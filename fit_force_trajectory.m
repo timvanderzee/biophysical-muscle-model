@@ -7,14 +7,16 @@ addpath(genpath('C:\Users\timvd\Documents\casadi-windows-matlabR2016a-v3.5.5'))
 import casadi.*; 
 
 %% specify data
-i = 6;
-Ks = 1:4;
-n = 3;
-m = 7;
-tiso = 3;
+load('active_trials.mat')
+
+iF = 7; % fiber number (note: #4 and #9 lack pCa = 4.5)
+Ks = find(Fm(:,iF) > 0.1); % only consider active trials
+n = 3; % ISI number
+m = 7; % AMP number
+tiso = 3; % isometric time (s)
 
 %% load data
-[Data, tis, Lis, vis, Cas, ts, id0, id1, id2] = get_data(i,n,m,Ks,tiso);
+[Data, tis, Lis, vis, Cas, ts, id0, id1, id2] = get_data(iF,n,m,Ks,tiso);
 
 % interpolate force
 Fis = interp1(Data.t, Data.F, tis);
@@ -56,7 +58,7 @@ output_dir = [output_mainfolder{1}, '\', filename,vs{1}, output_folder];
 cd(output_dir)
 
 % get parallel parameters from that fiber
-load([filename,'_F', num2str(i),'_best.mat'],'parms','exitflag','fopt','C0','Cbounds','model','P0','P')
+load([filename,'_F', num2str(iF),'_best.mat'],'parms','exitflag','fopt','C0','Cbounds','model','P0','P')
 C = p_to_c(P, Cbounds);
 parms = C_to_parms(C, parms, parms.optvars);
 kpe = parms.kpe;
@@ -142,10 +144,10 @@ if ishandle(3), close(3); end; figure(3)
 [newparms, out] = fit_model_parameters_v2(opti, optparms, w, Xdata, fparms);
 set(gcf,'units','normalized','position',[.2 .2 .4 .6])
 
-sparms(i) = newparms;
+sparms(iF) = newparms;
 
 %% visualize fitted parameters
-id = i;
+id = iF;
 clear Y
 for j = 1:length(id)
     for i = 1:length(optparms)
@@ -235,11 +237,10 @@ plot(F0, ds(:,1)./ds(:,2),'o-'); hold on
 plot(F0, os(:,1)./os(:,2),'o-')
 plot(F0, ns(:,1)./ns(:,2),'o-')
 
-return
 %% test on the condition without conditioning stretch
 n = 1;
 m = 1;
-[Data, tis, Lis, vis, Cas, ts, id0, id1, id2] = get_data(i,n,m,Ks,tiso);
+[Data, tis, Lis, vis, Cas, ts, id0, id1, id2] = get_data(iF,n,m,Ks,tiso);
 
 figure(10)
 subplot(411)
@@ -258,27 +259,32 @@ plot(tis, Lis,'b',  'linewidth',1);
 box off
 
 subplot(414)
-plot(Data.t, Data.F,'r.');
+plot(Data.t, Data.F,'r.'); hold on
 box off
 
 parms.ti = tis;
 parms.vts = vis;
 parms.Cas = Cas;
 
-dsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(parms.ti)], x0, xp0, odeopt);
+osol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(parms.ti)], x0, xp0, odeopt);
 
 newparms.ti = tis;
 newparms.vts = vis;
 newparms.Cas = Cas;
 
+oF = (osol.y(1,:) + osol.y(2,:)) * parms.Fscale;
+ot = osol.x;
+oFi = interp1(ot, oF, tis) + parms.Fpe_func(Liss, parms);
+
 xsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, newparms), [0 max(newparms.ti)], x0, xp0, odeopt);
 
-dF = (dsol.y(1,:) + dsol.y(2,:)) * parms.Fscale;
 xF = (xsol.y(1,:) + xsol.y(2,:)) * parms.Fscale;
+xt = xsol.x;
+xFi = interp1(xt, xF, tis) + parms.Fpe_func(Liss, newparms);
 
-subplot(414); hold on
-plot(dsol.x, dF,'b'); hold on
-plot(xsol.x, xF,'m'); hold on
+
+plot(tis, oFi,'b'); hold on
+plot(tis, xFi,'m');
 
 
 %%
