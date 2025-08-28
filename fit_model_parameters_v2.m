@@ -263,6 +263,8 @@ try
     R.F     = sol.value(Frel); 
     R.Fdot  = R.dQ0dt + R.dQ1dt;
     R.t     = 0:dt:(N-1)*dt;
+    
+    R.J = sol.value(J);
 
 catch
     sol = opti.debug();
@@ -278,6 +280,7 @@ catch
     R.Fdot  = R.dQ0dt + R.dQ1dt;
     R.t     = 0:dt:(N-1)*dt;
 
+    R.J = opti.debug.value(J);
 end
 
 R.Non = sol.value(Non);
@@ -305,8 +308,8 @@ end
 osol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(toc)], sol0.y(:,end), xp0, odeopt);
 t = osol.x;
 x = osol.y;
-F = x(1,:) + x(2,:);
-Fi = interp1(t, F, toc);
+F = (x(1,:) + x(2,:)) * parms.Fscale;
+Fn = interp1(t, F, toc) + parms.kpe * Lts + parms.Fpe0;
 
 % [~,xdot] = deval(osol, t);
 % Fdot = xdot(1,:) + xdot(2,:);
@@ -318,11 +321,14 @@ ylabel('Velocity')
 title('Velocity')
 
 subplot(312)
-plot(toc, Fi); hold on
+plot(R.t(idF), Fts(idF), 'k.', 'markersize',10); hold on 
+plot(toc, Fi, ':', 'linewidth',1.5); 
 plot(R.t, R.F, 'linewidth',1.5); hold on
-plot(R.t(idF), Fts(idF), '.', 'markersize',10); 
+plot(toc, Fn, ':', 'linewidth',1.5); 
 ylabel('Force')
 title('Force')
+legend('Target','Initial guess','Result','Simulated','location','best')
+legend boxoff
 
 subplot(313);
 plot(toc, Fidot); hold on
@@ -338,21 +344,12 @@ for i = 1:3
     xlim([0 max(toc)])
 end
 
-color = get(gca,'colororder');
-
-subplot(312)
-plot(toc, Fi*parms.Fscale + parms.kpe * Lts + parms.Fpe0,':','color',color(1,:))
-legend('Initial guess','Result','Target','Simulated','location','best')
-legend boxoff
-
-% subplot(313)
-% plot(t, Fdot*parms.Fscale,':','color',color(1,:))
-
 set(gcf,'units','normalized','position', [.1 .1 .4 .8])
 
 %% output
 out.v = vts(idF);
 out.F = R.F(idF);
 out.Ft = Fts(idF);
+out.cost = R.J;
 
 end
