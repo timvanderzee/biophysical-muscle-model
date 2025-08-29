@@ -29,7 +29,7 @@ for k = 1:length(Ks)
     id1 = t > trange(1) & t < trange(2);
    
     % save
-    Data.t = [Data.t; t(id1) + k * tiso - 3*Data.dTt - 0.002]; % move to agree with idealized input
+    Data.t = [Data.t; t(id1) + k * tiso - 3*Data.dTt - 0.005]; % move to agree with idealized input
     Data.F = [Data.F; F(id1)];
     Data.L = [Data.L; L(id1)];
     Data.C = [Data.C; Ca(id1)];

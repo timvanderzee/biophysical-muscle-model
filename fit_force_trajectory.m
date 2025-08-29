@@ -16,7 +16,7 @@ load('active_trials.mat', 'Fm')
 iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
 % iFs = [5, 6, 7];
 
-for iF = 10
+for iF = iFs
 
 % iF = 6; % fiber number (note: #4 and #9 lack pCa = 4.5)
 Ks = find(Fm(:,iF) > 0.1); % only consider active trials
@@ -151,15 +151,15 @@ opti = casadi.Opti();
 % define weigth vector
 w1 = 100;    % weight for fitting force-velocity
 w2 = 100;   % weight for fitting short-range stiffness
-w3 = .1; 	% weight for regularization
+w3 = 1; 	% weight for regularization
 w = [w1 w2 w3];
 
 % specify biophysical parameters to be fitted
-optparms = {'f', 'k11', 'k22', 'k21', 'JF', 'kon', 'koop', 'kse', 'kse0'};
+optparms = {'f', 'k11', 'k22', 'k21', 'JF', 'J1','J2', 'kon', 'koop', 'kse', 'kse0'};
 
 fparms = parms;
-fparms.J1 = 50;
-fparms.J2 = 200;
+% fparms.J1 = 50;
+% fparms.J2 = 200;
 
 figure(2 + iF*10)
 [newparms, out] = fit_model_parameters_v2(opti, optparms, w, Xdata, fparms);
@@ -170,122 +170,122 @@ pparms(iF) = oparms;
 
 end
 
-% %% visualize fitted parameters
-% for i = 1:length(optparms)
-%     Y(i,1) = eval(['pparms(', num2str(iF),').',optparms{i}]);
-%     Y(i,2) = eval(['fparms.',optparms{i}]);
-%     Y(i,3) = eval(['sparms(', num2str(iF),').',optparms{i}]);
-% end
-% 
-% figure(1)
-% nexttile 
-% bar(categorical(optparms), Y)
-% set(gca,'YScale','log')
-% yline(.1,'r--')
-% yline(2e3,'r--')
-% legend('Old','IG','New','location','best')
-% 
-% %% test with fitted paramers
-% Kss = [Ks; 7]; % only consider active trials
-% Data = get_data(username, iF,n,m,Kss,tiso);
-% [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Kss));
-% Liss = Lis * gamma;
-% 
-% newparms.ti = tis;
-% newparms.vts = vis;
-% newparms.Cas = Cas;
-% 
-% odeopt = odeset('maxstep', 3e-3);
-% x0 = 1e-3 * ones(6,1);
-% xp0 = zeros(size(x0));
-% 
-% nsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, newparms), [0 max(tis)], x0, xp0, odeopt);
-% [~,xdot] = deval(nsol, nsol.x);
-% 
-% nF = (nsol.y(1,:) + nsol.y(2,:)) * parms.Fscale;
-% nt = nsol.x;
-% 
-% nFi = interp1(nt, nF, tis) + parms.Fpe_func(Liss, newparms);
-% 
-% figure(1 + iF * 10)
-% subplot(414); hold on
-% plot(tis, nFi,'m'); hold on
-% 
-% %% estimate SRS
-% % lts   = interp1(Data.t, Data.Lf, parms.ti);
-% nFi = interp1(nsol.x, nF, Data.t)  + parms.Fpe_func(Data.L * gamma, newparms);
-% oFi = interp1(osol.x, oF, Data.t)  + parms.Fpe_func(Data.L * gamma, parms);
-% 
-% figure(4 + iF * 10)
-% subplot(131);
-% plot(Data.L, Data.F,'.'); hold on
-% 
-% subplot(132);
-% plot(Data.L, oFi,'.'); hold on
-% 
-% subplot(133)
-% plot(Data.L, nFi,'.'); hold on
-% 
-% % pre-allocate
-% ns = nan(length(Kss), 2);
-% os = nan(length(Kss), 2);
-% ds = nan(length(Kss), 2);
-% F0 = nan(length(Kss), 1);
-% 
-% [id0,id1,id2] = get_indices(Data.t, ts, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Kss));
-% 
-% for i = 1:length(Kss)
-%     
-%     np1 = polyfit(Data.L(id1(i,:)), nFi(id1(i,:)), 1);
-%     np2 = polyfit(Data.L(id2(i,:)), nFi(id2(i,:)), 1);
-%     
-%     op1 = polyfit(Data.L(id1(i,:)), oFi(id1(i,:)), 1);
-%     op2 = polyfit(Data.L(id2(i,:)), oFi(id2(i,:)), 1);
-%     
-%     dp1 = polyfit(Data.L(id1(i,:)), Data.F(id1(i,:)), 1);
-%     dp2 = polyfit(Data.L(id2(i,:)), Data.F(id2(i,:)), 1);
-%     
-%     ns(i,:) = [np1(1) np2(1)];
-%     os(i,:) = [op1(1) op2(1)];
-%     ds(i,:) = [dp1(1) dp2(1)];
-%     
-%     F0(i) = mean(Data.F(id0(i,:)));
-%     
-%     subplot(131)
-%     plot(Data.L(id0(i,:)), Data.F(id0(i,:)), 'g.')
-%     plot(Data.L(id1(i,:)), Data.F(id1(i,:)), 'r.')
-%     plot(Data.L(id2(i,:)), Data.F(id2(i,:)), 'y.')
-%     
-%     subplot(132)
-%     plot(Data.L(id1(i,:)), oFi(id1(i,:)), 'r.')
-%     plot(Data.L(id2(i,:)), oFi(id2(i,:)), 'y.')
-%     
-%     subplot(133)
-%     plot(Data.L(id1(i,:)), nFi(id1(i,:)), 'r.')
-%     plot(Data.L(id2(i,:)), nFi(id2(i,:)), 'y.')
-% end
-% 
-% titles = {'Data','Old parameters', 'New parameters'};
-% for i = 1:3
-%     subplot(1,3,i)
-%     box off
-%     xlabel('Length (L_0)')
-%     ylabel('Force (F_0)')
-%     title(titles{i})
-% end
-% 
-% %% summary plot
-% figure(2)
-% nexttile
-% plot(F0, ds(:,1)./ds(:,2),'o-'); hold on
-% plot(F0, os(:,1)./os(:,2),'o-')
-% plot(F0, ns(:,1)./ns(:,2),'o-')
-% box off
-% xlabel('Isometric force (F_0)')
-% ylabel('Relative stiffness')
-% legend('Data', 'Old parameters', 'New parameters', 'location', 'best')
-% legend boxoff
-% xlim([0 1.05])
+%% visualize fitted parameters
+for i = 1:length(optparms)
+    Y(i,1) = eval(['pparms(', num2str(iF),').',optparms{i}]);
+    Y(i,2) = eval(['fparms.',optparms{i}]);
+    Y(i,3) = eval(['sparms(', num2str(iF),').',optparms{i}]);
+end
+
+figure(1)
+nexttile 
+bar(categorical(optparms), Y)
+set(gca,'YScale','log')
+yline(.1,'r--')
+yline(2e3,'r--')
+legend('Old','IG','New','location','best')
+
+%% test with fitted paramers
+Kss = [Ks; 7]; % only consider active trials
+Data = get_data(username, iF,n,m,Kss,tiso);
+[tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Kss));
+Liss = Lis * gamma;
+
+newparms.ti = tis;
+newparms.vts = vis;
+newparms.Cas = Cas;
+
+odeopt = odeset('maxstep', 3e-3);
+x0 = 1e-3 * ones(6,1);
+xp0 = zeros(size(x0));
+
+nsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, newparms), [0 max(tis)], x0, xp0, odeopt);
+[~,xdot] = deval(nsol, nsol.x);
+
+nF = (nsol.y(1,:) + nsol.y(2,:)) * parms.Fscale;
+nt = nsol.x;
+
+nFi = interp1(nt, nF, tis) + parms.Fpe_func(Liss, newparms);
+
+figure(1 + iF * 10)
+subplot(414); hold on
+plot(tis, nFi,'m'); hold on
+
+%% estimate SRS
+% lts   = interp1(Data.t, Data.Lf, parms.ti);
+nFi = interp1(nsol.x, nF, Data.t)  + parms.Fpe_func(Data.L * gamma, newparms);
+oFi = interp1(osol.x, oF, Data.t)  + parms.Fpe_func(Data.L * gamma, parms);
+
+figure(4 + iF * 10)
+subplot(131);
+plot(Data.L, Data.F,'.'); hold on
+
+subplot(132);
+plot(Data.L, oFi,'.'); hold on
+
+subplot(133)
+plot(Data.L, nFi,'.'); hold on
+
+% pre-allocate
+ns = nan(length(Kss), 2);
+os = nan(length(Kss), 2);
+ds = nan(length(Kss), 2);
+F0 = nan(length(Kss), 1);
+
+[id0,id1,id2] = get_indices(Data.t, ts, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Kss));
+
+for i = 1:length(Kss)
+    
+    np1 = polyfit(Data.L(id1(i,:)), nFi(id1(i,:)), 1);
+    np2 = polyfit(Data.L(id2(i,:)), nFi(id2(i,:)), 1);
+    
+    op1 = polyfit(Data.L(id1(i,:)), oFi(id1(i,:)), 1);
+    op2 = polyfit(Data.L(id2(i,:)), oFi(id2(i,:)), 1);
+    
+    dp1 = polyfit(Data.L(id1(i,:)), Data.F(id1(i,:)), 1);
+    dp2 = polyfit(Data.L(id2(i,:)), Data.F(id2(i,:)), 1);
+    
+    ns(i,:) = [np1(1) np2(1)];
+    os(i,:) = [op1(1) op2(1)];
+    ds(i,:) = [dp1(1) dp2(1)];
+    
+    F0(i) = mean(Data.F(id0(i,:)));
+    
+    subplot(131)
+    plot(Data.L(id0(i,:)), Data.F(id0(i,:)), 'g.')
+    plot(Data.L(id1(i,:)), Data.F(id1(i,:)), 'r.')
+    plot(Data.L(id2(i,:)), Data.F(id2(i,:)), 'y.')
+    
+    subplot(132)
+    plot(Data.L(id1(i,:)), oFi(id1(i,:)), 'r.')
+    plot(Data.L(id2(i,:)), oFi(id2(i,:)), 'y.')
+    
+    subplot(133)
+    plot(Data.L(id1(i,:)), nFi(id1(i,:)), 'r.')
+    plot(Data.L(id2(i,:)), nFi(id2(i,:)), 'y.')
+end
+
+titles = {'Data','Old parameters', 'New parameters'};
+for i = 1:3
+    subplot(1,3,i)
+    box off
+    xlabel('Length (L_0)')
+    ylabel('Force (F_0)')
+    title(titles{i})
+end
+
+%% summary plot
+figure(2)
+nexttile
+plot(F0, ds(:,1)./ds(:,2),'o-'); hold on
+plot(F0, os(:,1)./os(:,2),'o-')
+plot(F0, ns(:,1)./ns(:,2),'o-')
+box off
+xlabel('Isometric force (F_0)')
+ylabel('Relative stiffness')
+legend('Data', 'Old parameters', 'New parameters', 'location', 'best')
+legend boxoff
+xlim([0 1.05])
 
 %% test on the condition without conditioning stretch
 % n = 1;
@@ -351,38 +351,6 @@ end
 % end
 
 %%
-function yp=grad5(y,dx)
-% function yp=grad5(y,dx)
-% 031091 KvS
-% purpose: calculation of 5 point derivative
-% inputs : y : vector containing signal as a function of x
-%          dx: change in x between steps
-% output : yp: derivative of y with respect to x
- 
-if nargin~=2
-  disp('OOPS: grad5 expects 2 input arguments')
-  disp('      hit any key to continue');pause
-  return
-end
 
-%y=y(:);
-[nrow,ncol]=size(y);
-% keyboard
-
-yp(1,1:ncol)=zeros(1,ncol);
-yp(2,1:ncol )=zeros(1,ncol);
-yp(nrow-1,1:ncol)=zeros(1,ncol);
-yp(nrow,1:ncol)=zeros(1,ncol);
-
-yp(1,1:ncol)=(y(2,:)-y(1,:))/dx;
-yp(2,1:ncol)=(y(3,:)-y(1,:))/(2*dx);
-yp(nrow-1,1:ncol)=(y(nrow,:)-y(nrow-2,:))/(2*dx);
-yp(nrow,1:ncol)=(y(nrow,:)-y(nrow-1,:))/dx;
-
-coef=[1 -8 0 8 -1];
-for i=3:nrow-2;
-  yp(i,:)=(coef*y(i-2:i+2,:))/(12*dx);
-end;
-end
 %if flip; y=y';yp=yp';end;
 

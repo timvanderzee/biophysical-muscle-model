@@ -4,20 +4,55 @@ addpath(genpath([mainfolder, '\muscle-thixotropy']))
 addpath(genpath([mainfolder, '\casadi-windows-matlabR2016a-v3.5.5']))
 addpath(genpath([mainfolder, '\biophysical-muscle-model']))
 
-AMP = .0383;
+
+ISIs = logspace(-2,0,10);
+pCas = flip([9, 7:-.1:6, 4.5]);
+pCas = [6.4 6];
+
+
+AMPs = [.02 .0383];
+
+F0 = nan(length(pCas), length(ISIs),length(AMPs), 11, 2);
+Scond = nan(length(pCas), length(ISIs),length(AMPs), 11, 2);
+Stest = nan(length(pCas), length(ISIs),length(AMPs), 11, 2);
+
+iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
+iFs = 6;
+
+
+for ii = 1:length(AMPs)
+
+AMP = AMPs(ii);
 dTt = .0383/.4545; % test stretch (= constant)
 dTc = AMP / .4545; % conditioning stretch
 
+
+
+for jj = 1:length(ISIs)
+    
 tiso = 3;
-ISI = .1;
-pCas = flip([9, 7:-.1:6, 4.5]);
+ISI = ISIs(jj);
 Ca = 10.^(-pCas+6);
 
 [tis, Cas, Lis, vis, ts] = create_input(tiso, dTt, dTc, ISI, Ca, 2000);
 
-[id0,id1,id2] = get_indices(tis, ts, dTt, dTc, ISI, Ca);
+[id0,id1,id2] = get_indices(tis, tiso, ts, dTt, dTc, ISI, Ca);
 
-figure(1)
+
+%% get parameters
+load('parms_v2.mat','sparms','pparms');
+
+
+for iF = iFs
+    
+for kk = 1
+    if kk == 1
+        parms = sparms(iF);
+    else
+        parms = pparms(iF);
+    end
+
+figure(kk)
 subplot(411)
 plot(tis, Cas, 'b', 'linewidth',1); 
 
@@ -26,32 +61,6 @@ plot(tis, vis,'b',  'linewidth',1);
 
 subplot(413)
 plot(tis, Lis,'b',  'linewidth',1); hold on
-
-%% get parameters
-iF = 6;
-
-mcode = [1 1 1];
-vs = {'\', '\'};
-
-cd([mainfolder, '\muscle-thixotropy\new_model\get_variable'])
-[output_mainfolder, filename, opt_type, ~] = get_folder_and_model(mcode);
-
-disp(filename)
-output_folder = [opt_type,'\normalized\with_PE_optimized\2_trials'];
-
-output_dir = [output_mainfolder{1}, '\', filename,vs{1}, output_folder];
-cd(output_dir)
-
-% get parallel parameters from that fiber
-load([filename,'_F', num2str(iF),'_best.mat'],'parms','exitflag','fopt','C0','Cbounds','model','P0','P')
-C = p_to_c(P, Cbounds);
-parms = C_to_parms(C, parms, parms.optvars);
-kpe = parms.kpe;
-Fpe0 = parms.Fpe0;
-parms.act = 1;
-parms.Noverlap = 1;
-parms.Fscale = 1.5;
-
 
 %% run simulation
 x0 = 1e-3 * ones(6,1);
@@ -101,10 +110,73 @@ for i = 1:length(Ca)
     np1 = polyfit(Lis(id1(i,:)), oFi(id1(i,:)), 1);
     np2 = polyfit(Lis(id2(i,:)), oFi(id2(i,:)), 1);
     
-    ns(i,:) = [np1(1) np2(1)];
+    Stest(i,jj,ii,iF,kk) = np1(1);
+    Scond(i,jj,ii,iF,kk) = np2(1);
+    
+%     ns = [np1(1) np2(1)];
 
-    F0(i) = mean(oFi(id0(i,:)));
+    F0(i,jj,ii,iF,kk) = mean(oFi(id0(i,:)));
+
+end
+end
+end
+end
 end
 
-figure(2)
-plot(F0, ns(:,1)./ns(:,2));
+%% effect of ISI
+SRSrel = Stest./Scond(:,:,2,:,:);
+close all
+figure(10)
+color = get(gca,'colororder');
+
+for iF = iFs
+
+    subplot(131);
+    plot(squeeze(F0(:,1,:,iF, kk)), squeeze(SRSrel(:,1,:,iF,kk)), 'color', color(kk,:)); hold on
+    
+    subplot(132)
+    semilogx(ISIs, squeeze(SRSrel(1,:,:,iF,kk)), 'color', color(kk,:)); hold on
+   
+    subplot(133)  
+    plot(AMPs, squeeze(SRSrel(:,1,:,iF,kk))', 'color', color(kk,:)); hold on
+   
+end
+
+
+return
+
+%%
+%% summary figure
+
+% figure(10)
+% color = get(gca,'colororder');
+% 
+% for iF = iFs
+%     for kk = 1
+% 
+%         figure(10)
+%         plot(F0(:,1,2,iF, kk), SRSrel(:,1,2,iF,kk), 'color', color(kk,:)); hold on
+%     end
+% end
+
+
+%% interpolate
+% F0s = linspace(0,1,13);
+% SRSi = nan(size(SRSrel));
+% 
+% for iF = iFs
+%     for kk = 1
+%         SRSi(:,1,2,iF,kk) = interp1(F0(:,1,2,iF,kk), SRSrel(:,1,2,iF,kk), F0s(:), [], 'extrap');
+%     end
+% end
+% 
+% figure(11)
+% for kk = 1:2
+% plot(F0s, mean(SRSi(:,1,2,:,kk), 2,'omitnan'),'color',color(kk,:)); hold on
+% end
+% 
+
+
+
+
+

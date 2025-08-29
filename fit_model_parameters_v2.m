@@ -27,6 +27,9 @@ for i = 1:length(optparms)
     eval(['opti.set_initial(',optparms{i},',', num2str(parms.(optparms{i})),');']);
 end
 
+% dependent parameter
+% J2 = J1 * parms.SRX0 / (1-parms.SRX0);
+
 %% extract input and target
 Cas = data.Cas;
 vts = data.v;
@@ -137,6 +140,9 @@ opti.subject_to(error_Q1(:) == 0);
 opti.subject_to(error_Q2(:) == 0);
 opti.subject_to(error_length(:) == 0);
 
+opti.subject_to(J2 - (J1 * parms.SRX0 / (1-parms.SRX0)) == 0);
+
+
 %% derivative constraints
 opti.subject_to((dNondt(1:N-1) + dNondt(2:N))*dt/2 + Non(1:N-1) == Non(2:N));
 opti.subject_to((dDRXdt(1:N-1) + dDRXdt(2:N))*dt/2 + DRX(1:N-1) == DRX(2:N));
@@ -208,6 +214,8 @@ end
 
 R.Fdot  = R.dQ0dt + R.dQ1dt;
 R.t     = 0:dt:(N-1)*dt;
+
+% parms.J2 = sol.value(J2);
 
 %% Test the result: run a forward simulation (sanity check)
 [t,x] = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(toc)], sol0.y(:,end), xp0, odeopt);
