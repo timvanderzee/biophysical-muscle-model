@@ -6,7 +6,6 @@ username = 'timvd';
 
 addpath(genpath([mainfolder, '\muscle-thixotropy']))
 addpath(genpath([mainfolder, '\casadi-windows-matlabR2016a-v3.5.5']))
-addpath(genpath([mainfolder, '\biophysical-muscle-model']))
 
 % Import casadi libraries
 import casadi.*; 
@@ -14,9 +13,9 @@ import casadi.*;
 %% specify data
 load('active_trials.mat', 'Fm')
 iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
-% iFs = [5, 6, 7];
+iFs = [5, 6, 7];
 
-for iF = 10
+for iF = 7
 
 % iF = 6; % fiber number (note: #4 and #9 lack pCa = 4.5)
 Ks = find(Fm(:,iF) > 0.1); % only consider active trials
@@ -170,122 +169,122 @@ pparms(iF) = oparms;
 
 end
 
-% %% visualize fitted parameters
-% for i = 1:length(optparms)
-%     Y(i,1) = eval(['pparms(', num2str(iF),').',optparms{i}]);
-%     Y(i,2) = eval(['fparms.',optparms{i}]);
-%     Y(i,3) = eval(['sparms(', num2str(iF),').',optparms{i}]);
-% end
-% 
-% figure(1)
-% nexttile 
-% bar(categorical(optparms), Y)
-% set(gca,'YScale','log')
-% yline(.1,'r--')
-% yline(2e3,'r--')
-% legend('Old','IG','New','location','best')
-% 
-% %% test with fitted paramers
-% Kss = [Ks; 7]; % only consider active trials
-% Data = get_data(username, iF,n,m,Kss,tiso);
-% [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Kss));
-% Liss = Lis * gamma;
-% 
-% newparms.ti = tis;
-% newparms.vts = vis;
-% newparms.Cas = Cas;
-% 
-% odeopt = odeset('maxstep', 3e-3);
-% x0 = 1e-3 * ones(6,1);
-% xp0 = zeros(size(x0));
-% 
-% nsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, newparms), [0 max(tis)], x0, xp0, odeopt);
-% [~,xdot] = deval(nsol, nsol.x);
-% 
-% nF = (nsol.y(1,:) + nsol.y(2,:)) * parms.Fscale;
-% nt = nsol.x;
-% 
-% nFi = interp1(nt, nF, tis) + parms.Fpe_func(Liss, newparms);
-% 
-% figure(1 + iF * 10)
-% subplot(414); hold on
-% plot(tis, nFi,'m'); hold on
-% 
-% %% estimate SRS
-% % lts   = interp1(Data.t, Data.Lf, parms.ti);
-% nFi = interp1(nsol.x, nF, Data.t)  + parms.Fpe_func(Data.L * gamma, newparms);
-% oFi = interp1(osol.x, oF, Data.t)  + parms.Fpe_func(Data.L * gamma, parms);
-% 
-% figure(4 + iF * 10)
-% subplot(131);
-% plot(Data.L, Data.F,'.'); hold on
-% 
-% subplot(132);
-% plot(Data.L, oFi,'.'); hold on
-% 
-% subplot(133)
-% plot(Data.L, nFi,'.'); hold on
-% 
-% % pre-allocate
-% ns = nan(length(Kss), 2);
-% os = nan(length(Kss), 2);
-% ds = nan(length(Kss), 2);
-% F0 = nan(length(Kss), 1);
-% 
-% [id0,id1,id2] = get_indices(Data.t, ts, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Kss));
-% 
-% for i = 1:length(Kss)
-%     
-%     np1 = polyfit(Data.L(id1(i,:)), nFi(id1(i,:)), 1);
-%     np2 = polyfit(Data.L(id2(i,:)), nFi(id2(i,:)), 1);
-%     
-%     op1 = polyfit(Data.L(id1(i,:)), oFi(id1(i,:)), 1);
-%     op2 = polyfit(Data.L(id2(i,:)), oFi(id2(i,:)), 1);
-%     
-%     dp1 = polyfit(Data.L(id1(i,:)), Data.F(id1(i,:)), 1);
-%     dp2 = polyfit(Data.L(id2(i,:)), Data.F(id2(i,:)), 1);
-%     
-%     ns(i,:) = [np1(1) np2(1)];
-%     os(i,:) = [op1(1) op2(1)];
-%     ds(i,:) = [dp1(1) dp2(1)];
-%     
-%     F0(i) = mean(Data.F(id0(i,:)));
-%     
-%     subplot(131)
-%     plot(Data.L(id0(i,:)), Data.F(id0(i,:)), 'g.')
-%     plot(Data.L(id1(i,:)), Data.F(id1(i,:)), 'r.')
-%     plot(Data.L(id2(i,:)), Data.F(id2(i,:)), 'y.')
-%     
-%     subplot(132)
-%     plot(Data.L(id1(i,:)), oFi(id1(i,:)), 'r.')
-%     plot(Data.L(id2(i,:)), oFi(id2(i,:)), 'y.')
-%     
-%     subplot(133)
-%     plot(Data.L(id1(i,:)), nFi(id1(i,:)), 'r.')
-%     plot(Data.L(id2(i,:)), nFi(id2(i,:)), 'y.')
-% end
-% 
-% titles = {'Data','Old parameters', 'New parameters'};
-% for i = 1:3
-%     subplot(1,3,i)
-%     box off
-%     xlabel('Length (L_0)')
-%     ylabel('Force (F_0)')
-%     title(titles{i})
-% end
-% 
-% %% summary plot
-% figure(2)
-% nexttile
-% plot(F0, ds(:,1)./ds(:,2),'o-'); hold on
-% plot(F0, os(:,1)./os(:,2),'o-')
-% plot(F0, ns(:,1)./ns(:,2),'o-')
-% box off
-% xlabel('Isometric force (F_0)')
-% ylabel('Relative stiffness')
-% legend('Data', 'Old parameters', 'New parameters', 'location', 'best')
-% legend boxoff
-% xlim([0 1.05])
+%% visualize fitted parameters
+for i = 1:length(optparms)
+    Y(i,1) = eval(['pparms(', num2str(iF),').',optparms{i}]);
+    Y(i,2) = eval(['fparms.',optparms{i}]);
+    Y(i,3) = eval(['sparms(', num2str(iF),').',optparms{i}]);
+end
+
+figure(1)
+nexttile 
+bar(categorical(optparms), Y)
+set(gca,'YScale','log')
+yline(.1,'r--')
+yline(2e3,'r--')
+legend('Old','IG','New','location','best')
+
+%% test with fitted paramers
+Kss = [Ks; 7]; % only consider active trials
+Data = get_data(username, iF,n,m,Kss,tiso);
+[tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Kss));
+Liss = Lis * gamma;
+
+newparms.ti = tis;
+newparms.vts = vis;
+newparms.Cas = Cas;
+
+odeopt = odeset('maxstep', 3e-3);
+x0 = 1e-3 * ones(6,1);
+xp0 = zeros(size(x0));
+
+nsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, newparms), [0 max(tis)], x0, xp0, odeopt);
+[~,xdot] = deval(nsol, nsol.x);
+
+nF = (nsol.y(1,:) + nsol.y(2,:)) * parms.Fscale;
+nt = nsol.x;
+
+nFi = interp1(nt, nF, tis) + parms.Fpe_func(Liss, newparms);
+
+figure(1 + iF * 10)
+subplot(414); hold on
+plot(tis, nFi,'m'); hold on
+
+%% estimate SRS
+% lts   = interp1(Data.t, Data.Lf, parms.ti);
+nFi = interp1(nsol.x, nF, Data.t)  + parms.Fpe_func(Data.L * gamma, newparms);
+oFi = interp1(osol.x, oF, Data.t)  + parms.Fpe_func(Data.L * gamma, parms);
+
+figure(4 + iF * 10)
+subplot(131);
+plot(Data.L, Data.F,'.'); hold on
+
+subplot(132);
+plot(Data.L, oFi,'.'); hold on
+
+subplot(133)
+plot(Data.L, nFi,'.'); hold on
+
+% pre-allocate
+ns = nan(length(Kss), 2);
+os = nan(length(Kss), 2);
+ds = nan(length(Kss), 2);
+F0 = nan(length(Kss), 1);
+
+[id0,id1,id2] = get_indices(Data.t, ts, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Kss));
+
+for i = 1:length(Kss)
+    
+    np1 = polyfit(Data.L(id1(i,:)), nFi(id1(i,:)), 1);
+    np2 = polyfit(Data.L(id2(i,:)), nFi(id2(i,:)), 1);
+    
+    op1 = polyfit(Data.L(id1(i,:)), oFi(id1(i,:)), 1);
+    op2 = polyfit(Data.L(id2(i,:)), oFi(id2(i,:)), 1);
+    
+    dp1 = polyfit(Data.L(id1(i,:)), Data.F(id1(i,:)), 1);
+    dp2 = polyfit(Data.L(id2(i,:)), Data.F(id2(i,:)), 1);
+    
+    ns(i,:) = [np1(1) np2(1)];
+    os(i,:) = [op1(1) op2(1)];
+    ds(i,:) = [dp1(1) dp2(1)];
+    
+    F0(i) = mean(Data.F(id0(i,:)));
+    
+    subplot(131)
+    plot(Data.L(id0(i,:)), Data.F(id0(i,:)), 'g.')
+    plot(Data.L(id1(i,:)), Data.F(id1(i,:)), 'r.')
+    plot(Data.L(id2(i,:)), Data.F(id2(i,:)), 'y.')
+    
+    subplot(132)
+    plot(Data.L(id1(i,:)), oFi(id1(i,:)), 'r.')
+    plot(Data.L(id2(i,:)), oFi(id2(i,:)), 'y.')
+    
+    subplot(133)
+    plot(Data.L(id1(i,:)), nFi(id1(i,:)), 'r.')
+    plot(Data.L(id2(i,:)), nFi(id2(i,:)), 'y.')
+end
+
+titles = {'Data','Old parameters', 'New parameters'};
+for i = 1:3
+    subplot(1,3,i)
+    box off
+    xlabel('Length (L_0)')
+    ylabel('Force (F_0)')
+    title(titles{i})
+end
+
+%% summary plot
+figure(2)
+nexttile
+plot(F0, ds(:,1)./ds(:,2),'o-'); hold on
+plot(F0, os(:,1)./os(:,2),'o-')
+plot(F0, ns(:,1)./ns(:,2),'o-')
+box off
+xlabel('Isometric force (F_0)')
+ylabel('Relative stiffness')
+legend('Data', 'Old parameters', 'New parameters', 'location', 'best')
+legend boxoff
+xlim([0 1.05])
 
 %% test on the condition without conditioning stretch
 % n = 1;
@@ -335,20 +334,20 @@ end
 % 
 % plot(tis, oFi,'b'); hold on
 % plot(tis, xFi,'m');
-% end
+end
 
-% %% compare parameter values
-% figure(3)
-% 
-% Ys = nan(length(optparms), iFs(end));
-% Yp = nan(length(optparms), iFs(end));
-% 
-% for iF = iFs
-%     for i = 1:length(optparms)
-%         Ys(i,iF) = eval(['sparms(', num2str(iF),').',optparms{i}]);
-%         Yp(i,iF) = eval(['pparms(', num2str(iF),').',optparms{i}]);
-%     end
-% end
+%% compare parameter values
+figure(3)
+
+Ys = nan(length(optparms), iFs(end));
+Yp = nan(length(optparms), iFs(end));
+
+for iF = iFs
+    for i = 1:length(optparms)
+        Ys(i,iF) = eval(['sparms(', num2str(iF),').',optparms{i}]);
+        Yp(i,iF) = eval(['pparms(', num2str(iF),').',optparms{i}]);
+    end
+end
 
 %%
 function yp=grad5(y,dx)

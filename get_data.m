@@ -1,17 +1,17 @@
-function[Data] = get_data(i,n,m,Ks,tiso)
+function[Data] = get_data(username, i,n,m,Ks,tiso)
 
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
 %% process data
 % load short-range stiffness data (skinned rat soleus muscle fibers), 
 % cd('C:\Users\timvd\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data')
-cd('C:\Users\u0167448\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data')
+cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
 load([fibers{i},'_cor_new.mat'],'data')
 
 Data.F = [];
 Data.L = [];
 Data.t = [];
-Data.Ca = [];
+Data.C = [];
 
 Data.dTt = .0383/.4545; % test stretch (= constant)
 
@@ -29,10 +29,10 @@ for k = 1:length(Ks)
     id1 = t > trange(1) & t < trange(2);
    
     % save
-    Data.t = [Data.t; t(id1) + k * tiso - 3*dTt - .005]; % move to agree with idealized input
+    Data.t = [Data.t; t(id1) + k * tiso - 3*Data.dTt - 0.002]; % move to agree with idealized input
     Data.F = [Data.F; F(id1)];
     Data.L = [Data.L; L(id1)];
-    Data.Ca = [Data.Ca; Ca(id1)];
+    Data.C = [Data.C; Ca(id1)];
        
 end
 

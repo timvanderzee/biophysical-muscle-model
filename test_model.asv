@@ -1,8 +1,4 @@
 clear all; close all; clc
-mainfolder = 'C:\Users\timvd\Documents';
-addpath(genpath([mainfolder, '\muscle-thixotropy']))
-addpath(genpath([mainfolder, '\casadi-windows-matlabR2016a-v3.5.5']))
-addpath(genpath([mainfolder, '\biophysical-muscle-model']))
 
 AMP = .0383;
 dTt = .0383/.4545; % test stretch (= constant)
@@ -10,8 +6,7 @@ dTc = AMP / .4545; % conditioning stretch
 
 tiso = 3;
 ISI = .1;
-pCas = flip([9, 7:-.1:6, 4.5]);
-Ca = 10.^(-pCas+6);
+Ca = [10 2 1];
 
 [tis, Cas, Lis, vis, ts] = create_input(tiso, dTt, dTc, ISI, Ca, 2000);
 
@@ -28,8 +23,6 @@ subplot(413)
 plot(tis, Lis,'b',  'linewidth',1); hold on
 
 %% get parameters
-iF = 6;
-
 mcode = [1 1 1];
 vs = {'\', '\'};
 
@@ -68,7 +61,7 @@ parms.ti = tis;
 parms.vts = vis;
 parms.Cas = Cas;
 parms.Lts = Lis;
-odeopt = odeset('maxstep', 5e-2);
+odeopt = odeset('maxstep', 3e-3);
 
 sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(tis)], sol0.y(:,end), xp0, odeopt);
 toc

@@ -1,6 +1,6 @@
 function[id0,id1,id2] = get_indices(t, ts, dTt, dTc, ISI, Ca)
 
-dt = mean(diff(t));
+dt = median(diff(t));
 N = round(.01/dt); % 10 ms
 
 % SRS indices
