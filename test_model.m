@@ -1,0 +1,102 @@
+clear all; close all; clc
+
+AMP = .0383;
+dTt = .0383/.4545; % test stretch (= constant)
+dTc = AMP / .4545; % conditioning stretch
+
+tiso = 3;
+ISI = .1;
+Ca = [10 2 1];
+
+[tis, Cas, Lis, vis, ts] = create_input(tiso, dTt, dTc, ISI, Ca, 2000);
+
+[id0,id1,id2] = get_indices(tis, ts, dTt, dTc, ISI, Ca);
+
+figure(1)
+subplot(411)
+plot(tis, Cas, 'b', 'linewidth',1); 
+
+subplot(412)
+plot(tis, vis,'b',  'linewidth',1); 
+
+subplot(413)
+plot(tis, Lis,'b',  'linewidth',1); hold on
+
+%% run simulation
+parms.f = 100;
+parms.k11 = 20;
+parms.k12 = 2;
+parms.k21 = 20;
+parms.k22 = 0.5;
+parms.JF = 100;
+parms.koop = 3;
+parms.kon = 22;
+parms.koff = 80;
+parms.J1 = 50;
+parms.J2 = 200;
+parms.act = 1;
+parms.Noverlap = 1;
+parms.Fscale = 1.5;
+parms.w = 0.1;
+
+parms.kpe = 1e-3;
+parms.Fpe0 = 1e-3;
+parms.kse = 5e-3;
+parms.kse0 = 1e-3;
+
+parms.Fpe_func = @(L, parms) L * parms.kpe + parms.Fpe0;
+
+x0 = 1e-3 * ones(6,1);
+xp0 = zeros(size(x0));
+
+% isometric
+tic
+parms.vts = [0 0];
+parms.ti = [0 100];
+parms.Cas = Cas(1) * [1 1];
+sol0 = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(parms.ti)], x0, xp0, []);
+
+parms.ti = tis;
+parms.vts = vis;
+parms.Cas = Cas;
+parms.Lts = Lis;
+odeopt = odeset('maxstep', 3e-3);
+
+sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(tis)], sol0.y(:,end), xp0, odeopt);
+toc
+
+gamma = 108.3333; % length scaling
+Liss = Lis * gamma;
+oF = (sol.y(1,:) + sol.y(2,:)) * parms.Fscale;
+ot = sol.x;
+
+oFi = interp1(ot, oF, tis); %+ parms.Fpe_func(Liss, parms);
+
+subplot(414); hold on
+plot(tis, oFi,'b'); hold on
+plot(tis(id0), oFi(id0),'r.',  'linewidth',1); 
+plot(tis(id1), oFi(id1),'k.',  'linewidth',1); 
+plot(tis(id2), oFi(id2),'g.',  'linewidth',1); 
+
+for j = 1:4
+     subplot(4,1,j)
+     box off
+    
+    for i = 1:length(ts)
+        xline(ts(i),'k--')
+    end
+end
+
+%%
+for i = 1:length(Ca)
+    
+    np1 = polyfit(Lis(id1(i,:)), oFi(id1(i,:)), 1);
+    np2 = polyfit(Lis(id2(i,:)), oFi(id2(i,:)), 1);
+    
+    ns(i,:) = [np1(1) np2(1)];
+
+    F0(i) = mean(oFi(id0(i,:)));
+end
+
+figure(2)
+plot(F0, ns(:,1)./ns(:,2));

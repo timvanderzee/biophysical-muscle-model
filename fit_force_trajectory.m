@@ -21,7 +21,8 @@ m = 7; % AMP number
 tiso = 3; % isometric time (s)
 
 %% load data
-[Data, tis, Lis, vis, Cas, ts] = get_data(iF,n,m,Ks,tiso);
+Data = get_data(iF,n,m,Ks,tiso);
+[tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks));
 
 % interpolate force
 Fis = interp1(Data.t, Data.F, tis);
@@ -45,7 +46,6 @@ box off
 subplot(414)
 plot(Data.t, Data.F,'r.');
 box off
-
 
 %% get parameters
 mcode = [1 1 1];
@@ -85,6 +85,7 @@ parms.kpe = kpe;
 parms.Fpe0 = Fpe0;
 
 %% evaluate
+% note: not required for fitting
 oparms.ti = tis;
 oparms.vts = vis;
 oparms.Cas = Cas;
@@ -108,7 +109,6 @@ plot(tis, oFi,'b'); hold on
 
 %% intervals of interest
 id = nan(length(Ks), length(oparms.ti));
-% id2 = nan(length(Ks), length(parms.ti));
 
 for k = 1:length(Ks)
     id(k,:) = oparms.ti > (ts(k) + 2.2-0.0843) & (oparms.ti < ts(k)+3-0.0843);
@@ -140,9 +140,6 @@ w = [w1 w2 w3];
 
 % specify biophysical parameters to be fitted
 optparms = {'f', 'k11', 'k22', 'k21', 'JF', 'kon', 'koop', 'kse', 'kse0'};
-% optparms = {'f', 'k11', 'k22', 'k21', 'JF', 'koop', 'kse', 'kse0'};
-% optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'koop', 'kse', 'kse0'};
-% optparms = {'f', 'k11', 'k22', 'k21', 'JF', 'kon', 'koop'};
 
 fparms = parms;
 fparms.J1 = 50;
@@ -172,8 +169,8 @@ legend('Old','IG','New','location','best')
 
 %% test with fitted paramers
 Kss = [Ks; 7]; % only consider active trials
-
-[Data, tis, Lis, vis, Cas, ts, id0, id1, id2] = get_data(iF,n,m,Kss,tiso);
+Data = get_data(iF,n,m,Kss,tiso);
+[tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Kss));
 Liss = Lis * gamma;
 
 newparms.ti = tis;
@@ -210,6 +207,14 @@ plot(Data.L, oFi,'.'); hold on
 
 subplot(133)
 plot(Data.L, nFi,'.'); hold on
+
+% pre-allocate
+ns = nan(length(Kss), 2);
+os = nan(length(Kss), 2);
+ds = nan(length(Kss), 2);
+F0 = nan(length(Kss), 1);
+
+[id0,id1,id2] = get_indices(Data.t, ts, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Kss));
 
 for i = 1:length(Kss)
     
@@ -363,112 +368,3 @@ end;
 end
 %if flip; y=y';yp=yp';end;
 
-function[Data, tis, Lis, vis, Cas, ts, id0, id1, id2] = get_data(i,n,m,Ks,tiso)
-
-fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
-
-%% process data
-% load short-range stiffness data (skinned rat soleus muscle fibers), 
-% cd('C:\Users\timvd\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data')
-cd('C:\Users\u0167448\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data')
-load([fibers{i},'_cor_new.mat'],'data')
-
-Data.F = [];
-Data.L = [];
-Data.t = [];
-Data.Ca = [];
-
-dTt = .0383/.4545; % test stretch (= constant)
-
-for k = 1:length(Ks)
-
-    F = data.Fexp(:,Ks(k),n,m);
-    L = data.Lexp(:,Ks(k),n,m);
-    t = data.texp(:,Ks(k),n,m);
-    Ca = 10^(6-data.pCas(Ks(k))) * ones(size(F));
-
-    ISI = data.ISIs(n)/1000;
-    dTc = data.AMPs(m)/10000 / .4545; % conditioning stretch
-    
-    trange = [-.8 .2];
-    id1 = t > trange(1) & t < trange(2);
-   
-    % save
-    Data.t = [Data.t; t(id1) + k * tiso - 3*dTt - .005]; % move to agree with idealized input
-    Data.F = [Data.F; F(id1)];
-    Data.L = [Data.L; L(id1)];
-    Data.Ca = [Data.Ca; Ca(id1)];
-       
-end
-
-% intervals
-ts = 0:tiso:(tiso*(length(Ks)-1));
-
-%% get velocity (through interpolating and filtering)
-ti = linspace(0,max(Data.t), 10000);
-Li = interp1([0; Data.t], [0; Data.L], ti);
-
-% filter
-dt = mean(diff(ti),'omitnan');
-fs = 1/dt;
-Wn = 30 / (.5 * fs);
-[b,a] = butter(2, Wn);
-
-Lf = Li;
-idf = isfinite(Li);
-
-Lf(idf) = filtfilt(b,a, Li(idf));
-
-vf = grad5(Lf(:), dt);
-
-Data.v = interp1(ti, vf, Data.t);
-
-%% create idealized input
-Ts = cumsum([tiso-(dTt*3+dTc*2+ISI); dTc; dTc; ISI; dTt; dTt; dTt]);
-tx = linspace(0, Ts(end), 5000);
-
-vx = nan(size(tx));
-vx(tx <= Ts(1)) = 0;
-vx(tx > Ts(1) & tx <=  Ts(2)) = .4545;
-vx(tx > Ts(2) & tx <=  Ts(3)) = -.4545;
-vx(tx > Ts(3) & tx <=  Ts(4)) = 0;
-vx(tx > Ts(4) & tx <=  Ts(5)) = .4545;
-vx(tx > Ts(5) & tx <=  Ts(6)) = 0;
-vx(tx > Ts(6) & tx <=  Ts(7)) = -.4545;
-
-Lx = cumtrapz(tx, vx);
-
-ti = linspace(0, Ts(end), 500);
-vi = interp1(tx, vx, ti);
-Li = interp1(tx, Lx, ti);
-%%
-Ca = 10.^(6-data.pCas);
-
-vis = [];
-Cas = [];
-Lis = [];
-
-for k = 1:length(Ks)
-    vis = [vis vi];
-    Cas = [Cas Ca(Ks(k)) * ones(size(vi))];
-    Lis = [Lis Li];
-end
-
-tis = linspace(0, Ts(end)*length(Ks), length(ti)*length(Ks));
-% Lis = cumtrapz(tis, vis);
-
-%% SRS indices
-id0 = nan(length(Ks), 100);
-id1 = nan(length(Ks), 10);
-id2 = nan(length(Ks), 10);
-
-for i = 1:length(Ks)
-    id0(i,:) = find(Data.t < (ts(i) + 3 - 3*dTt - 2*dTc - ISI),100, 'last');
-    id1(i,:) = find(Data.t > (ts(i) + 3 - 3*dTt),10, 'first');
-    id2(i,:) = find(Data.t > (ts(i) + 3 - 3*dTt - 2*dTc - ISI),10, 'first');
-end
-
-%%
-
-
-end
