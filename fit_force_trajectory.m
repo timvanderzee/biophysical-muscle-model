@@ -1,8 +1,9 @@
 clear all; close all; clc
 
-% mainfolder = 'C:\Users\u0167448\Documents\GitHub';
-mainfolder = 'C:\Users\timvd\Documents';
-username = 'timvd';
+mainfolder = 'C:\Users\u0167448\Documents\GitHub';
+% mainfolder = 'C:\Users\timvd\Documents';
+% username = 'timvd';
+username = 'u0167448';
 
 addpath(genpath([mainfolder, '\muscle-thixotropy']))
 addpath(genpath([mainfolder, '\casadi-windows-matlabR2016a-v3.5.5']))

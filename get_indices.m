@@ -10,7 +10,10 @@ id2 = nan(length(Ca), N);
 
 for i = 1:length(Ca)
     id0(i,:) = find(t < (ts(i) + tiso - 3*dTt - 2*dTc - ISI),10*N, 'last');
-    id1(i,:) = find(t > (ts(i) + tiso - 3*dTt),N, 'first');
-    id2(i,:) = find(t > (ts(i) + tiso - 3*dTt - 2*dTc - ISI),N, 'first');
+    
+    if nargout > 1
+        id1(i,:) = find(t > (ts(i) + tiso - 3*dTt),N, 'first');
+        id2(i,:) = find(t > (ts(i) + tiso - 3*dTt - 2*dTc - ISI),N, 'first');
+    end
 end
 end
