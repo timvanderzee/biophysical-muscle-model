@@ -1,16 +1,15 @@
 clear all; close all; clc
 % mainfolder = 'C:\Users\timvd\Documents';
-mainfolder = 'C:\Users\u0167448\Documents\GitHub';
-addpath(genpath([mainfolder, '\muscle-thixotropy']))
-% addpath(genpath([mainfolder, '\casadi-windows-matlabR2016a-v3.5.5']))
-addpath(genpath([mainfolder, '\biophysical-muscle-model']))
+mainfolder = 'C:\Users\u0167448\Documents\';
+addpath(genpath([mainfolder, 'GitHub\muscle-thixotropy']))
+addpath(genpath([mainfolder, 'GitHub\biophysical-muscle-model']))
 
 % fibers
 iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
-iFs = 6;
+% iFs = 6;
 
 % get parameters
-load('parms_v2.mat','sparms','pparms');
+load('parms_v4.mat','sparms','pparms');
 
 x0 = 1e-3 * ones(6,1);
 xp0 = zeros(size(x0));

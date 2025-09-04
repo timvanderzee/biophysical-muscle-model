@@ -1,10 +1,15 @@
 clear all; close all; clc
 
-load('test_model_output.mat')
+load('test_model_output.mat', 'Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
+SRSrel(:,:,:,:,2) = Stest(:,:,:,:,2)./Scond(:,:,AMPs == .0383,:,2);
+F0s(:,:,:,:,2) = F0(:,:,:,:,2);
+
+load('test_model_output_v4.mat','Stest', 'Scond', 'F0')
+SRSrel(:,:,:,:,1) = Stest(:,:,:,:,1)./Scond(:,:,AMPs == .0383,:,1);
+F0s(:,:,:,:,1) = F0(:,:,:,:,1);
 
 %% plot for each fiber
-SRSrel = Stest./Scond(:,:,AMPs == .0383,:,:);
-
+% SRSrel = Stest./Scond(:,:,AMPs == .0383,:,:);
 color = parula(8);
 
 ISIid = 2;
@@ -12,7 +17,7 @@ pCaid = 5;
 
 syms = 'osd+x*v<>phosd+x*v<>ph';
 
-for kk = 2
+for kk = 1:2
 
 % effect of activation
 for iF = iFs
@@ -22,7 +27,7 @@ for iF = iFs
             for ii = 1:length(AMPs)
 
                 subplot(131);
-                plot(F0(uu,jj,ii,iF, kk), SRSrel(uu,jj,ii,iF,kk),syms(iF), 'color', color(ii,:),'markerfacecolor', color(ii,:)); hold on
+                plot(F0s(uu,jj,ii,iF, kk), SRSrel(uu,jj,ii,iF,kk),syms(iF), 'color', color(ii,:),'markerfacecolor', color(ii,:)); hold on
                 
             end
         end
@@ -72,9 +77,9 @@ for j = 1:3
     ylim([.5 1])
 end
 
-if isfinite(F0(pCaid,jj,ii,iF, kk))
+if isfinite(F0s(pCaid,jj,ii,iF, kk))
 subplot(131)
-xline(F0(pCaid,jj,ii,iF, kk), 'k--')
+xline(F0s(pCaid,jj,ii,iF, kk), 'k--')
 end
 end
 
@@ -84,8 +89,8 @@ xline(ISIs(ISIid), 'k--')
 %% plot for all fibers
 figure(kk+10)
 
-iref = find(AMPs == .0383);
-SRSrel = Stest./Scond(:,:,iref,:,:);
+% iref = find(AMPs == .0383);
+% SRSrel = Stest./Scond(:,:,iref,:,:);
 
 color = parula(8);
 
@@ -100,7 +105,7 @@ for uu = 1:length(pCas)
         for ii = 1:length(AMPs)
 
             subplot(131);
-            errorbar(mean(F0(uu,jj,ii,:, kk), 4, 'omitnan'), mean(SRSrel(uu,jj,ii,:,kk),4, 'omitnan'), ...
+            errorbar(mean(F0s(uu,jj,ii,:, kk), 4, 'omitnan'), mean(SRSrel(uu,jj,ii,:,kk),4, 'omitnan'), ...
                 std(SRSrel(uu,jj,ii,:,kk),1,4, 'omitnan'), 'o', 'color', color(ii,:),'markerfacecolor', color(ii,:)); hold on
 
         end
@@ -156,7 +161,7 @@ for j = 1:3
 end
 
 subplot(131)
-xline(mean(F0(pCaid,jj,ii,:, kk),4, 'omitnan'), 'k:')
+xline(mean(F0s(pCaid,jj,ii,:, kk),4, 'omitnan'), 'k:')
 
 subplot(132)
 xline(ISIs(ISIid), 'k:')

@@ -15,7 +15,7 @@ ub = 2e3 * ones(1, length(optparms));
 % exception for exponential coefficient
 for i = 1:length(optparms)
     if strcmp(optparms{i}, 'k22') || strcmp(optparms{i}, 'k12') || strcmp(optparms{i}, 'kse') || strcmp(optparms{i}, 'kse0')
-        lb(i) = 0;
+        lb(i) = 1e-4;
         ub(i) = 5;
     end
 end
@@ -76,7 +76,11 @@ dQ2dti  = interp1(sol.x, xdot(3,:), toc); % second-order moment time derivative
 dNondti = interp1(sol.x, xdot(4,:), toc); % thin filament activation time derivative
 dDRXdti = interp1(sol.x, xdot(5,:), toc); % thick filament activation time derivative
 
-Fi = (Q0i + Q1i) * parms.Fscale;
+% don't allow number too close to 0
+k = 100;
+Q00i = log(1+exp(Q0i*k))/k;
+
+Fi = (Q00i + Q1i);
 Fidot = (dQ0dti + dQ1dti) * parms.Fscale;
 
 %% Fit cross-bridge rates using direct collocation
@@ -91,7 +95,9 @@ Ld  = opti.variable(1,N);
 % define extra variables
 p  = opti.variable(1,N); % mean strain of the distribution
 q  = opti.variable(1,N); % standard deviation strain of the distribution
-  
+F  = opti.variable(1,N);
+Fdot  = opti.variable(1,N);
+
 % (slack) controls (defined as above)
 dQ0dt  = opti.variable(1,N);
 dQ1dt  = opti.variable(1,N); 
@@ -100,19 +106,25 @@ dNondt = opti.variable(1,N);
 dDRXdt = opti.variable(1,N); 
 
 % extra constraints
+opti.subject_to(dQ0dt + dQ1dt - Fdot - Ld .* Q0 == 0);
+opti.subject_to(Q0 + Q1 - F == 0);
 opti.subject_to(Q1 - Q0 .* p == 0);
 opti.subject_to(Q2 - Q0 .* (p.^2 + q) == 0);
 
 opti.subject_to(q >= 0);
+opti.subject_to(Q0 >= 0);
+opti.subject_to(F >= 0);
+% opti.subject_to(Q2 >= 0);
 
 % set initial guess
-opti.set_initial(Q0, Q0i);
+opti.set_initial(F, Fi);
+opti.set_initial(Q0, Q00i);
 opti.set_initial(Q1, Q1i);
 opti.set_initial(Q2, Q2i);
 opti.set_initial(Non, Noni);
 opti.set_initial(DRX, DRXi);
-opti.set_initial(p, Q1i./Q0i);
-opti.set_initial(q, Q2i./Q0i - (Q1i./Q0i).^2);
+opti.set_initial(p, Q1i./Q00i);
+opti.set_initial(q, max(Q2i./Q00i - (Q1i./Q00i).^2, 0));
 opti.set_initial(Ld, Ldi);
 opti.set_initial(dQ0dt, dQ0dti);
 opti.set_initial(dQ1dt, dQ1dti);
@@ -121,13 +133,13 @@ opti.set_initial(dNondt, dNondti);
 opti.set_initial(dDRXdt, dDRXdti);
 
 %% dynamics constraints
-F = Q0 + Q1; % cross-bridge force
+% F = Q0 + Q1; % cross-bridge force
 
 % specify dynamics using error
 error_thin      = ThinEquilibrium(Cas, Q0, Non, dNondt, kon, koff, koop, parms.Noverlap); % thin filament dynamics     
 error_thick     = ThickEquilibrium(F, DRX, dDRXdt, J1, J2, JF, parms.Noverlap); % thick filament dynamics
-[error_XB, Fdot]= MuscleEquilibrium(Q0, p, q, dQ0dt, dQ1dt, dQ2dt, f, parms.w, k11, k12, k21, k22,  Non, Ld, DRX); % cross-bridge dynamics
-error_length    = LengthEquilibrium(Q0, Q1, Fdot, Ld, vts, kse0, kse);
+error_XB        = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, parms.w, k11, k12, k21, k22,  Non, Ld, DRX); % cross-bridge dynamics
+error_length    = LengthEquilibrium(Q0, F, Fdot, Ld, vts, kse0, kse);
 
 % separate out the XB error
 error_Q0 = error_XB(1,:);
@@ -142,11 +154,7 @@ opti.subject_to(error_Q1(:) == 0);
 opti.subject_to(error_Q2(:) == 0);
 opti.subject_to(error_length(:) == 0);
 
-opti.subject_to(J2 - (J1 * parms.SRX0 / (1-parms.SRX0)) == 0);
-
-% opti.subject_to(J2 * (1-parms.SRX0) - J1 * parms.SRX0   == 0);
-
-
+opti.subject_to(J2 - J1 * parms.SRX0 / (1-parms.SRX0) == 0);
 
 %% derivative constraints
 opti.subject_to((dNondt(1:N-1) + dNondt(2:N))*dt/2 + Non(1:N-1) == Non(2:N));
@@ -174,7 +182,7 @@ opti.minimize(J);
 
 % Solve the OCP
 p_opts = struct('detect_simple_bounds', true);
-s_opts = struct('max_iter', 100);
+s_opts = struct('max_iter', 300);
 opti.solver('ipopt',p_opts,s_opts);
 
 % visualize 
@@ -235,7 +243,7 @@ title('Velocity')
 
 subplot(312)
 plot(R.t(idF), Fts(idF), 'k.', 'markersize',10); hold on 
-plot(toc, Fi, ':', 'linewidth',1.5); 
+plot(toc, Fi * parms.Fscale + parms.kpe * Lts + parms.Fpe0, ':', 'linewidth',1.5); 
 plot(R.t, R.F, 'linewidth',1.5); hold on
 plot(toc, Fn, ':', 'linewidth',1.5); 
 ylabel('Force')

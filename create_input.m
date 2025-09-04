@@ -21,6 +21,9 @@ vx(tx > Ts(6) & tx <=  Ts(7)) = -.4545;
 % integrate to get length
 Lx = cumtrapz(tx, vx);
 
+% set back to 0
+vx(tx > Ts(6) & tx <=  Ts(7)) = 0;
+
 % interpolate
 ti = linspace(0, Ts(end), N);
 vi = interp1(tx, vx, ti);

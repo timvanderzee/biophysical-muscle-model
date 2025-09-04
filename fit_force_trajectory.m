@@ -1,21 +1,21 @@
 clear all; close all; clc
 
-mainfolder = 'C:\Users\u0167448\Documents\GitHub';
+mainfolder = 'C:\Users\u0167448\Documents';
 % mainfolder = 'C:\Users\timvd\Documents';
 % username = 'timvd';
 username = 'u0167448';
 
-addpath(genpath([mainfolder, '\muscle-thixotropy']))
-addpath(genpath([mainfolder, '\casadi-windows-matlabR2016a-v3.5.5']))
-addpath(genpath([mainfolder, '\biophysical-muscle-model']))
+addpath(genpath([mainfolder, '\GitHub\muscle-thixotropy']))
+addpath(genpath([mainfolder, '\casadi-3.7.1-windows64-matlab2018b']))
+addpath(genpath([mainfolder, '\GitHub\biophysical-muscle-model']))
 
 % Import casadi libraries
 import casadi.*; 
 
 %% specify data
 load('active_trials.mat', 'Fm')
-% iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
-iFs = 6;
+iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
+iFs = 3;
 
 for iF = iFs
 
@@ -67,7 +67,7 @@ end
 mcode = [1 1 1];
 vs = {'\', '\'};
 
-cd([mainfolder, '\muscle-thixotropy\new_model\get_variable'])
+cd([mainfolder, '\GitHub\muscle-thixotropy\new_model\get_variable'])
 [output_mainfolder, filename, opt_type, ~] = get_folder_and_model(mcode);
 
 disp(filename)
@@ -89,7 +89,7 @@ oparms.Fscale = 1.5;
 
 % get other parameters from other fiber
 ii = 6; % fiber from which parameters are obtained
-load([filename,'_F', num2str(ii),'_best.mat'],'parms','exitflag','fopt','C0','Cbounds','model','P0','P')
+load([filename,'_F', num2str(iF),'_best.mat'],'parms','exitflag','fopt','C0','Cbounds','model','P0','P')
 C = p_to_c(P, Cbounds);
 parms = C_to_parms(C, parms, parms.optvars);
 parms = calc_dependent_parms(parms);  
@@ -100,7 +100,7 @@ parms.Fscale = 1.5;
 parms.kpe = kpe;
 parms.Fpe0 = Fpe0;
 
-%% evaluate
+%% evaluate current values
 % note: not required for fitting
 oparms.ti = tis;
 oparms.vts = vis;
@@ -127,13 +127,13 @@ plot(tis, oFi,'b'); hold on
 id = nan(length(Ks), length(oparms.ti));
 
 for k = 1:length(Ks)
-    id(k,:) = oparms.ti > (ts(k) + 2.2-0.0843) & (oparms.ti < ts(k)+3-0.0843);
+    id(k,:) = oparms.ti > (ts(k) + tiso - 4*Data.dTt - 2*Data.dTc - Data.ISI) & (oparms.ti < (ts(k)+tiso - Data.dTt));
 end
 
 idF = find(sum(id,1) & isfinite(Fis));
 
 subplot(414); hold on
-plot(tis(idF), oFi(idF),'g.'); hold on
+plot(tis(idF), oFi(idF),'b.'); hold on
 
 %% select data for fitting
 Xdata.t = tis;
@@ -151,7 +151,7 @@ opti = casadi.Opti();
 % define weigth vector
 w1 = 100;    % weight for fitting force-velocity
 w2 = 100;   % weight for fitting short-range stiffness
-w3 = 1; 	% weight for regularization
+w3 = 100; 	% weight for regularization
 w = [w1 w2 w3];
 
 % specify biophysical parameters to be fitted

@@ -30,6 +30,8 @@ q = Q2./Q00 - p.^2;
 
 q = log(1+exp(q*k))/k;
 
+% Fdot = 
+
 % Thin filament
 [error_thin, ~] = ThinEquilibrium(Ca, Q0, Non, dNondt, parms.kon, parms.koff, parms.koop, parms.act * parms.Noverlap);
 
@@ -37,10 +39,10 @@ q = log(1+exp(q*k))/k;
 [error_thick, ~] = ThickEquilibrium(F, DRX, dDRXdt, parms.J1, parms.J2, parms.JF, parms.act * parms.Noverlap);
 
 % Cross-bridge dynamics
-[error_fv, Fdot] = MuscleEquilibrium(Q0, p, q, dQ0dt, dQ1dt, dQ2dt, parms.f, parms.w, parms.k11, parms.k12, parms.k21, parms.k22, Non, Ld, DRX);
+[error_fv, Fdot] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, parms.f, parms.w, parms.k11, parms.k12, parms.k21, parms.k22, Non, Ld, DRX);
 
 % Length dynamics
-[error_length] = LengthEquilibrium(Q0, Q1, Fdot, Ld, vMtilda, parms.kse0, parms.kse);
+[error_length] = LengthEquilibrium(Q0, F, Fdot, Ld, vMtilda, parms.kse0, parms.kse);
 
 error = [error_thin; error_thick; error_fv; error_length];
 
