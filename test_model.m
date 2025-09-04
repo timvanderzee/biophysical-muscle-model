@@ -7,6 +7,7 @@ addpath(genpath([mainfolder, '\biophysical-muscle-model']))
 
 % fibers
 iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
+iFs = 6;
 
 % get parameters
 load('parms_v2.mat','sparms','pparms');
@@ -21,7 +22,7 @@ tiso = 5;
 %% step 1: force - pCa
 pCas = flip([9, 7:-.2:5, 4.5]);
 
-ks = 1:2;
+ks = 1;
 
 Fss = nan(length(pCas), 2, iFs(end));
 

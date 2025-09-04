@@ -103,6 +103,8 @@ dDRXdt = opti.variable(1,N);
 opti.subject_to(Q1 - Q0 .* p == 0);
 opti.subject_to(Q2 - Q0 .* (p.^2 + q) == 0);
 
+opti.subject_to(q >= 0);
+
 % set initial guess
 opti.set_initial(Q0, Q0i);
 opti.set_initial(Q1, Q1i);
@@ -142,6 +144,9 @@ opti.subject_to(error_length(:) == 0);
 
 opti.subject_to(J2 - (J1 * parms.SRX0 / (1-parms.SRX0)) == 0);
 
+% opti.subject_to(J2 * (1-parms.SRX0) - J1 * parms.SRX0   == 0);
+
+
 
 %% derivative constraints
 opti.subject_to((dNondt(1:N-1) + dNondt(2:N))*dt/2 + Non(1:N-1) == Non(2:N));
@@ -168,7 +173,7 @@ opti.minimize(J);
 % opti.solver('ipopt',options);
 
 % Solve the OCP
-p_opts = struct('expand',true);
+p_opts = struct('detect_simple_bounds', true);
 s_opts = struct('max_iter', 100);
 opti.solver('ipopt',p_opts,s_opts);
 

@@ -14,13 +14,13 @@ import casadi.*;
 
 %% specify data
 load('active_trials.mat', 'Fm')
-iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
-% iFs = [5, 6, 7];
+% iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
+iFs = 6;
 
 for iF = iFs
 
 % iF = 6; % fiber number (note: #4 and #9 lack pCa = 4.5)
-Ks = find(Fm(:,iF) > 0.1); % only consider active trials
+Ks = find(Fm(:,iF) > 0); % only consider active trials
 n = 3; % ISI number
 m = 7; % AMP number
 tiso = 3; % isometric time (s)
@@ -60,7 +60,6 @@ for j = 1:4
         xline(ts(i),'k--')
         xline(ts(i) + mean(diff(ts)) - 3*Data.dTt - 2*Data.dTc - Data.ISI, 'k:')
         xline(ts(i) + mean(diff(ts)) - 3*Data.dTt, 'k:')
-        
     end
 end
 
@@ -233,7 +232,7 @@ os = nan(length(Kss), 2);
 ds = nan(length(Kss), 2);
 F0 = nan(length(Kss), 1);
 
-[id0,id1,id2] = get_indices(Data.t, ts, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Kss));
+[id0,id1,id2] = get_indices(Data.t, tiso, ts, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Kss));
 
 for i = 1:length(Kss)
     
