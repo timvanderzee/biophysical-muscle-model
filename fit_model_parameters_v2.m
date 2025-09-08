@@ -8,16 +8,21 @@ for i = 1:length(allparms)
     eval([allparms{i}, ' = ', num2str(parms.(allparms{i})),';'])
 end
 
-% bounds on parameter values
-lb = .1 * ones(1, length(optparms));
-ub = 2e3 * ones(1, length(optparms));
+% % bounds on parameter values
+% lb = .1 * ones(1, length(optparms));
+% ub = 2e3 * ones(1, length(optparms));
+% 
+% % exception for exponential coefficient
+% for i = 1:length(optparms)
+%     if strcmp(optparms{i}, 'k22') || strcmp(optparms{i}, 'k12') || strcmp(optparms{i}, 'kse') || strcmp(optparms{i}, 'kse0')
+%         lb(i) = 1e-4;
+%         ub(i) = 5;
+%     end
+% end
 
-% exception for exponential coefficient
 for i = 1:length(optparms)
-    if strcmp(optparms{i}, 'k22') || strcmp(optparms{i}, 'k12') || strcmp(optparms{i}, 'kse') || strcmp(optparms{i}, 'kse0')
-        lb(i) = 1e-4;
-        ub(i) = 5;
-    end
+    lb(i) = .2 * parms.(optparms{i});
+    ub(i) = 5 * parms.(optparms{i});
 end
 
 % create opti variables for parameters that are fitted
@@ -111,10 +116,18 @@ opti.subject_to(Q0 + Q1 - F == 0);
 opti.subject_to(Q1 - Q0 .* p == 0);
 opti.subject_to(Q2 - Q0 .* (p.^2 + q) == 0);
 
+% opti.subject_to(p >= -5);
+% opti.subject_to(p <= 5)
+
 opti.subject_to(q >= 0);
 opti.subject_to(Q0 >= 0);
 opti.subject_to(F >= 0);
-% opti.subject_to(Q2 >= 0);
+opti.subject_to(Non >= 0);
+opti.subject_to(DRX >= 0);
+
+% opti.subject_to(Q0 <= 1);
+% opti.subject_to(Non <= 1);
+% opti.subject_to(DRX <= 1);
 
 % set initial guess
 opti.set_initial(F, Fi);
@@ -137,7 +150,7 @@ opti.set_initial(dDRXdt, dDRXdti);
 
 % specify dynamics using error
 error_thin      = ThinEquilibrium(Cas, Q0, Non, dNondt, kon, koff, koop, parms.Noverlap); % thin filament dynamics     
-error_thick     = ThickEquilibrium(F, DRX, dDRXdt, J1, J2, JF, parms.Noverlap); % thick filament dynamics
+error_thick     = ThickEquilibrium(Q0, dQ0dt, F, DRX, dDRXdt, J1, J2, JF, parms.Noverlap); % thick filament dynamics
 error_XB        = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, parms.w, k11, k12, k21, k22,  Non, Ld, DRX); % cross-bridge dynamics
 error_length    = LengthEquilibrium(Q0, F, Fdot, Ld, vts, kse0, kse);
 
@@ -182,7 +195,7 @@ opti.minimize(J);
 
 % Solve the OCP
 p_opts = struct('detect_simple_bounds', true);
-s_opts = struct('max_iter', 300);
+s_opts = struct('max_iter', 500);
 opti.solver('ipopt',p_opts,s_opts);
 
 % visualize 

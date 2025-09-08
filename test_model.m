@@ -9,7 +9,7 @@ iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
 % iFs = 6;
 
 % get parameters
-load('parms_v4.mat','sparms','pparms');
+load('parms_v5.mat','sparms','pparms');
 
 x0 = 1e-3 * ones(6,1);
 xp0 = zeros(size(x0));
@@ -21,7 +21,7 @@ tiso = 5;
 %% step 1: force - pCa
 pCas = flip([9, 7:-.2:5, 4.5]);
 
-ks = 1;
+ks = 1:2;
 
 Fss = nan(length(pCas), 2, iFs(end));
 

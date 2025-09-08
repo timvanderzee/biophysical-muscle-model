@@ -1,13 +1,18 @@
 clear all; close all; clc
 
-mainfolder = 'C:\Users\u0167448\Documents';
-% mainfolder = 'C:\Users\timvd\Documents';
-% username = 'timvd';
-username = 'u0167448';
+% username = 'u0167448';
+username = 'timvd';
+mainfolder = ['C:\Users\',username,'\Documents'];
 
-addpath(genpath([mainfolder, '\GitHub\muscle-thixotropy']))
+if strcmp(username, 'timvd')
+    githubfolder = mainfolder;
+else   
+    githubfolder = [mainfolder, '\GitHub'];
+end
+
+addpath(genpath([githubfolder, '\muscle-thixotropy']))
 addpath(genpath([mainfolder, '\casadi-3.7.1-windows64-matlab2018b']))
-addpath(genpath([mainfolder, '\GitHub\biophysical-muscle-model']))
+addpath(genpath([githubfolder, '\biophysical-muscle-model']))
 
 % Import casadi libraries
 import casadi.*; 
@@ -15,7 +20,7 @@ import casadi.*;
 %% specify data
 load('active_trials.mat', 'Fm')
 iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
-iFs = 3;
+% iFs = 2;
 
 for iF = iFs
 
@@ -67,7 +72,7 @@ end
 mcode = [1 1 1];
 vs = {'\', '\'};
 
-cd([mainfolder, '\GitHub\muscle-thixotropy\new_model\get_variable'])
+cd([githubfolder, '\muscle-thixotropy\new_model\get_variable'])
 [output_mainfolder, filename, opt_type, ~] = get_folder_and_model(mcode);
 
 disp(filename)
@@ -76,19 +81,8 @@ output_folder = [opt_type,'\normalized\with_PE_optimized\2_trials'];
 output_dir = [output_mainfolder{1}, '\', filename,vs{1}, output_folder];
 cd(output_dir)
 
-% get parallel parameters from that fiber
-load([filename,'_F', num2str(iF),'_best.mat'],'parms','exitflag','fopt','C0','Cbounds','model','P0','P')
-C = p_to_c(P, Cbounds);
-oparms = parms;
-oparms = C_to_parms(C, oparms, oparms.optvars);
-kpe = oparms.kpe;
-Fpe0 = oparms.Fpe0;
-oparms.act = 1;
-oparms.Noverlap = 1;
-oparms.Fscale = 1.5;
-
 % get other parameters from other fiber
-ii = 6; % fiber from which parameters are obtained
+% ii = 6; % fiber from which parameters are obtained
 load([filename,'_F', num2str(iF),'_best.mat'],'parms','exitflag','fopt','C0','Cbounds','model','P0','P')
 C = p_to_c(P, Cbounds);
 parms = C_to_parms(C, parms, parms.optvars);
@@ -96,38 +90,35 @@ parms = calc_dependent_parms(parms);
 
 parms.act = 1;
 parms.Noverlap = 1;
-parms.Fscale = 1.5;
-parms.kpe = kpe;
-parms.Fpe0 = Fpe0;
 
 %% evaluate current values
 % note: not required for fitting
-oparms.ti = tis;
-oparms.vts = vis;
-oparms.Cas = Cas;
-oparms.Lts = Lis;
+parms.ti = tis;
+parms.vts = vis;
+parms.Cas = Cas;
+parms.Lts = Lis;
 
 odeopt = odeset('maxstep', 1e-3);
 x0 = 1e-3 * ones(6,1);
 xp0 = zeros(size(x0));
 
-osol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, oparms), [0 max(oparms.ti)], x0, xp0, odeopt);
+osol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(parms.ti)], x0, xp0, odeopt);
 
 gamma = 108.3333; % length scaling
 Liss = Lis * gamma;
-oF = (osol.y(1,:) + osol.y(2,:)) * oparms.Fscale;
+oF = (osol.y(1,:) + osol.y(2,:)) * parms.Fscale;
 ot = osol.x;
 
-oFi = interp1(ot, oF, tis) + oparms.Fpe_func(Liss, parms);
+oFi = interp1(ot, oF, tis) + parms.Fpe_func(Liss, parms);
 
 subplot(414); hold on
 plot(tis, oFi,'b'); hold on
 
 %% intervals of interest
-id = nan(length(Ks), length(oparms.ti));
+id = nan(length(Ks), length(parms.ti));
 
 for k = 1:length(Ks)
-    id(k,:) = oparms.ti > (ts(k) + tiso - 4*Data.dTt - 2*Data.dTc - Data.ISI) & (oparms.ti < (ts(k)+tiso - Data.dTt));
+    id(k,:) = parms.ti > (ts(k) + tiso - 4*Data.dTt - 2*Data.dTc - Data.ISI) & (parms.ti < (ts(k)+tiso - Data.dTt));
 end
 
 idF = find(sum(id,1) & isfinite(Fis));
@@ -166,7 +157,7 @@ figure(2 + iF*10)
 set(gcf,'units','normalized','position',[.2 .2 .4 .6])
 
 sparms(iF) = newparms;
-pparms(iF) = oparms;
+pparms(iF) = parms;
 
 end
 

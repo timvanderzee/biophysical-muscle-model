@@ -1,12 +1,16 @@
 clear all; close all; clc
 
-load('test_model_output.mat', 'Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
-SRSrel(:,:,:,:,2) = Stest(:,:,:,:,2)./Scond(:,:,AMPs == .0383,:,2);
-F0s(:,:,:,:,2) = F0(:,:,:,:,2);
+% load('test_model_output.mat', 'Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
+% SRSrel(:,:,:,:,2) = Stest(:,:,:,:,2)./Scond(:,:,AMPs == .0383,:,2);
+% F0s(:,:,:,:,2) = F0(:,:,:,:,2);
+% 
+% load('test_model_output_v4.mat','Stest', 'Scond', 'F0')
+% SRSrel(:,:,:,:,1) = Stest(:,:,:,:,1)./Scond(:,:,AMPs == .0383,:,1);
+% F0s(:,:,:,:,1) = F0(:,:,:,:,1);
 
-load('test_model_output_v4.mat','Stest', 'Scond', 'F0')
-SRSrel(:,:,:,:,1) = Stest(:,:,:,:,1)./Scond(:,:,AMPs == .0383,:,1);
-F0s(:,:,:,:,1) = F0(:,:,:,:,1);
+load('test_model_output_v5.mat','Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
+SRSrel = Stest./Scond(:,:,AMPs == .0383,:,1);
+F0s = F0;
 
 %% plot for each fiber
 % SRSrel = Stest./Scond(:,:,AMPs == .0383,:,:);
