@@ -1,12 +1,19 @@
 clear all; close all; clc
 
-% username = 'u0167448';
-username = 'timvd';
-mainfolder = ['C:\Users\',username,'\Documents'];
+usernames = {'timvd','u0167448'};
 
-if strcmp(username, 'timvd')
+for i = 1:length(usernames)
+    docfolder =  ['C:\Users\', usernames{i}, '\Documents'];
+    
+    if isfolder(docfolder)
+        mainfolder = docfolder;
+        username = usernames{i};
+    end
+end
+
+if contains(mainfolder, 'timvd')
     githubfolder = mainfolder;
-else   
+else
     githubfolder = [mainfolder, '\GitHub'];
 end
 

@@ -19,8 +19,7 @@ addpath(genpath([githubfolder, '\muscle-thixotropy']))
 addpath(genpath([mainfolder, '\casadi-3.7.1-windows64-matlab2018b']))
 addpath(genpath([githubfolder, '\biophysical-muscle-model']))
 
-mcodes = [1 1 1; 1 1 3; 2 1 1];
-% mcodes = [1 1 1];
+mcodes = [1 1 1; 1 1 1; 1 1 3; 2 1 1];
       
 for kk = 1:size(mcodes,1)
     mcode = mcodes(kk,:);
@@ -37,17 +36,11 @@ k = 7;
 load([fibers{k},'_cor_new.mat'],'data');
 
 % chosen ISIs, AMPs and pCas
-ISIs = [.001 .100 .316; 
-        .001 .001 .001;
-        .001 .001 .001];
+ISIs = repmat([.001 .100 .316 1], 4,1);
 
-AMPs = [.0383 .0383 .0383; 
-        .0038 .0121 .0383; 
-        .0383 .0383 .0383];
+AMPs = repmat([0 .0038 .0121 .0383]', 1, 4); 
 
-pCas = [6.1 6.1 6.1; 
-        6.1 6.1 6.1; 
-        6.2 6.1 4.5];
+pCas = 6.1 * ones(size(AMPs));
 
 vs = {'\', '\'};
 
@@ -70,9 +63,9 @@ for kk = 1:size(mcodes,1)
     Parms{kk} = parms;
     
     if kk == 1
-    cd([mainfolder, '\GitHub\biophysical-muscle-model\Parameters'])
-    load('parms_v5.mat')
-    Parms{kk} = sparms(k);
+        cd([mainfolder, '\GitHub\biophysical-muscle-model\Parameters'])
+        load('parms_v5.mat')
+        Parms{kk} = sparms(k);
     end
 end
 
@@ -80,11 +73,11 @@ end
 odeopt = odeset('maxstep', 1e-2);
 gamma = 108.3333; % length scaling
 
+RMSD = nan(size(ISIs,1), size(ISIs,2), size(mcodes,1));
+
 for j = 1:size(ISIs,1)
-    if ishandle(j), close(j); end
-    figure(j)
+
     [texp, Lexp, Fexp, Tsrel] = get_data(data, ISIs(j,:), AMPs(j,:), pCas(j,:));
-    plot_data(texp, Lexp, Fexp, Tsrel);
 
     for i = 1:size(ISIs,2)
         
@@ -101,16 +94,12 @@ for j = 1:size(ISIs,1)
         % center around 2nd stretch
         t = tis + 3*dTt - tiso;
         
-        subplot(3,3,i)
-        plot(t(t<.15), Lis(t<.15)*100, 'linewidth',2)
-        
         for kk = 1:size(mcodes,1)
         
             parms = Parms{kk};
 
             x0 = parms.x0(2:end)';
             xp0 = zeros(size(x0));
-
 
             parms.ti = tis;
             parms.vts = vis;
@@ -147,31 +136,28 @@ for j = 1:size(ISIs,1)
                 oFi = interp1(ot, oF, tis) + parms.Fpe_func(Liss, parms);
             end
 
-            subplot(3,3,i+3)
-            plot(t(t<.15), oFi(t<.15)*100, 'linewidth',2)
-            
             % compute RMSD
             id = t < .15 & t > (-ISI - 2 * dTc - .1);
             oFii = interp1(t(id), oFi(id), texp(:,i));
             
             RMSDs = sqrt((oFii - Fexp(:,i)).^2) * 100;
             
-            subplot(3,3,i+6)
-            plot(texp(:,i), RMSDs, 'linewidth', 2); 
-            hold on
-            box off
-            
-            RMSD = sqrt(sum((oFii - Fexp(:,i)).^2));
-            axis([-.35 .25 0 20])
-            
-             xlabel('Time (s)')
-            
-             if i == 1
-                 ylabel('RMSD (%F_0)')
-             end
+            RMSD(j,i,kk) = sqrt(mean((oFii - Fexp(:,i)).^2, 'omitnan'));
+%             axis([-.35 .25 0 20])
         end
-        
     end
 end
 
+%% 
+close all
+figure(1)
 
+for kk = 1:size(mcodes,1)
+nexttile
+surf(ISIs, AMPs, RMSD(:,:,kk))
+xlabel('ISI')
+ylabel('AMP')
+
+set(gca, 'XScale', 'log')
+% zlim([0 2])
+end
