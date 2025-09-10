@@ -28,9 +28,6 @@ import casadi.*;
 load('active_trials.mat', 'Fm')
 iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
 % iFs = 2;
-pCas = [4.5000    6.1000    6.2000    6.3000    6.4000    6.6000    9.0000];
-fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
-
 
 for iF = 6
 
