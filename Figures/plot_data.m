@@ -1,35 +1,24 @@
+function[] = plot_data(texp, Lexp, Fexp, color, ls)
 
-function[] = plot_data(texp, Lexp, Fexp, Tsrel)
+n = size(texp,2);
 
-for kk = 1:size(texp,2)
-    tids = sort([Tsrel(kk,:) .15]);
+for kk = 1:n
     
-    subplot(3,3,kk)
-    plot(texp(:,kk), Lexp(:,kk)*100, 'color', [.5 .5 .5], 'linewidth', 2); hold on
+    subplot(4,n,kk)
+    plot(texp(:,kk), Lexp(:,kk)*100, 'color', color, 'linewidth', 2, 'linestyle',ls); hold on
     
-    for ii = 1:(length(tids)-2)
-        plot([tids(ii) tids(ii)], [0 200], 'k:'); hold on
-    end
-    
-    axis([-.35 .25 0 5])
+    axis([-.35 .15 -.1 4])
     box off
     
     if kk == 1
         ylabel('Length (%L_0)')
     end
     
-    
-    subplot(3,3,kk+3)
-    plot(texp(:,kk), Fexp(:,kk)*100, 'color', [.5 .5 .5], 'linewidth', 2); hold on
-    
-    for ii = 1:(length(tids)-2)
-        plot([tids(ii) tids(ii)], [0 200], 'k:'); hold on
-    end
-    
-    axis([-.35 .25 0 max(Fexp(:,kk)*100)*1.2])
+    subplot(4,n,[kk+n kk+3*n])
+    plot(texp(:,kk), Fexp(:,kk)*100, 'color', color, 'linewidth', 2, 'linestyle',ls); hold on
+        
+    axis([-.35 .15 0 max(Fexp(:,kk)*100)*1.2])
     box off
-    
-   
     
     if kk == 1
         ylabel('Force (%F_0)')
