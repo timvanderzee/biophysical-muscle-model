@@ -1,6 +1,6 @@
 function [error, dX] = ThickEquilibrium(Q0, Q0dot, F, DRX, dDRXdt, k1, k2, kF, Ntot, R)
 
-if nargin < 8
+if nargin < 10
     R = 0;
 end
 

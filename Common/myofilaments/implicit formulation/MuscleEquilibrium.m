@@ -1,4 +1,4 @@
-function [error, Fdot] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, w, k11, k12, k21, k22, Non, Ld, DRX, dRdt, b, k, R, dLcrit)
+function [error_Q0, error_Q1, error_Q2, error_R, Fdot] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, w, k11, k12, k21, k22, Non, Ld, DRX, dRdt, b, k, R, dLcrit)
 
 % points where integrals is evaluated
 k1 = [k11 k12];
@@ -19,8 +19,6 @@ IG{2} =  @(x,c)1/2*c(1)*erf((x-c(2))/sqrt(c(3)))*c(2)-1/2*sqrt(c(3))*c(1)/sqrt(p
 IG{3} =  @(x,c)1/2*c(1)*erf((x-c(2))/sqrt(c(3)))*(c(2)^2+c(3)/2)-1/2*sqrt(c(3))*c(1)/sqrt(pi)*exp(-(x-c(2)).^2/c(3)).*(c(2)+min(x,1e4));
 
 % Compute Qdot
-% [Q0dot, Q1dot, Q2dot] = CrossBridge_Dynamics(Q0, p, q, f, w, k1, k2, IGef, Non, DRX);
-
 [Q0dot, Q1dot, Q2dot, Rdot] = CrossBridge_Dynamics(Q0, p, q, f, w, k1, k2, IGef, Non, DRX, IG, b, k, R, dLcrit);
 
 % velocity - independent derivative
@@ -29,9 +27,6 @@ Fdot  = Q1dot + Q0dot;
 error_Q0 = dQ0dt - Q0dot;
 error_Q1 = dQ1dt - (Q1dot + 1 * Ld .* Q0);
 error_Q2 = dQ2dt - (Q2dot + 2 * Ld .* Q1);
-
 error_R = dRdt - Rdot;
-
-error = [error_Q0; error_Q1; error_Q2; error_R];
 
 end

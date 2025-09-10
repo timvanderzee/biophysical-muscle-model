@@ -51,12 +51,12 @@ q = log(1+exp(q*k))/k;
 [error_thick, ~] = ThickEquilibrium(Q0, dQ0dt, F, DRX, dDRXdt, parms.J1, parms.J2, parms.JF, parms.act * parms.Noverlap, R);
 
 % Cross-bridge dynamics
-[error_fv, Fdot] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, parms.f, parms.w, parms.k11, parms.k12, parms.k21, parms.k22, Non, Ld, DRX, dRdt, parms.b, parms.k, R, parms.dLcrit);
+[error_Q0, error_Q1, error_Q2, error_R, Fdot] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, parms.f, parms.w, parms.k11, parms.k12, parms.k21, parms.k22, Non, Ld, DRX, dRdt, parms.b, parms.k, R, parms.dLcrit);
 
 % Length dynamics
 [error_length] = LengthEquilibrium(Q0, F, Fdot, Ld, vMtilda, parms.kse0, parms.kse);
 
 % Combined error
-error = [error_thin; error_thick; error_fv; error_length];
+error = [error_thin; error_thick; error_Q0; error_Q1; error_Q2; error_R; error_length];
 
 end

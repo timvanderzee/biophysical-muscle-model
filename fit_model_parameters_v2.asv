@@ -54,7 +54,7 @@ parms.vts = [0 0];
 parms.ti = [0 1];
 parms.Cas = Cas(1) * [1 1];
 
-x0 = 1e-3 * ones(7,1);
+x0 = 1e-3 * ones(6,1);
 xp0 = zeros(size(x0));
 odeopt = odeset('maxstep', 3e-3);
 sol0 = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 1], x0, xp0, odeopt);
@@ -154,8 +154,13 @@ dRdt = zeros(1,N);
 % specify dynamics using error
 error_thin      = ThinEquilibrium(Cas, Q0, Non, dNondt, kon, koff, koop, parms.Noverlap); % thin filament dynamics     
 error_thick     = ThickEquilibrium(Q0, dQ0dt, F, DRX, dDRXdt, J1, J2, JF, parms.Noverlap); % thick filament dynamics
-[error_Q0, error_Q1, error_Q2, error_R] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, parms.w, k11, k12, k21, k22,  Non, Ld, DRX, R, b, k, dRdt, dLcrit); % cross-bridge dynamics
+error_XB        = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, parms.w, k11, k12, k21, k22,  Non, Ld, DRX, R, b, k, dRdt, dLcrit); % cross-bridge dynamics
 error_length    = LengthEquilibrium(Q0, F, Fdot, Ld, vts, kse0, kse);
+
+% separate out the XB error
+error_Q0 = error_XB(1,:);
+error_Q1 = error_XB(2,:);
+error_Q2 = error_XB(3,:);
 
 % set errors equal to zero
 opti.subject_to(error_thin(:) == 0);

@@ -25,7 +25,7 @@ color = get(gca,'colororder');
 pcolors = flip(parula(7));
 acolors = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
 
-fig = 5;
+fig = 6;
 
 if fig == 4 || fig == 5
     mcodes = [2 1 1; 1 1 3; 1 1 1];
