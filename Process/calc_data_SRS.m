@@ -52,7 +52,7 @@ for k = 1:length(iFs)
                     
                     % filter
                     fs = 1000;
-                    fc = 50;
+                    fc = 100;
                     Wn = fc / (.5*fs);
                     [b,a] = butter(2, Wn);
                     

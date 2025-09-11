@@ -6,7 +6,7 @@ end
 
 %% create idealized input
 Ts = cumsum([tiso-(dTt*3+dTc*2+ISI); dTc; dTc; ISI; dTt; dTt; dTt]);
-tx = linspace(0, Ts(end), 10*N);
+tx = linspace(0, Ts(end), length(Ca)*N);
 
 % specify velocity
 vx = nan(size(tx));

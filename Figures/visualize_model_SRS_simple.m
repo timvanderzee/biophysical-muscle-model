@@ -8,8 +8,8 @@ function[] = visualize_model_SRS_simple()
 % SRSrel(:,:,:,:,1) = Stest(:,:,:,:,1)./Scond(:,:,AMPs == .0383,:,1);
 % F0s(:,:,:,:,1) = F0(:,:,:,:,1);
 
-load('test_model_output_v5.mat','Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
-SRSrel = Stest./Scond(:,:,AMPs == .0383,:,1);
+load('test_model_output_v6.mat','Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
+SRSrel = Stest./Scond(:,:,AMPs == .0383,:,2);
 F0s = F0;
 
 %% plot for each fiber
@@ -20,16 +20,18 @@ ISIid = 2;
 pCaid = 5;
 
 syms = 'osd+x*v<>phosd+x*v<>ph';
-kk = 1;
+kk = 2;
 
 
 %% plot for all fibers
 % figure(1)
 color = parula(8);
 
-AMPid = length(AMPs);
+AMPid = 7;
 ISIid = 1;
 pCaid = 4;
+
+% AMPid = 5;
 
 % effect of activation
 
@@ -85,7 +87,7 @@ for j = 1:3
     title(titles{j})
     xlabel(xlabels{j})
     ylabel(ylabels)
-    ylim([.5 1.2])
+    ylim([.4 1.2])
     yline(1, 'k-')
     
 %     for ii = 1:length(AMPs)
@@ -94,12 +96,14 @@ for j = 1:3
 end
 
 subplot(131)
-xline(mean(F0s(pCaid,jj,ii,:, kk),4, 'omitnan'), 'k:')
+% xline(mean(F0s(pCaid,jj,ii,:, kk),4, 'omitnan'), 'k:')
 
 subplot(132)
-xline(AMPs(AMPid), 'k:')
+% xline(AMPs(AMPid), 'k:')
 
 subplot(133)
-xline(ISIs(ISIid), 'k:')
+% xline(ISIs(ISIid), 'k:')
+
+xlim([1e-4 1e1])
 
 end

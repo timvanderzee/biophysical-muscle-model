@@ -57,6 +57,10 @@ q = log(1+exp(q*k))/k;
 [error_length] = LengthEquilibrium(Q0, F, Fdot, Ld, vMtilda, parms.kse0, parms.kse);
 
 % Combined error
+if length(y) > 6
 error = [error_thin; error_thick; error_Q0; error_Q1; error_Q2; error_R; error_length];
+else
+error = [error_thin; error_thick; error_Q0; error_Q1; error_Q2; error_length];
+end
 
 end
