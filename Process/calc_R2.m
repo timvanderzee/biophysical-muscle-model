@@ -36,11 +36,17 @@ SSE = sum((mean(SRSrel(:,AMPid, ISIid, :),4,'omitnan') - mean(SRSrel_m(:,ISIid, 
 R2 = 1 - sum(SSE) ./ sum(SST);
 
 %% compute SSE from R2
-R2s = [-24 .58];
+R2s = [-24 -.02 .58];
+% R2s = [.08 .66 .72];
+% R2s = [-1.2 .49 .73];
 
 SSE2 = -(R2s - 1) * sum(SST)
 
 n = 4;
 
-k = [5 10];
+k = [5 10 12];
 AIC = 2*k + n.*log(SSE2/n)
+
+% AICc = AIC + (2*k.^2 + 2*k) ./ (n-k-1)
+
+
