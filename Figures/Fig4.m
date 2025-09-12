@@ -1,24 +1,5 @@
 clear all; close all; clc
-usernames = {'timvd','u0167448'};
-
-for i = 1:length(usernames)
-    username = usernames{i};
-    docfolder =  ['C:\Users\', usernames{i}, '\Documents'];
-    
-    if isfolder(docfolder)
-        mainfolder = docfolder;
-    end
-end
-
-if contains(mainfolder, 'timvd')
-    githubfolder = mainfolder;
-else
-    githubfolder = [mainfolder, '\GitHub'];
-end
-
-addpath(genpath([githubfolder, '\muscle-thixotropy']))
-addpath(genpath([mainfolder, '\casadi-3.7.1-windows64-matlab2018b']))
-addpath(genpath([githubfolder, '\biophysical-muscle-model']))
+[username, githubfolder] = get_paths();
 
 figure(1)
 color = get(gca,'colororder');
@@ -54,41 +35,41 @@ load([fibers{k},'_cor_new.mat'],'data');
 
 % chosen ISIs, AMPs and pCas
 if fig == 4
-    ISIs = [.001 .001;
-        .100 .100];
+    ISIs = [.001 .001; % dashed
+            .100 .100]; % solid
     
-    AMPs = [0      0;
-        .0383 .0383];
+    AMPs = [0      0; % dashed
+        .0383 .0383]; % solid
     
     pCas = [4.5 6.2;
-        4.5 6.2];
+            4.5 6.2];
     
     titles = {'Maximal activation', 'Submaximal activation'};
     
 elseif fig == 5
     
-    ISIs = [.001 .001;
-        .001 .316];
+    ISIs = [.316 .316;
+            .001 .001];
     
-    AMPs = [0      0;
-        .0383 .0383];
+    AMPs = [.0383 .0383;
+            .0383 .0383];
     
-    pCas = [6.2 6.2;
-        6.2 6.2];
+    pCas = [4.5 6.2;
+            4.5 6.2];
     
     
-    titles = {'No recovery', 'Long recovery'};
+    titles = {'Maximal activation', 'Submaximal activation'};
     
 elseif fig == 6
     
-    ISIs = [.001 .001;
-        .1 .316];
+    ISIs = [.100 .001;
+            .001 .316]; % solid
     
-    AMPs = [0      0;
-        .0383 .0383];
+    AMPs = [.0383   .0383;
+            0       .0383];
     
     pCas = [6.2 6.2;
-        6.2 6.2];
+            6.2 6.2];
     
     
     titles = {'Short recovery', 'Long recovery'};
