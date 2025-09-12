@@ -6,9 +6,9 @@ tiso = 3;
 
 iFs = 1:11;
 
-F0 = nan(length(Kss), 8,7,length(iFs));
-SRS_pre = nan(length(Kss), 8,7,length(iFs));
-SRS_post = nan(length(Kss), 8,7,length(iFs));
+F0 = nan(length(Kss), 7,8,length(iFs));
+SRS_pre = nan(length(Kss), 7,8,length(iFs));
+SRS_post = nan(length(Kss), 7,8,length(iFs));
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
 visualize = 0;
@@ -65,7 +65,7 @@ for k = 1:length(iFs)
                     
                     dp1 = polyfit(L(id1(i,:)), F(id1(i,:)), 1);
                     
-                    SRS_post(i,m,n,k) = dp1(1);
+                    SRS_post(i,n,m,k) = dp1(1);
 
                     if visualize
                         figure(1)
@@ -80,8 +80,8 @@ for k = 1:length(iFs)
                     if n == 1
                         dp2 = polyfit(L(id2(i,:)), F(id2(i,:)), 1);
                         
-                        F0(i,m,n,k) = mean(F(id0(i,:)));
-                        SRS_pre(i,m,n,k) = dp2(1);
+                        F0(i,n,m,k) = mean(F(id0(i,:)));
+                        SRS_pre(i,n,m,k) = dp2(1);
    
                         if visualize
                             figure(1)
@@ -102,14 +102,14 @@ end
 
 %% average some pCas
 th = [0 .05 .1 .25 .7 1.5];
-SRSrel = nan(length(th)-1,8,7,length(iFs));
-F0s = nan(length(th)-1, 8,7,length(iFs));
+SRSrel = nan(length(th)-1,7,8,length(iFs));
+F0s = nan(length(th)-1, 7,8,length(iFs));
 
 for k = 1:length(iFs)
     for i = 1:length(th)-1
-        id = F0(:,7,1,k) > th(i) & F0(:,7,1,k) <= th(i+1);
+        id = F0(:,1,7,k) > th(i) & F0(:,1,7,k) <= th(i+1);
         
-        SRSrel(i,:,:,k) = mean(SRS_post(id,:,:,k),1,'omitnan') ./ mean(SRS_pre(id,7,1,k),'all', 'omitnan');
+        SRSrel(i,:,:,k) = mean(SRS_post(id,:,:,k),1,'omitnan') ./ mean(SRS_pre(id,1,7,k),'all', 'omitnan');
         F0s(i,:,:,k) = mean(F0(id,:,:,k), 1,'omitnan');
     end
 end

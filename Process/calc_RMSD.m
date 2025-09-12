@@ -1,38 +1,27 @@
 clear all; close all; clc
-usernames = {'timvd','u0167448'};
+[username, githubfolder] = get_paths();
 
-for i = 1:length(usernames)
-    docfolder =  ['C:\Users\', usernames{i}, '\Documents'];
-    
-    if isfolder(docfolder)
-        mainfolder = docfolder;
-    end
-end
-
-if contains(mainfolder, 'timvd')
-    githubfolder = mainfolder;
-else
-    githubfolder = [mainfolder, '\GitHub'];
-end
-
-addpath(genpath([githubfolder, '\muscle-thixotropy']))
-addpath(genpath([mainfolder, '\casadi-3.7.1-windows64-matlab2018b']))
-addpath(genpath([githubfolder, '\biophysical-muscle-model']))
-
+iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
+iFs = 6;
 % mcodes = [1 1 1; 1 1 1; 1 1 3; 2 1 1];
-mcodes = [1 1 1];
+mcodes = [2 1 1];
 
 for kk = 1:size(mcodes,1)
     mcode = mcodes(kk,:);
     
     [output_mainfolder, filenames{kk}, opt_types{kk}, ~] = get_folder_and_model(mcode);
+    
+    cd([githubfolder, '\biophysical-muscle-model\Parameters'])
+    load(['parms_',filenames{kk},'.mat'], 'pparms')
+    
+    for iF = iFs
+        Parms{kk, iF} = pparms(iF);
+    end
 end
 
 %% load data and parameters
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
-iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
 pCas = repmat([4.5000    6.1000    6.2000    6.3000    6.4000    6.6000    9.0000],1,1,3);
-
 
 % chosen ISIs, AMPs and pCas
 ISIs = repmat([.001 .100 .316 1], 4,1,7);
@@ -42,42 +31,16 @@ for i = 1:size(ISIs,3)
     ACTs(:,:,i) = pCas(i) * ones(size(ISIs,1), size(ISIs,2));
 end
 
-%%
+%% calc RMSD
 % pCas = 6.1 * ones(size(AMPs));
-RMSD = nan(size(ISIs,1), size(ISIs,2), length(iFs), size(mcodes,1));
+RMSD = nan(size(ISIs,1), size(ISIs,2), iFs(end), size(mcodes,1));
 
-for iF = 1:length(iFs)
+for iF = iFs
     cd([output_mainfolder{2},'\data'])
-    load([fibers{iFs(iF)},'_cor_new.mat'],'data');
+    load([fibers{iF},'_cor_new.mat'],'data');
     
-    disp([fibers{iFs(iF)}])
-    vs = {'\', '\'};
-    
-    for kk = 1:size(mcodes,1)
-        disp(filenames{kk})
-        output_folder = [opt_types{kk},'\normalized\with_PE_optimized\2_trials'];
-        
-        output_dir = [output_mainfolder{1}, '\', filenames{kk},vs{1}, output_folder];
-        cd(output_dir)
-        
-        load([filenames{kk},'_F', num2str(iFs(iF)),'_best.mat'],'parms','exitflag','fopt','C0','Cbounds','model','P0','P')
-        C = p_to_c(P, Cbounds);
-        parms = C_to_parms(C, parms, parms.optvars);
-        parms = calc_dependent_parms(parms);
-        
-        parms.act = 1;
-        parms.Noverlap = 1;
-        parms.vF_func =  @(vcerel,parms)parms.e(1)*log((parms.e(2)*vcerel./parms.vmax+parms.e(3))+sqrt((parms.e(2)*vcerel./parms.vmax+parms.e(3)).^2+1))+parms.e(4);
-        
-        Parms{kk} = parms;
-        
-        %     if kk == 1
-        %         cd([mainfolder, '\GitHub\biophysical-muscle-model\Parameters'])
-        %         load('parms_v5.mat')
-        %         Parms{kk} = sparms(k);
-        %     end
-    end
-    
+    disp([fibers{iF}])
+
     %% evaluate
     odeopt = odeset('maxstep', 1e-2);
     gamma = 108.3333; % length scaling
@@ -105,7 +68,7 @@ for iF = 1:length(iFs)
                 
                 for kk = 1:size(mcodes,1)
                     
-                    parms = Parms{kk};
+                    parms = Parms{kk, iF};
                     
                     if contains(filenames{kk}, 'Hill')
                         x0 = 0;
@@ -160,6 +123,13 @@ for iF = 1:length(iFs)
             end
         end
     end
+end
+
+%%
+figure(1)
+for i = 1:size(AMPs,3)
+    nexttile
+    surf(AMPs(:,:,i), ISIs(:,:,i), RMSD(:,:,iF,kk,i))
 end
 
 return

@@ -6,32 +6,8 @@ color = get(gca,'colororder');
 pcolors = flip(parula(7));
 acolors = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
 
+%% chose figure number: specify conditions
 fig = 6;
-
-if fig == 4 || fig == 5
-    mcodes = [2 1 1; 1 1 3; 1 1 1];
-    vs = {'\', '\','\'};
-    colors = acolors;
-
-else
-    mcodes = [1 1 1; 1 2 1];
-    vs = {'\', '\full\'};
-    colors = acolors(3:end,:);
-end
-
-for kk = 1:size(mcodes,1)
-    mcode = mcodes(kk,:);
-    
-    [output_mainfolder, filenames{kk}, opt_types{kk}, ~] = get_folder_and_model(mcode);
-end
-
-%% load data and parameters
-fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
-
-cd([output_mainfolder{2},'\data'])
-
-k = 6;
-load([fibers{k},'_cor_new.mat'],'data');
 
 % chosen ISIs, AMPs and pCas
 if fig == 4
@@ -57,54 +33,58 @@ elseif fig == 5
     pCas = [4.5 6.2;
             4.5 6.2];
     
-    
     titles = {'Maximal activation', 'Submaximal activation'};
     
 elseif fig == 6
     
-    ISIs = [.100 .001;
-            .001 .316]; % solid
+    ISIs = [.001 .316;
+            .100 .001]; % solid
     
-    AMPs = [.0383   .0383;
-            0       .0383];
+    AMPs = [0   .0383;
+            .0383       .0383];
     
     pCas = [6.2 6.2;
             6.2 6.2];
     
-    
-    titles = {'Short recovery', 'Long recovery'};
+    titles = {'Effect of amplitude', 'Effect of recovery'};
+end
+
+ISIs = flip(ISIs,1);
+AMPs = flip(AMPs,1);
+pCas = flip(pCas,1);
+
+%% choose fiber: load data and parameters
+iF = 6;
+
+if fig == 4 || fig == 5
+    mcodes = [2 1 1; 1 1 3; 1 1 1];
+    colors = acolors;
+
+else
+    mcodes = [1 1 1; 1 2 1];
+    colors = acolors(3:end,:);
 end
 
 for kk = 1:size(mcodes,1)
-    disp(filenames{kk})
-    output_folder = [opt_types{kk},'\normalized\with_PE_optimized\2_trials'];
+    mcode = mcodes(kk,:);
     
-    output_dir = [output_mainfolder{1}, '\', filenames{kk},vs{kk}, output_folder];
-    cd(output_dir)
-    
-    load([filenames{kk},'_F', num2str(k),'_best.mat'],'parms','exitflag','fopt','C0','Cbounds','model','P0','P')
-    C = p_to_c(P, Cbounds);
-    parms = C_to_parms(C, parms, parms.optvars);
-    parms = calc_dependent_parms(parms);
-    
-    parms.act = 1;
-    parms.Noverlap = 1;
-    parms.vF_func =  @(vcerel,parms)parms.e(1)*log((parms.e(2)*vcerel./parms.vmax+parms.e(3))+sqrt((parms.e(2)*vcerel./parms.vmax+parms.e(3)).^2+1))+parms.e(4);
-    
-    Parms{kk} = parms;
-    
-    %     if kk == 1
-    %     cd([mainfolder, '\GitHub\biophysical-muscle-model\Parameters'])
-    %     load('parms_v5.mat')
-    %     Parms{kk} = sparms(k);
-    %     end
+    [output_mainfolder, filenames{kk}, opt_types{kk}, ~] = get_folder_and_model(mcode);
+
+    cd([githubfolder, '\biophysical-muscle-model\Parameters'])
+    load(['parms_',filenames{kk},'.mat'], 'pparms')
+    Parms{kk} = pparms(iF);
 end
+
+% load data 
+fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
+cd([output_mainfolder{2},'\data'])
+load([fibers{iF},'_cor_new.mat'],'data');
 
 %% evaluate
 odeopt = odeset('maxstep', 1e-2);
 gamma = 108.3333; % length scaling
 
-ls = {'--','-'};
+ls = {'-',':'};
 
 for j = 1:size(ISIs,1)
     %     if ishandle(j), close(j); end
@@ -112,7 +92,7 @@ for j = 1:size(ISIs,1)
     
     figure(1)
     [texp, Lexp, Fexp, Tsrel] = get_data(data, ISIs(j,:), AMPs(j,:), pCas(j,:));
-    plot_data(texp, Lexp, Fexp, brighten([.5 .5 .5], (2-j)/2), ls{j});
+    plot_data(texp, Lexp, Fexp, brighten([.5 .5 .5], (j-1)/2), ls{j});
     
     for i = 1:size(ISIs,2)
         
@@ -185,7 +165,7 @@ for j = 1:size(ISIs,1)
            
             figure(1)
             subplot(4,size(ISIs,2),[i+size(ISIs,2) i+size(ISIs,2)*3])
-            plot(t(t<.15), oFi(t<.15)*100, 'linestyle', ls{j}, 'linewidth',2, 'color', brighten(colors(kk,:), (2-j)/2))
+            plot(t(t<.15), oFi(t<.15)*100, 'linestyle', ls{j}, 'linewidth',2, 'color', brighten(colors(kk,:), (j-1)/2))
             
             % compute RMSD
             id = t < .15 & t > (-ISI - 2 * dTc - .1);
@@ -196,14 +176,14 @@ for j = 1:size(ISIs,1)
             
             figure(10)
             subplot(1,size(ISIs,2),i)
-            plot(texp(:,i), RMSDs, 'linestyle', ls{j}, 'linewidth', 2, 'color', brighten(colors(kk,:), (2-j)/2));
+            plot(texp(:,i), RMSDs, 'linestyle', ls{j}, 'linewidth', 2, 'color', brighten(colors(kk,:), (j-1)/2));
             hold on
             box off
             
             RMSD = sqrt(sum((oFii - Fexp(:,i)).^2));
   
             for ii = 1:(length(tids)-2)
-                plot([tids(ii) tids(ii)], [0 20], 'k:'); hold on
+                plot([tids(ii) tids(ii)], [0 20], ':', 'color', [.5 .5 .5]); hold on
             end
             
             axis([-.3 .15 0 20])
@@ -219,12 +199,12 @@ for j = 1:size(ISIs,1)
         subplot(4,size(ISIs,2),i)
         title(titles{i})
         for ii = 1:(length(tids)-2)
-            plot([tids(ii) tids(ii)], [0 20], 'k:'); hold on
+            plot([tids(ii) tids(ii)], [0 20], ':', 'color', [.5 .5 .5]); hold on
         end
         
         subplot(4,size(ISIs,2),[i+size(ISIs,2) i+size(ISIs,2)*3])        
         for ii = 1:(length(tids)-2)
-            plot([tids(ii) tids(ii)], [0 300], 'k:'); hold on
+            plot([tids(ii) tids(ii)], [0 300], ':', 'color', [.5 .5 .5]); hold on
         end
         
         

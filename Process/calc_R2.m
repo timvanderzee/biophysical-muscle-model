@@ -10,30 +10,41 @@ SRSrel_m = Stest./Scond(:,:,AMPs == .0383,:,2);
 F0s_m = F0;
 
 %%
-ISIid = 1;
-AMPid = 7;
-
 close all
-figure(1)
-plot(F0s_m(:,ISIid, AMPid, 1, 2),SRSrel_m(:,ISIid, AMPid, 1, 2)); hold on
-plot(F0s(:, AMPid,ISIid, 1), SRSrel(:,AMPid, ISIid, 1),'o')
 
-iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
 
-for i = iFs
-    SSE(i) = sum((SRSrel(:,AMPid, ISIid, i) - SRSrel_m(:,ISIid, AMPid, i, 2)).^2,'omitnan');
-    SST(i) = sum((SRSrel(:,AMPid, ISIid, i) - mean(SRSrel(:,AMPid, ISIid, i),'omitnan')).^2,'omitnan');
+for i = 1:3
+    
+    if i == 1
+        ISIid = 1;
+        pCaid = 1:size(SRSrel,1);
+        AMPid = 7;
+        x = pCas(pCaid);
+    elseif i == 2
+        ISIid = 1;
+        pCaid = 4;
+        AMPid = [1 2 3 4 7];
+        x = AMPs(AMPid);
+    elseif i == 3
+        ISIid = [1, 3, 4, 5, 7];
+        pCaid = 4;
+        AMPid = 7;
+        x = ISIs(ISIid);
+    end
+    
+    SST(i) = sum((squeeze(mean(SRSrel(pCaid,ISIid, AMPid, :),4,'omitnan')) - mean(mean(SRSrel(pCaid,ISIid, AMPid, :),4,'omitnan'),'omitnan')).^2,'omitnan');
+    SSE(i) = sum((squeeze(mean(SRSrel(pCaid,ISIid, AMPid, :),4,'omitnan')) - squeeze(mean(SRSrel_m(pCaid,ISIid, AMPid, :,2),4,'omitnan'))).^2,'omitnan');
+
+    figure(1)
+    subplot(1,3,i)
+    plot(x, (squeeze(mean(SRSrel(pCaid,ISIid, AMPid, :),4,'omitnan')))); hold on
+    plot(x, squeeze(mean(SRSrel_m(pCaid,ISIid, AMPid, :,2),4,'omitnan')))
+
 end
 
-%%
-R2 = 1 - sum(SSE) ./ sum(SST)
+R2 = 1 - SSE ./ SST;
 
-%%
-
-SST = sum((mean(SRSrel(:,AMPid, ISIid, :),4,'omitnan') - mean(mean(SRSrel(:,AMPid, ISIid, :),4,'omitnan'),'omitnan')).^2,'omitnan');
-SSE = sum((mean(SRSrel(:,AMPid, ISIid, :),4,'omitnan') - mean(SRSrel_m(:,ISIid, AMPid, :,2),4,'omitnan')).^2,'omitnan');
-
-R2 = 1 - sum(SSE) ./ sum(SST);
+return
 
 %% compute SSE from R2
 R2s = [-24 -.02 .58];

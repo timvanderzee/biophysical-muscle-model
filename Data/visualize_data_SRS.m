@@ -12,11 +12,11 @@ iid = [1 3 4 5 7];
 aid = [1:4, 7];
 
 subplot(131)
-plot(squeeze(F0s(:,7,1,:)), squeeze(SRSrel(:,7,1,:)), '.', 'color', [.5 .5 .5]); hold on
+plot(squeeze(F0s(:,1,7,:)), squeeze(SRSrel(:,1,7,:)), '.', 'color', [.5 .5 .5]); hold on
 
-errorbar(mean(F0s(:,7,1,:),4,'omitnan'), mean(SRSrel(:,7,1,:),4,'omitnan'),...
-    std(SRSrel(:,7,1,:),1,4,'omitnan'),std(SRSrel(:,7,1,:),1,4,'omitnan'),...
-    std(F0s(:,7,1,:),1,4,'omitnan'),std(F0s(:,7,1,:),1,4,'omitnan'),'o', 'color', [.5 .5 .5]); hold on
+errorbar(mean(F0s(:,1,7,:),4,'omitnan'), mean(SRSrel(:,1,7,:),4,'omitnan'),...
+    std(SRSrel(:,1,7,:),1,4,'omitnan'),std(SRSrel(:,1,7,:),1,4,'omitnan'),...
+    std(F0s(:,1,7,:),1,4,'omitnan'),std(F0s(:,1,7,:),1,4,'omitnan'),'o', 'color', [.5 .5 .5]); hold on
 
 box off
 xlabel('Isometric force (F_0)')
@@ -30,14 +30,14 @@ for i = 1:length(th)
 end
 
 subplot(132)
-plot(AMPs(aid), squeeze(SRSrel(4,aid,1,:)), '.', 'color', [.5 .5 .5]); hold on
-errorbar(AMPs(aid), squeeze(mean(SRSrel(4,aid,1,:), 4, 'omitnan')), squeeze(std(SRSrel(4,aid,1,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5])
+plot(AMPs(aid), squeeze(SRSrel(4,1,aid,:)), '.', 'color', [.5 .5 .5]); hold on
+errorbar(AMPs(aid), squeeze(mean(SRSrel(4,1,aid,:), 4, 'omitnan')), squeeze(std(SRSrel(4,1,aid,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5])
 % xlim([1e-4 1e2])
 box off
 
 subplot(133)
-semilogx(ISIs(iid), squeeze(SRSrel(4,7,iid,:)), '.', 'color', [.5 .5 .5]); hold on
-errorbar(ISIs(iid), squeeze(mean(SRSrel(4,7,iid,:), 4, 'omitnan')), squeeze(std(SRSrel(4,7,iid,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5])
+semilogx(ISIs(iid), squeeze(SRSrel(4,iid,7,:)), '.', 'color', [.5 .5 .5]); hold on
+errorbar(ISIs(iid), squeeze(mean(SRSrel(4,iid,7,:), 4, 'omitnan')), squeeze(std(SRSrel(4,iid,7,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5])
 xlim([1e-4 1e2])
 box off
 

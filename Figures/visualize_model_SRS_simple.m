@@ -87,7 +87,7 @@ for j = 1:3
     title(titles{j})
     xlabel(xlabels{j})
     ylabel(ylabels)
-    ylim([.4 1.2])
+    ylim([0 1.5])
     yline(1, 'k-')
     
 %     for ii = 1:length(AMPs)
