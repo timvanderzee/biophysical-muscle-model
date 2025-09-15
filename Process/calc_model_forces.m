@@ -29,18 +29,18 @@ xp0 = zeros(size(x0));
 iFs = [1 2 3, 5, 7, 8, 10, 11];
 
 AMPs = [0 12 38 121 216 288 383 682]/10000;
-ISIs = [1 10 100 316 1000]/1000;
+% ISIs = [1 10 100 316 1000]/1000;
+ISIs = [1 10 100 316 1000 3160 10000]/1000;
 
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
+visualize = 1;
 
-visualize = 0;
-
-for iF = iFs
+for iF = 6
     
     parms = pparms(iF);
     
-    for i = 1:length(Ca)
+    for i = 3:length(Ca)
           
         % initial condition
 %         x0 = xs(:,i,iF);       
@@ -52,9 +52,18 @@ for iF = iFs
             dTt = .0383/.4545; % test stretch (= constant)
             dTc = AMP / .4545; % conditioning stretch
             
-            odeopt = odeset('maxstep', max([dTc, 1e-3]));
+            % when there is pre-stretch, make sure we don't miss it
+            dtmax = max([dTc/2, 5e-3]);
             
-            for jj = 1:length(ISIs)
+            % if there is no pre-stretch, we can't miss it either
+            if AMP == 0
+                dtmax = dTt;
+            end
+            
+            dtmax = 1e-2;
+            odeopt = odeset('maxstep',dtmax);
+            
+            for jj = 6:7
                 
                 ISI = ISIs(jj);
                 
@@ -67,7 +76,7 @@ for iF = iFs
                 
                 parms.ti = tis;
                 parms.vts = vis;
-                parms.Cas = Cas;
+                parms.Cas = mean(Cas);
                 parms.Lts = Lis;
                 Liss = Lis * gamma;
                 
@@ -100,7 +109,7 @@ for iF = iFs
                 end
                 
                 cd([filename,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)])
-                disp([fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'])
+                disp([filename,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'])
                 save([fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'], ...
                     'tis','Cas','vis','Lis','oFi','parms','ts')
                 

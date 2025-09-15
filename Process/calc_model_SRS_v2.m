@@ -15,7 +15,8 @@ fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18De
 
 % conditions
 AMPs = [0 12 38 121 216 288 383 682]/10000;
-ISIs = [1 10 100 316 1000]/1000;
+% ISIs = [1 10 100 316 1000]/1000;
+ISIs = [1 10 100 316 1000 3160 10000]/1000;
 pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
 Ca = 10.^(-pCas+6);
 
@@ -24,12 +25,10 @@ F0      = nan(length(pCas), length(ISIs),length(AMPs), 11);
 Scond   = nan(length(pCas), length(ISIs),length(AMPs), 11);
 Stest   = nan(length(pCas), length(ISIs),length(AMPs), 11);
 
-visualize = 1;
+visualize = 0;
 
-
-for iF = 7
+for iF = iFs
     for i = 1:length(Ca)
-        
         for ii = 1:length(AMPs)
             
             AMP = AMPs(ii);
@@ -91,13 +90,16 @@ for iF = 7
     end
 end
 
+return
+
 %% plot for all fibers
 close all
 SRSrel = Stest./Scond(:,:,AMPs == .0383,:);
 
-aAMPs = repmat(AMPs, 5, 1);
+aAMPs = repmat(AMPs, 7, 1);
 aISIs = repmat(ISIs(:), 1, 8);
 
+iF = 6;
 for i = 1:size(SRSrel,1)
     SRS = squeeze(SRSrel(i,:,:,iF));
     

@@ -8,22 +8,27 @@ function[] = visualize_model_SRS_simple()
 % SRSrel(:,:,:,:,1) = Stest(:,:,:,:,1)./Scond(:,:,AMPs == .0383,:,1);
 % F0s(:,:,:,:,1) = F0(:,:,:,:,1);
 
-load('test_model_output_v6.mat','Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
-SRSrel = Stest./Scond(:,:,AMPs == .0383,:,2);
-F0s = F0;
+load('test_model_output_v8.mat','Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
+% SRSrel = Stest./Scond(:,:,AMPs == .0383,:);
+% F0s = F0;
 
-%% plot for each fiber
-% SRSrel = Stest./Scond(:,:,AMPs == .0383,:,:);
-color = parula(8);
+% average 
+iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
+th = [0 .05 .1 .25 .7 1.5];
+SRSrel = nan(length(th)-1,7,8,length(iFs));
+F0s = nan(length(th)-1, 7,8,length(iFs));
 
-ISIid = 2;
-pCaid = 5;
-
-syms = 'osd+x*v<>phosd+x*v<>ph';
-kk = 2;
-
+for k = 1:length(iFs)
+    for i = 1:length(th)-1
+        id = F0(:,1,7,k) > th(i) & F0(:,1,7,k) <= th(i+1);
+        
+        SRSrel(i,:,:,k) = mean(Stest(id,:,:,k),1,'omitnan') ./ mean(Scond(id,1,7,k),'all', 'omitnan');
+        F0s(i,:,:,k) = mean(F0(id,:,:,k), 1,'omitnan');
+    end
+end
 
 %% plot for all fibers
+kk = 1;
 % figure(1)
 color = parula(8);
 
@@ -31,17 +36,28 @@ AMPid = 7;
 ISIid = 1;
 pCaid = 4;
 
-% AMPid = 5;
+% subplot(131)
+% for uu = 1:size(SRSrel, 1)
+%     for jj = ISIid
+%         for ii = AMPid
+%             for i = 1:size(SRSrel, 4)
+%             
+%                 plot(F0s(:,jj,ii,i, kk), SRSrel(:,jj,ii,i,kk),'o'); hold on
+%             end
+%         end
+%     end
+% end
 
+% keyboard
 % effect of activation
-
-for uu = 1:length(pCas)
+for uu = 1:size(SRSrel, 1)
     for jj = ISIid
         for ii = AMPid
 
             subplot(131);
             errorbar(mean(F0s(uu,jj,ii,:, kk), 4, 'omitnan'), mean(SRSrel(uu,jj,ii,:,kk),4, 'omitnan'), ...
-                std(SRSrel(uu,jj,ii,:,kk),1,4, 'omitnan'), 'o', 'color', color(ii,:),'markerfacecolor', color(ii,:)); hold on
+                std(SRSrel(uu,jj,ii,:,kk),1,4, 'omitnan'), std(SRSrel(uu,jj,ii,:,kk),1,4, 'omitnan'),...
+                std(F0s(uu,jj,ii,:,kk),1,4, 'omitnan'), std(F0s(uu,jj,ii,:,kk),1,4, 'omitnan'),'o', 'color', color(ii,:),'markerfacecolor', color(ii,:)); hold on
 
         end
     end

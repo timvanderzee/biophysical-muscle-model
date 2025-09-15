@@ -2,7 +2,12 @@ function[error] = fiber_dynamics_implicit_no_tendon(t,y,yp, parms)
 
 % Get velocity and calcium
 vMtilda = interp1(parms.ti, parms.vts, t);
-Ca      = interp1(parms.ti, parms.Cas, t);
+
+if numel(parms.Cas, 1)
+    Ca = parms.Cas;
+else
+    Ca      = interp1(parms.ti, parms.Cas, t);
+end
 
 % States
 Q0  = y(1);

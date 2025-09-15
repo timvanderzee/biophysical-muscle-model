@@ -5,9 +5,24 @@ load('SRS_data.mat', 'SRSrel', 'F0s', 'th')
 
 
 %%
-load('test_model_output_v6.mat','Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
-SRSrel_m = Stest./Scond(:,:,AMPs == .0383,:,2);
-F0s_m = F0;
+load('test_model_output_v8.mat','Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
+% SRSrel_m = Stest./Scond(:,:,AMPs == .0383,:,2);
+% F0s_m = F0;
+
+% average 
+iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
+th = [0 .05 .1 .25 .7 1.5];
+SRSrel_m = nan(length(th)-1,7,8,length(iFs));
+F0s_m = nan(length(th)-1,7,8,length(iFs));
+
+for k = 1:length(iFs)
+    for i = 1:length(th)-1
+        id = F0(:,1,7,k) > th(i) & F0(:,1,7,k) <= th(i+1);
+        
+        SRSrel_m(i,:,:,k) = mean(Stest(id,:,:,k),1,'omitnan') ./ mean(Scond(id,1,7,k),'all', 'omitnan');
+        F0s_m(i,:,:,k) = mean(F0(id,:,:,k), 1,'omitnan');
+    end
+end
 
 %%
 close all
@@ -33,12 +48,12 @@ for i = 1:3
     end
     
     SST(i) = sum((squeeze(mean(SRSrel(pCaid,ISIid, AMPid, :),4,'omitnan')) - mean(mean(SRSrel(pCaid,ISIid, AMPid, :),4,'omitnan'),'omitnan')).^2,'omitnan');
-    SSE(i) = sum((squeeze(mean(SRSrel(pCaid,ISIid, AMPid, :),4,'omitnan')) - squeeze(mean(SRSrel_m(pCaid,ISIid, AMPid, :,2),4,'omitnan'))).^2,'omitnan');
+    SSE(i) = sum((squeeze(mean(SRSrel(pCaid,ISIid, AMPid, :),4,'omitnan')) - squeeze(mean(SRSrel_m(pCaid,ISIid, AMPid, :),4,'omitnan'))).^2,'omitnan');
 
     figure(1)
     subplot(1,3,i)
     plot(x, (squeeze(mean(SRSrel(pCaid,ISIid, AMPid, :),4,'omitnan')))); hold on
-    plot(x, squeeze(mean(SRSrel_m(pCaid,ISIid, AMPid, :,2),4,'omitnan')))
+    plot(x, squeeze(mean(SRSrel_m(pCaid,ISIid, AMPid, :),4,'omitnan')))
 
 end
 
