@@ -2,7 +2,7 @@ clear all; close all; clc
 [username, githubfolder] = get_paths();
 
 % load parameters
-mcode = [1 1 1];
+mcode = [2 1 1];
 [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcode);
 
 cd([githubfolder, '\biophysical-muscle-model\Parameters'])
@@ -26,7 +26,7 @@ xp0 = zeros(size(x0));
 
 
 %% evaluate
-iFs = [1 2 3, 5, 7, 8, 10, 11];
+iFs = [1 2 3, 5,6, 7, 8, 10, 11];
 
 AMPs = [0 12 38 121 216 288 383 682]/10000;
 % ISIs = [1 10 100 316 1000]/1000;
@@ -40,7 +40,7 @@ for iF = 6
     
     parms = pparms(iF);
     
-    for i = 3:length(Ca)
+    for i = 1:length(Ca)
           
         % initial condition
 %         x0 = xs(:,i,iF);       
@@ -63,7 +63,7 @@ for iF = 6
             dtmax = 1e-2;
             odeopt = odeset('maxstep',dtmax);
             
-            for jj = 6:7
+            for jj = 1:length(ISIs)
                 
                 ISI = ISIs(jj);
                 

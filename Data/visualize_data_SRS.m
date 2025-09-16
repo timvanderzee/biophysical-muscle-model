@@ -10,6 +10,7 @@ ISIs = [1 10 100 316 1000 3160 10000]/1000;
 
 iid = [1 3 4 5 7];
 aid = [1:4, 7];
+Cid = 3;
 
 subplot(131)
 plot(squeeze(F0s(:,1,7,:)), squeeze(SRSrel(:,1,7,:)), '.', 'color', [.5 .5 .5]); hold on
@@ -30,14 +31,14 @@ for i = 1:length(th)
 end
 
 subplot(132)
-plot(AMPs(aid), squeeze(SRSrel(4,1,aid,:)), '.', 'color', [.5 .5 .5]); hold on
-errorbar(AMPs(aid), squeeze(mean(SRSrel(4,1,aid,:), 4, 'omitnan')), squeeze(std(SRSrel(4,1,aid,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5])
+plot(AMPs(aid), squeeze(SRSrel(Cid,1,aid,:)), '.', 'color', [.5 .5 .5]); hold on
+errorbar(AMPs(aid), squeeze(mean(SRSrel(Cid,1,aid,:), 4, 'omitnan')), squeeze(std(SRSrel(4,1,aid,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5])
 % xlim([1e-4 1e2])
 box off
 
 subplot(133)
-semilogx(ISIs(iid), squeeze(SRSrel(4,iid,7,:)), '.', 'color', [.5 .5 .5]); hold on
-errorbar(ISIs(iid), squeeze(mean(SRSrel(4,iid,7,:), 4, 'omitnan')), squeeze(std(SRSrel(4,iid,7,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5])
+semilogx(ISIs(iid), squeeze(SRSrel(Cid,iid,7,:)), '.', 'color', [.5 .5 .5]); hold on
+errorbar(ISIs(iid), squeeze(mean(SRSrel(Cid,iid,7,:), 4, 'omitnan')), squeeze(std(SRSrel(4,iid,7,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5])
 xlim([1e-4 1e2])
 box off
 

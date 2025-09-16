@@ -2,7 +2,7 @@ clear all; close all; clc
 [username, githubfolder] = get_paths();
 
 % load parameters
-mcode = [1 1 1];
+mcode = [2 1 1];
 [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcode);
 
 cd([githubfolder, '\biophysical-muscle-model\Parameters'])
@@ -91,6 +91,13 @@ for iF = iFs
 end
 
 return
+
+
+%% save
+cd(githubfolder)
+cd('biophysical-muscle-model')
+cd('Model output')
+save([filename, '_SRS.mat'])
 
 %% plot for all fibers
 close all

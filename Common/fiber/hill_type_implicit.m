@@ -1,39 +1,45 @@
 function[error, Fse] = hill_type_implicit(t, x, xdot, parms)
 
-    gamma = (.5*parms.s)/parms.h;
+gamma = (.5*parms.s)/parms.h;
 
-    lmtc = interp1(parms.ti, parms.Lts, t) * gamma;
-    Ca   = interp1(parms.ti, parms.Cas, t);
+lmtc = interp1(parms.ti, parms.Lts, t) * gamma;
 
-    % states
-    lce = x(1);
+if numel(parms.Cas, 1)
+    Ca = parms.Cas;
+else
+    Ca      = interp1(parms.ti, parms.Cas, t);
+end
+% Ca   = interp1(parms.ti, parms.Cas, t);
+
+% states
+lce = x(1);
 %     lmtc = x(2);
-    
-    vce = xdot(1);
+
+vce = xdot(1);
 %     vmtc = xdot(2);
-    
-    Fce_rel = parms.vF_func(vce, parms);
 
-    % activation from Ca
-    a = parms.actfunc(Ca, parms);
-    a(a<parms.amin) = parms.amin;
-    
-    Fce = a * Fce_rel;
+Fce_rel = parms.vF_func(vce, parms);
 
-    % elastic elements
-    Lse = lmtc - lce;    
+% activation from Ca
+a = parms.actfunc(Ca, parms);
+a(a<parms.amin) = parms.amin;
 
-    if isfield(parms, 'Fpece_func')
-        Fpe = parms.Fpece_func(lce, parms);
-    else
-        Fpe = 0;
-    end
-    
-    Fse = parms.Fse_func(Lse, parms);
-    Fse(Lse < 0) = 0;
+Fce = a * Fce_rel;
 
-    % error terms
-    error(1,1) = Fse - Fce - Fpe;
+% elastic elements
+Lse = lmtc - lce;
+
+if isfield(parms, 'Fpece_func')
+    Fpe = parms.Fpece_func(lce, parms);
+else
+    Fpe = 0;
+end
+
+Fse = parms.Fse_func(Lse, parms);
+Fse(Lse < 0) = 0;
+
+% error terms
+error(1,1) = Fse - Fce - Fpe;
 %     error(2,1) = parms.vmtc - vmtc;
 
 end
