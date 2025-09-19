@@ -1,136 +1,117 @@
 clear all; close all; clc
 [username, githubfolder] = get_paths();
 
-iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
-iFs = 6;
-% mcodes = [1 1 1; 1 1 1; 1 1 3; 2 1 1];
-mcodes = [2 1 1];
+Kss = 1:7;
+tiso = 3;
 
-for kk = 1:size(mcodes,1)
-    mcode = mcodes(kk,:);
-    
-    [output_mainfolder, filenames{kk}, opt_types{kk}, ~] = get_folder_and_model(mcode);
-    
-    cd([githubfolder, '\biophysical-muscle-model\Parameters'])
-    load(['parms_',filenames{kk},'.mat'], 'pparms')
-    
-    for iF = iFs
-        Parms{kk, iF} = pparms(iF);
-    end
-end
-
-%% load data and parameters
+% iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
+iFs = [2,3,5,6,7,8,11];
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
-pCas = repmat([4.5000    6.1000    6.2000    6.3000    6.4000    6.6000    9.0000],1,1,3);
 
-% chosen ISIs, AMPs and pCas
-ISIs = repmat([.001 .100 .316 1], 4,1,7);
-AMPs = repmat([0 .0038 .0121 .0383]', 1, 4,7);
+visualize = 0;
 
-for i = 1:size(ISIs,3)
-    ACTs(:,:,i) = pCas(i) * ones(size(ISIs,1), size(ISIs,2));
-end
+mcode = [2 1 1];
+[output_mainfolder, filename, ~, ~] = get_folder_and_model(mcode);
+
+cd([githubfolder, '\biophysical-muscle-model\Parameters'])
+load(['parms_',filename,'.mat'], 'pparms')
 
 %% calc RMSD
-% pCas = 6.1 * ones(size(AMPs));
-RMSD = nan(size(ISIs,1), size(ISIs,2), iFs(end), size(mcodes,1));
+AMPs = [0 12 38 121 216 288 383 682]/10000;
+ISIs = [1 10 100 316 1000 3160 10000]/1000;
+pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
+Ca = 10.^(-pCas+6);
 
+RMSD = nan(length(pCas), length(ISIs), length(AMPs), iFs(end), 7);
+
+%%
 for iF = iFs
-    cd([output_mainfolder{2},'\data'])
-    load([fibers{iF},'_cor_new.mat'],'data');
+    cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
+    load([fibers{iF},'_cor_new.mat'],'data')
     
-    disp([fibers{iF}])
-
-    %% evaluate
-    odeopt = odeset('maxstep', 1e-2);
-    gamma = 108.3333; % length scaling
-    
-    for j = 1:size(ISIs,1)
-        for i = 1:size(ISIs,2)        
-            for k = 1:size(ISIs,3)
+    for i = 1:length(Ca)
+        cd([output_mainfolder{2}])
+        
+        cd([filename,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)])
+        
+        for m = 1:length(AMPs)
+            
+            AMP = AMPs(m);
+            dTt = .0383/.4545; % test stretch (= constant)
+            dTc = AMP / .4545; % conditioning stretch
+            
+            for n = 1:length(ISIs)
+                ISI = ISIs(n);
                 
-                % get data            
-                [texp, Lexp, Fexp, Tsrel] = get_data(data, ISIs(j,i,k), AMPs(j,i,k), ACTs(j,i,k));
+                disp([fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'])
+                load([fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'], ...
+                    'tis','Cas','vis','Lis','oFi','parms', 'ts')
                 
-                % evaluate fit
-                Ca = 10.^(-ACTs(j,i,k)+6);
+                tiso = dTt*3+dTc*2+ISI;
                 
-                dTt = .0383/.4545; % test stretch (= constant)
-                dTc = AMPs(j,i,k) / .4545; % conditioning stretch
-                ISI = ISIs(j,i,k);
-                tiso = 3;
+                texp = data.texp(:,i,n,m) - .005;
+                Fexp = data.Fexp(:,i,n,m);
                 
-                [tis, Cas, Lis, vis, ts] = create_input(tiso, dTt, dTc, ISI, Ca, 2000);
+                % center around second stretch
+                tm = tis - 2 -ISI - 2 * dTc;
+                oFii = interp1(tm, oFi, texp);
                 
-                % center around 2nd stretch
-                t = tis + 3*dTt - tiso;
+                tids = [-ISI - 2*dTc - .1; -ISI - 2*dTc; -ISI - dTc; -ISI; 0; dTt; .16];
                 
-                
-                for kk = 1:size(mcodes,1)
-                    
-                    parms = Parms{kk, iF};
-                    
-                    if contains(filenames{kk}, 'Hill')
-                        x0 = 0;
-                    else
-                        x0 = [parms.x0(2:end)'; 0];
+                for ii = 1:length(tids)
+                    if ii < length(tids)
+                        id = texp < tids(ii+1) & texp >= tids(ii);
+                    else % overall
+                        id = texp < tids(end) & texp >= tids(1);
                     end
                     
-                    xp0 = zeros(size(x0));
-                    
-                    parms.ti = tis;
-                    parms.vts = vis;
-                    parms.Cas = Cas;
-                    parms.Lts = Lis;
-                    
-                    % run simulation
-                    if contains(filenames{kk}, 'Hill')
-                        sol = ode15i(@(t,y,yp) hill_type_implicit(t,y,yp, parms), [0 max(tis)], x0, xp0, odeopt);
+                    if sum(id) > 0
+                        % compute RMSD
+                        %                 id = tm < .16 & tm > (-ISI - 2 * dTc - .1);
+                        if visualize
+                            figure(1)
+                            plot(tm, oFi, '-', texp, Fexp, '-', texp(id), oFii(id), '.')
+                            pause
+                        end
+                        
+                        RMSDs = sqrt((oFii(id) - Fexp(id)).^2) * 100;
+                        
+                        RMSD(i,n,m,iF,ii) = sqrt(mean((oFii(id) - Fexp(id)).^2, 'omitnan'));
                     else
-                        sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(tis)], x0, xp0, odeopt);
+                        RMSD(i,n,m,iF,ii) = nan;
                     end
-                    
-                    
-                    % update x0
-                    x0 = sol.y(:,end);
-                    
-                    Liss = Lis * gamma;
-                    ot = sol.x;
-                    
-                    if contains(filenames{kk}, 'Hill')
-                        lce = sol.y(1,:);
-                        
-                        % elastic elements
-                        Lse = Liss - interp1(sol.x, lce, tis);
-                        oFi = parms.Fse_func(Lse, parms) * parms.Fscale + parms.Fpe_func(Liss, parms);
-                        
-                    else
-                        F = sol.y(1,:) + sol.y(2,:);
-                        
-                        oF = F * parms.Fscale;
-                        
-                        oFi = interp1(ot, oF, tis) + parms.Fpe_func(Liss, parms);
-                    end
-                    
-                    % compute RMSD
-                    id = t < .16 & t > (-ISI - 2 * dTc - .1);
-                    oFii = interp1(t(id), oFi(id), texp);
-                    
-                    RMSDs = sqrt((oFii - Fexp).^2) * 100;
-                    
-                    RMSD(j,i,iF,kk,k) = sqrt(mean((oFii - Fexp).^2, 'omitnan'));
                 end
+                
             end
         end
     end
 end
 
+return
+
+%% save
+cd(githubfolder)
+cd('biophysical-muscle-model/Model output')
+
+save([filename, '_RMSD.mat'])
+
 %%
-figure(1)
-for i = 1:size(AMPs,3)
+close all
+aAMPs = repmat(AMPs, 7, 1);
+aISIs = repmat(ISIs(:), 1, 8);
+
+iF = 2;
+for i = 1:size(RMSD,1)
+    eps = squeeze(RMSD(i,:,:,iF));
+    
+    figure(1)
     nexttile
-    surf(AMPs(:,:,i), ISIs(:,:,i), RMSD(:,:,iF,kk,i))
+    surf(aAMPs, aISIs, eps)
+    set(gca, 'Yscale', 'log')
+    
 end
+
+
 
 return
 %%
@@ -181,8 +162,8 @@ close all
 ms = [4 4 2 2];
 ns = [1 4 4 1];
 
-titles = {'Overall','Short recovery','Long recovery','Long recovery','Short recovery'}; 
-subtitles = {'','Large amplitude','Large amplitude','Small amplitude','Small amplitude'}; 
+titles = {'Overall','Short recovery','Long recovery','Long recovery','Short recovery'};
+subtitles = {'','Large amplitude','Large amplitude','Small amplitude','Small amplitude'};
 
 mnames = {'Hill','No coop.','Coop.', 'Coop. + FD'};
 
@@ -203,7 +184,7 @@ mm = 1;
 for i = 1:4
     subplot(1,5,i+1)
     
-%     v = violinplot(squeeze(RMSDi(ms(i),ns(i),:,jid) - RMSDi(ms(i),ns(i),:,jr))*100, mnames, 'ViolinColor', colors,'Edgecolor', [1 1 1]);
+    %     v = violinplot(squeeze(RMSDi(ms(i),ns(i),:,jid) - RMSDi(ms(i),ns(i),:,jr))*100, mnames, 'ViolinColor', colors,'Edgecolor', [1 1 1]);
     v = violinplot(squeeze(RMSDc(ms(i),ns(i),:,jid))*100, mnames, 'ViolinColor', colors,'Edgecolor', [1 1 1],'ShowMean',true, 'ShowMedian',false);
     
     for j = 1:length(jid)
@@ -217,8 +198,8 @@ end
 
 %%
 subplot(151)
-% v = violinplot((mmRMSDi(:,jid)-mmRMSDi(:,jr))*100, mnames, 'ViolinColor', colors,'Edgecolor', [1 1 1]); 
-v = violinplot((mmRMSDc(:,jid))*100, mnames, 'ViolinColor', colors,'Edgecolor', [1 1 1],'ShowMean',true, 'ShowMedian',false); 
+% v = violinplot((mmRMSDi(:,jid)-mmRMSDi(:,jr))*100, mnames, 'ViolinColor', colors,'Edgecolor', [1 1 1]);
+v = violinplot((mmRMSDc(:,jid))*100, mnames, 'ViolinColor', colors,'Edgecolor', [1 1 1],'ShowMean',true, 'ShowMedian',false);
 
 for j = 1:length(jid)
     X(j,:) = v(j).ScatterPlot.XData;
@@ -227,18 +208,18 @@ end
 
 plot(X, Y, ':','color',[.5 .5 .5])
 
-drawnow  
+drawnow
 
 %
 figure(mm)
 
 for i = 1:5
     subplot(1,5,i)
-%     axis([.5 4.5 -100 100])
+    %     axis([.5 4.5 -100 100])
     axis([.5 4.5 -90 60])
-%         axis([.5 3.5 -4 4])
-        box off
-%     axis tight
+    %         axis([.5 3.5 -4 4])
+    box off
+    %     axis tight
     title(titles{i})
     subtitle(subtitles{i},'Fontweight','bold')
     ylabel('\DeltaRMSD (%)')

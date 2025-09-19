@@ -1,4 +1,8 @@
-function[] = visualize_model_SRS_simple()
+function[] = visualize_model_SRS_simple(th, id)
+
+Cid = id(1);
+ISIid = id(2);
+AMPid = id(3);
 
 % load('test_model_output.mat', 'Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
 % SRSrel(:,:,:,:,2) = Stest(:,:,:,:,2)./Scond(:,:,AMPs == .0383,:,2);
@@ -8,7 +12,7 @@ function[] = visualize_model_SRS_simple()
 % SRSrel(:,:,:,:,1) = Stest(:,:,:,:,1)./Scond(:,:,AMPs == .0383,:,1);
 % F0s(:,:,:,:,1) = F0(:,:,:,:,1);
 
-filenames = {'test_model_output_v8.mat', 'Hill_regular_SRS'};
+filenames = {'biophysical_full_regular_SRS', 'Hill_regular_SRS'};
 
 for ff = 1:length(filenames)
 
@@ -18,11 +22,11 @@ load(filenames{ff},'Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
 
 % average 
 iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
-th = [0 .05 .1 .25 .7 1.5];
-SRSrel = nan(length(th)-1,7,8,length(iFs));
-F0s = nan(length(th)-1, 7,8,length(iFs));
+% iFs = [2,3,5,6,7,8,11];
+SRSrel = nan(length(th)-1,7,8,iFs(end));
+F0s = nan(length(th)-1, 7,8,iFs(end));
 
-for k = 1:length(iFs)
+for k = iFs
     for i = 1:length(th)-1
         id = F0(:,1,7,k) > th(i) & F0(:,1,7,k) <= th(i+1);
         
@@ -37,9 +41,10 @@ kk = 1;
 % color = parula(8);
 color = get(gca,'colororder');
 
-AMPid = 7;
-ISIid = 1;
-pCaid = 3;
+% AMPid = 7;
+% ISIid = 1;
+pCaid = Cid;
+
 
 % subplot(131)
 % for uu = 1:size(SRSrel, 1)
@@ -72,7 +77,7 @@ end
 % effect of amplitude
 for uu = pCaid
     for jj = ISIid
-        for ii = 1:length(AMPs)
+        for ii = [1, 3, 4, 7, 8]
 
             subplot(132);
             errorbar(AMPs(ii), mean(SRSrel(uu,jj,ii,:,kk),4, 'omitnan'), ...
@@ -110,7 +115,7 @@ for j = 1:3
     xlabel(xlabels{j})
     ylabel(ylabels)
     ylim([0 2])
-    yline(1, 'k-')
+%     yline(1, 'k-')
     
 %     for ii = 1:length(AMPs)
 %         yline(mean(SRSrel(pCaid,ISIid,ii,:, kk),4, 'omitnan'), ':','color', color(ii,:))
@@ -121,6 +126,7 @@ subplot(131)
 % xline(mean(F0s(pCaid,jj,ii,:, kk),4, 'omitnan'), 'k:')
 
 subplot(132)
+xlim([-.005 .08])
 % xline(AMPs(AMPid), 'k:')
 
 subplot(133)

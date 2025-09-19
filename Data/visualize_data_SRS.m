@@ -1,23 +1,44 @@
-function[] = visualize_data_SRS()
+function[] = visualize_data_SRS(th, id)
 % 
+
+Cid = id(1);
+ISIid = id(2);
+AMPid = id(3);
+
 % [username, githubfolder] = get_paths();
 % cd([githubfolder, '\biophysical-muscle-model\Data'])
-load('SRS_data.mat', 'SRSrel', 'F0s', 'th')
+load('SRS_data.mat', 'SRS_pre', 'F0', 'SRS_post')
+
+%% average some pCas
+iFs = 1:11;
+% th = [0 .05 .1 .25 .7 1.5];
+SRSrel = nan(length(th)-1,7,8,length(iFs));
+F0s = nan(length(th)-1, 7,8,length(iFs));
+
+for k = iFs
+    for i = 1:length(th)-1
+        id = F0(:,1,7,k) > th(i) & F0(:,1,7,k) <= th(i+1);
+        
+        SRSrel(i,:,:,k) = mean(SRS_post(id,:,:,k),1,'omitnan') ./ mean(SRS_pre(id,1,7,k),'all', 'omitnan');
+        F0s(i,:,:,k) = mean(F0(id,:,:,k), 1,'omitnan');
+    end
+end
+
 
 %% summary plot
 AMPs = [0 12 38 121 216 288 383 682]/10000;
 ISIs = [1 10 100 316 1000 3160 10000]/1000;
 
 iid = [1 3 4 5 7];
-aid = [1:4, 7];
-Cid = 3;
+aid = [1, 3, 4, 7];
+% Cid = id;
 
 subplot(131)
-plot(squeeze(F0s(:,1,7,:)), squeeze(SRSrel(:,1,7,:)), '.', 'color', [.5 .5 .5]); hold on
+plot(squeeze(F0s(:,1,7,:)), squeeze(SRSrel(:,ISIid,AMPid,:)), '.', 'color', [.5 .5 .5]); hold on
 
-errorbar(mean(F0s(:,1,7,:),4,'omitnan'), mean(SRSrel(:,1,7,:),4,'omitnan'),...
-    std(SRSrel(:,1,7,:),1,4,'omitnan'),std(SRSrel(:,1,7,:),1,4,'omitnan'),...
-    std(F0s(:,1,7,:),1,4,'omitnan'),std(F0s(:,1,7,:),1,4,'omitnan'),'o', 'color', [.5 .5 .5]); hold on
+errorbar(mean(F0s(:,1,7,:),4,'omitnan'), mean(SRSrel(:,ISIid,AMPid,:),4,'omitnan'),...
+    std(SRSrel(:,ISIid,AMPid,:),1,4,'omitnan'),std(SRSrel(:,ISIid,AMPid,:),1,4,'omitnan'),...
+    std(F0s(:,1,7,:),1,4,'omitnan'),std(F0s(:,1,7,:),1,4,'omitnan'),'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5]); hold on
 
 box off
 xlabel('Isometric force (F_0)')
@@ -31,14 +52,14 @@ for i = 1:length(th)
 end
 
 subplot(132)
-plot(AMPs(aid), squeeze(SRSrel(Cid,1,aid,:)), '.', 'color', [.5 .5 .5]); hold on
-errorbar(AMPs(aid), squeeze(mean(SRSrel(Cid,1,aid,:), 4, 'omitnan')), squeeze(std(SRSrel(4,1,aid,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5])
+plot(AMPs(aid), squeeze(SRSrel(Cid,ISIid,aid,:)), '.', 'color', [.5 .5 .5]); hold on
+errorbar(AMPs(aid), squeeze(mean(SRSrel(Cid,ISIid,aid,:), 4, 'omitnan')), squeeze(std(SRSrel(4,ISIid,aid,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5])
 % xlim([1e-4 1e2])
 box off
 
 subplot(133)
-semilogx(ISIs(iid), squeeze(SRSrel(Cid,iid,7,:)), '.', 'color', [.5 .5 .5]); hold on
-errorbar(ISIs(iid), squeeze(mean(SRSrel(Cid,iid,7,:), 4, 'omitnan')), squeeze(std(SRSrel(4,iid,7,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5])
+semilogx(ISIs(iid), squeeze(SRSrel(Cid,iid,AMPid,:)), '.', 'color', [.5 .5 .5]); hold on
+errorbar(ISIs(iid), squeeze(mean(SRSrel(Cid,iid,AMPid,:), 4, 'omitnan')), squeeze(std(SRSrel(4,iid,AMPid,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5])
 xlim([1e-4 1e2])
 box off
 

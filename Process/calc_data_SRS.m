@@ -116,5 +116,5 @@ end
 
 %% save
 cd([githubfolder, '\biophysical-muscle-model\Data'])
-save('SRS_data.mat', 'SRSrel', 'F0s', 'SRS_post', 'SRS_pre', 'th')
+save('SRS_data.mat', 'SRSrel', 'F0s', 'SRS_post', 'SRS_pre', 'th', 'F0')
 
