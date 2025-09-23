@@ -1,4 +1,4 @@
-function[tis, Cas, Lis, vis, ts] = create_input(tiso, dTt, dTc, ISI, Ca, N)
+function[tis, Cas, Lis, vis, ts, Ts] = create_input(tiso, dTt, dTc, ISI, Ca, N)
 
 if nargin < 6
     N = 500;

@@ -1,13 +1,9 @@
 function[error] = fiber_dynamics_implicit_no_tendon(t,y,yp, parms)
 
 % Get velocity and calcium
-if numel(parms.vts) == 1
-    vMtilda = parms.vts;
-else
-    vMtilda = interp1(parms.ti, parms.vts, t);
-end
+vMtilda = interp1(parms.ti, parms.vts, t);
 
-if numel(parms.Cas) == 1
+if numel(parms.Cas, 1)
     Ca = parms.Cas;
 else
     Ca = interp1(parms.ti, parms.Cas, t);
@@ -27,7 +23,6 @@ Non = y(5);
 dQ0dt  = yp(1);
 dQ1dt  = yp(2);
 dQ2dt  = yp(3);
-dNondt = yp(5);
 
 if length(y) > 5
 %     Non = y(5);
@@ -35,9 +30,9 @@ if length(y) > 5
 %     dNondt = yp(5);
     dDRXdt = yp(6);
 else
-%     Non = Act;
+    Non = Act;
     DRX = 1 - Q0;
-%     dNondt = 0;
+    dNondt = 0;
     dDRXdt = 0;
 end
 
@@ -67,12 +62,7 @@ q = Q2./Q00 - p.^2;
 q = log(1+exp(q*k))/k;
 
 % Thin and thick filament
-if (parms.kon == 0) && (parms.koff == 0) && (parms.koop == 0)
-    error_thin = dNondt - ((Act - Non) / .005);
-else 
-    [error_thin, ~] = ThinEquilibrium(Act, Q0, Non, dNondt, parms.kon, parms.koff, parms.koop, parms.act * parms.Noverlap);
-end
-
+[error_thin, ~] = ThinEquilibrium(Act, Q0, Non, dNondt, parms.kon, parms.koff, parms.koop, parms.act * parms.Noverlap);
 [error_thick, ~] = ThickEquilibrium(Q0, dQ0dt, F, DRX, dDRXdt, parms.J1, parms.J2, parms.JF, parms.act * parms.Noverlap, R);
 
 % Cross-bridge dynamics
@@ -83,7 +73,7 @@ end
 
 % Combined error
 if length(y) < 6
-%     error_thin = [];
+    error_thin = [];
     error_thick = [];
 end
 
