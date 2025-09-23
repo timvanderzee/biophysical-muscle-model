@@ -2,7 +2,7 @@ clear all; close all; clc
 [username, githubfolder] = get_paths();
 
 % load parameters
-mcode = [2 1 1];
+mcode = [1 1 3];
 [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcode);
 
 cd([githubfolder, '\biophysical-muscle-model\Parameters'])

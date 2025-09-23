@@ -7,7 +7,8 @@ pcolors = flip(parula(7));
 acolors = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
 
 %% chose figure number: specify conditions
-fig = 4;
+fig = 6;
+iF = 6;
 
 % chosen ISIs, AMPs and pCas
 if fig == 4
@@ -54,11 +55,8 @@ AMPs = flip(AMPs,1);
 pCas = flip(pCas,1);
 
 %% choose fiber: load data and parameters
-iF = 6;
-
 if fig == 4 || fig == 5
     mcodes = [2 1 1; 1 1 3; 1 1 1];
-%     mcodes = [2 1 1; 1 1 1];
     colors = acolors;
 
 else

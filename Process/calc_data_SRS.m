@@ -39,29 +39,32 @@ for k = 1:length(iFs)
 
                 if visualize
                     figure(1)
-                    nexttile
+%                     nexttile
                     plot(Data.t, Data.F,'.'); hold on
 
 
                     figure(2)
-                    nexttile
+%                     nexttile
                     plot(Data.L, Data.F,'.'); hold on
                 end
                 
                 for i = 1:length(Kss)
                     
                     % filter
-                    fs = 1000;
-                    fc = 100;
-                    Wn = fc / (.5*fs);
-                    [b,a] = butter(2, Wn);
+%                     fs = 1000;
+%                     fc = 100;
+%                     Wn = fc / (.5*fs);
+%                     [b,a] = butter(2, Wn);
+%                     
+%                     F = nan(size(Data.F));
+%                     L = nan(size(Data.F));
+%                     
+%                     id = isfinite(Data.F);
+%                     F(id) = filtfilt(b,a, Data.F(id));
+%                     L(id) = filtfilt(b,a, Data.L(id));
                     
-                    F = nan(size(Data.F));
-                    L = nan(size(Data.F));
-                    
-                    id = isfinite(Data.F);
-                    F(id) = filtfilt(b,a, Data.F(id));
-                    L(id) = filtfilt(b,a, Data.L(id));
+                    F = Data.F;
+                    L = Data.L;
                     
                     dp1 = polyfit(L(id1(i,:)), F(id1(i,:)), 1);
                     
@@ -77,16 +80,19 @@ for k = 1:length(iFs)
 
                     
                     % only for ISI = 1 ms
-                    if n == 1
+                    % only for AMP = 3.83%
+                    if m == 7 && n < 5
                         dp2 = polyfit(L(id2(i,:)), F(id2(i,:)), 1);
                         
                         F0(i,n,m,k) = mean(F(id0(i,:)));
                         SRS_pre(i,n,m,k) = dp2(1);
    
                         if visualize
+                            
                             figure(1)
                             plot(Data.t(id0(i,:)), F(id0(i,:)), 'g.')
                             plot(Data.t(id2(i,:)), F(id2(i,:)), 'y.')
+                            hold off
 
                             figure(2)
                             plot(L(id0(i,:)), F(id0(i,:)), 'g.')
@@ -99,6 +105,7 @@ for k = 1:length(iFs)
     end
 end
 
+return
 
 %% average some pCas
 th = [0 .05 .1 .25 .7 1.5];
@@ -109,12 +116,12 @@ for k = 1:length(iFs)
     for i = 1:length(th)-1
         id = F0(:,1,7,k) > th(i) & F0(:,1,7,k) <= th(i+1);
         
-        SRSrel(i,:,:,k) = mean(SRS_post(id,:,:,k),1,'omitnan') ./ mean(SRS_pre(id,1,7,k),'all', 'omitnan');
+        SRSrel(i,:,:,k) = mean(SRS_post(id,:,:,k),1,'omitnan') ./ mean(SRS_pre(id,:,7,k),'all', 'omitnan');
         F0s(i,:,:,k) = mean(F0(id,:,:,k), 1,'omitnan');
     end
 end
 
 %% save
 cd([githubfolder, '\biophysical-muscle-model\Data'])
-save('SRS_data.mat', 'SRSrel', 'F0s', 'SRS_post', 'SRS_pre', 'th', 'F0')
+save('SRS_data_v3.mat', 'SRSrel', 'F0s', 'SRS_post', 'SRS_pre', 'th', 'F0')
 

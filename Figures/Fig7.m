@@ -1,6 +1,6 @@
 clear all; close all; clc
 [username, githubfolder] = get_paths();
-mcodes = [1 1 1; 2 1 1];
+mcodes = [2 1 1; 1 1 3; 1 1 1; 1 2 1];
 
 iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
 
@@ -18,9 +18,6 @@ RMSDc = nan(length(th)-1,7,8,length(iFs), 7, 2);
 
 for p = 1:7
     
-    
-    
-    %     figure;
     
     for ii = 1:size(mcodes,1)
         [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(ii,:));
@@ -79,7 +76,7 @@ for p = 1:7
     
     %% correct for individual offsets
     % correct for individual offset
-    for ii = 1:2
+    for ii = 1:size(mcodes,1)
         for k = 1:length(iFs)
             RMSDc(:,:,:,k,p,ii) = RMSDs(:,:,:,k,p,ii) - mean(RMSDs(:,:,:,k,p,ii),'all','omitnan') + mean(RMSDs(:,:,:,:,p,ii),'all','omitnan');
         end
@@ -99,11 +96,19 @@ clc
 
 yrange = [0 .15];
 
+color = get(gca,'colororder');
+pcolors = flip(parula(7));
+color = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
+
 figure(1)
+
+ms = [7 6 6 5];
+sym = 'shvo';
+
 for p = 1:3
     % figure;
-    for kk = 1:2
-        color = get(gca,'colororder');
+    for kk = 1:size(mcodes,1)
+%         color = get(gca,'colororder');
         
         
         % effect of activation
@@ -124,12 +129,12 @@ for p = 1:3
         pCaid = 2:3;
         errorbar(mean(F0s(pCaid,ISIid,AMPid,:, kk), 4, 'omitnan'), mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1), kk),4, 'omitnan'), ...
             std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'), std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'),...
-            std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'), std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'),'o', 'color', color(kk,:),'markerfacecolor', color(kk,:)); hold on
+            std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'), std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'),sym(kk), 'color', color(kk,:),'markerfacecolor', color(kk,:), 'markersize', ms(kk)); hold on
         
         pCaid = [1 4];
         errorbar(mean(F0s(pCaid,ISIid,AMPid,:, kk), 4, 'omitnan'), mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1), kk),4, 'omitnan'), ...
             std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'), std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'),...
-            std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'), std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'),'s', 'color', color(kk,:),'markerfacecolor', [1 1 1]); hold on
+            std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'), std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'),sym(kk), 'color', color(kk,:),'markerfacecolor', [1 1 1], 'markersize', ms(kk)); hold on
         
         % effect of amplitude
         AMPid = [1, 3, 4];
@@ -142,11 +147,11 @@ for p = 1:3
         end
         
         errorbar(AMPs(AMPid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),4, 'omitnan')), ...
-            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),1,4, 'omitnan')),'s', 'color', color(kk,:),'markerfacecolor', [1 1 1]); hold on
+            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),1,4, 'omitnan')),sym(kk), 'color', color(kk,:),'markerfacecolor', [1 1 1], 'markersize', ms(kk)); hold on
         
         AMPid = 7;
         errorbar(AMPs(AMPid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),4, 'omitnan')), ...
-            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),1,4, 'omitnan')),'o', 'color', color(kk,:),'markerfacecolor', color(kk,:)); hold on
+            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),1,4, 'omitnan')),sym(kk), 'color', color(kk,:),'markerfacecolor', color(kk,:), 'markersize', ms(kk)); hold on
         
         % effect of ISI
         ISIid = 4:7;
@@ -159,11 +164,11 @@ for p = 1:3
         end
         
         errorbar(ISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), ...
-            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),1,4, 'omitnan')),'s', 'color', color(kk,:),'markerfacecolor', [1 1 1]); hold on
+            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),1,4, 'omitnan')),sym(kk), 'color', color(kk,:),'markerfacecolor', [1 1 1], 'markersize',ms(kk)); hold on
         
         ISIid = 1:3;
         errorbar(ISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), ...
-            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),1,4, 'omitnan')),'o', 'color', color(kk,:),'markerfacecolor', color(kk,:)); hold on
+            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),1,4, 'omitnan')),sym(kk), 'color', color(kk,:),'markerfacecolor', color(kk,:), 'markersize', ms(kk)); hold on
         
         set(gca, 'XScale', 'log', 'Xlim', [5e-4 2e1])
         
@@ -212,7 +217,7 @@ for j = 1:9
     end
 end
 
-%%
+%
 figure(1)
 set(gcf,'units','normalized')
 h = get(gcf,'position')
