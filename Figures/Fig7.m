@@ -103,7 +103,7 @@ color = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
 figure(1)
 
 ms = [7 6 6 5];
-sym = 'shvo';
+sym = {'s','h','v','o'};
 
 for p = 1:3
     % figure;
@@ -117,6 +117,7 @@ for p = 1:3
         pCaid = 1:4;
         
         subplot(3,3,1 + (p-1)*3);
+        plot(mean(F0s(pCaid,ISIid,AMPid,:, kk), 4, 'omitnan'), mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1), kk),4, 'omitnan'), '--', 'color', color(kk,:)); hold on
         
         if kk == 1
             plot(ones(1,2) * mean(F0s(pCaid(3),ISIid,AMPid,:, kk), 4, 'omitnan'), yrange, 'k--'); hold on
@@ -129,46 +130,53 @@ for p = 1:3
         pCaid = 2:3;
         errorbar(mean(F0s(pCaid,ISIid,AMPid,:, kk), 4, 'omitnan'), mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1), kk),4, 'omitnan'), ...
             std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'), std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'),...
-            std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'), std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'),sym(kk), 'color', color(kk,:),'markerfacecolor', color(kk,:), 'markersize', ms(kk)); hold on
+            std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'), std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'),sym{kk}, 'color', color(kk,:),'markerfacecolor', color(kk,:), 'markersize',  ms(kk), 'Capsize',3); hold on
+       
+                
+       
         
         pCaid = [1 4];
         errorbar(mean(F0s(pCaid,ISIid,AMPid,:, kk), 4, 'omitnan'), mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1), kk),4, 'omitnan'), ...
             std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'), std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'),...
-            std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'), std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'),sym(kk), 'color', color(kk,:),'markerfacecolor', [1 1 1], 'markersize', ms(kk)); hold on
+            std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'), std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'),sym{kk}, 'color', color(kk,:),'markerfacecolor', [1 1 1], 'markersize', ms(kk), 'Capsize',3); hold on
         
         % effect of amplitude
-        AMPid = [1, 3, 4];
+        AMPid = [2, 3, 4, 7];
         pCaid = 3;
         
         subplot(3,3,2 + (p-1)*3);
-        
+         plot(AMPs(AMPid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),4, 'omitnan')), '--','color', color(kk,:)); hold on
+         
         if kk == 1
             plot(ones(1,2) * 0.0383, yrange, 'k-.'); hold on
         end
         
+        AMPid = [2, 3, 4];
         errorbar(AMPs(AMPid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),4, 'omitnan')), ...
-            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),1,4, 'omitnan')),sym(kk), 'color', color(kk,:),'markerfacecolor', [1 1 1], 'markersize', ms(kk)); hold on
+            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),1,4, 'omitnan')),sym{kk}, 'color', color(kk,:),'markerfacecolor', [1 1 1], 'markersize', ms(kk), 'Capsize',3); hold on
         
         AMPid = 7;
         errorbar(AMPs(AMPid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),4, 'omitnan')), ...
-            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),1,4, 'omitnan')),sym(kk), 'color', color(kk,:),'markerfacecolor', color(kk,:), 'markersize', ms(kk)); hold on
+            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),1,4, 'omitnan')),sym{kk}, 'color', color(kk,:),'markerfacecolor', color(kk,:), 'markersize', ms(kk), 'Capsize',3); hold on
         
         % effect of ISI
-        ISIid = 4:7;
+        ISIid = [1, 3:5, 7];
         AMPid = 7;
         
         subplot(3,3,3 + (p-1)*3);
-        
+        plot(ISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), '--','color', color(kk,:));
+            
         if kk == 1
             plot(ones(1,2) * .1, yrange, 'k-.'); hold on
         end
         
+        ISIid = 4:7;
         errorbar(ISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), ...
-            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),1,4, 'omitnan')),sym(kk), 'color', color(kk,:),'markerfacecolor', [1 1 1], 'markersize',ms(kk)); hold on
+            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),1,4, 'omitnan')),sym{kk}, 'color', color(kk,:),'markerfacecolor', [1 1 1], 'markersize',ms(kk), 'Capsize',3); hold on
         
         ISIid = 1:3;
         errorbar(ISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), ...
-            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),1,4, 'omitnan')),sym(kk), 'color', color(kk,:),'markerfacecolor', color(kk,:), 'markersize', ms(kk)); hold on
+            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),1,4, 'omitnan')),sym{kk}, 'color', color(kk,:),'markerfacecolor', color(kk,:), 'markersize', ms(kk), 'Capsize',3); hold on
         
         set(gca, 'XScale', 'log', 'Xlim', [5e-4 2e1])
         
@@ -222,3 +230,9 @@ figure(1)
 set(gcf,'units','normalized')
 h = get(gcf,'position')
 set(gcf,'position', [0.3536    0.2    0.2917    0.5])
+
+%% optionally export to PNG
+cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
+       
+figure(1)
+exportgraphics(gcf,['Fig7.png'])

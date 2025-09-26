@@ -7,7 +7,7 @@ for kk = 1:n
     subplot(4,n,kk)
     plot(texp(:,kk), Lexp(:,kk)*100, 'color', color, 'linewidth', 2, 'linestyle',ls); hold on
     
-    axis([-.35 .15 -.1 4])
+    axis([-.35 .15 -.1 5])
     box off
     
     if kk == 1

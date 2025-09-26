@@ -23,7 +23,7 @@ if fig == 4
     
     titles = {'Maximal activation', 'Submaximal activation'};
     
-elseif fig == 5
+elseif fig == 5 || fig == 6
     
     ISIs = [.316 .316;
             .001 .001];
@@ -36,18 +36,18 @@ elseif fig == 5
     
     titles = {'Maximal activation', 'Submaximal activation'};
     
-elseif fig == 6
-    
-    ISIs = [.001 .316;
-            .100 .001]; % solid
-    
-    AMPs = [0   .0383;
-            .0383       .0383];
-    
-    pCas = [6.2 6.2;
-            6.2 6.2];
-    
-    titles = {'Effect of amplitude', 'Effect of recovery'};
+% elseif fig == 6
+%     
+%     ISIs = [.001 .316;
+%             .100 .001]; % solid
+%     
+%     AMPs = [0   .0383;
+%             .0383       .0383];
+%     
+%     pCas = [6.2 6.2;
+%             6.2 6.2];
+%     
+%     titles = {'Effect of amplitude', 'Effect of recovery'};
 end
 
 ISIs = flip(ISIs,1);
@@ -187,35 +187,45 @@ for j = 1:size(ISIs,1)
             id = t < .15 & t > (-ISI - 2 * dTc - .1);
             oFii = interp1(t(id), oFi(id), texp(:,i));
             
-            RMSDs = sqrt((oFii - Fexp(:,i)).^2) * 100;
+%             RMSDs = sqrt((oFii - Fexp(:,i)).^2) * 100;
             xlabel('Time (s)')
             
-            figure(10)
-            subplot(1,size(ISIs,2),i)
-            plot(texp(:,i), RMSDs, 'linestyle', ls{j}, 'linewidth', 2, 'color', brighten(colors(kk,:), (j-1)/2));
-            hold on
-            box off
-            
-            RMSD = sqrt(sum((oFii - Fexp(:,i)).^2));
-  
-            for ii = 1:(length(tids)-2)
-                plot([tids(ii) tids(ii)], [0 20], ':', 'color', [.5 .5 .5]); hold on
-            end
-            
-            axis([-.3 .15 0 20])
-            xlabel('Time (s)')
-            
-            if i == 1
-                ylabel('RMSD (%F_0)')
-            end
+%             figure(10)
+%             subplot(1,size(ISIs,2),i)
+%             plot(texp(:,i), RMSDs, 'linestyle', ls{j}, 'linewidth', 2, 'color', brighten(colors(kk,:), (j-1)/2));
+%             hold on
+%             box off
+%             
+%             RMSD = sqrt(sum((oFii - Fexp(:,i)).^2));
+%   
+%             for ii = 1:(length(tids)-2)
+%                 plot([tids(ii) tids(ii)], [0 20], ':', 'color', [.5 .5 .5]); hold on
+%             end
+%             
+%             axis([-.3 .15 0 20])
+%             xlabel('Time (s)')
+%             
+%             if i == 1
+%                 ylabel('RMSD (%F_0)')
+%             end
         end
         
         % add vertical lines
+        if ISI > .01
+            phases = {'Isometric','Pre-stretch','Shortening','Recovery','Test stretch','Isometric'};
+        else
+            phases = {'Isometric','Pre-stretch','Shortening','','Test stretch','Isometric'};
+        end
+        
         figure(1)
         subplot(4,size(ISIs,2),i)
         title(titles{i})
         for ii = 1:(length(tids)-2)
             plot([tids(ii) tids(ii)], [0 20], ':', 'color', [.5 .5 .5]); hold on
+            
+            if j == 1
+                text(mean([tids(ii) tids(ii+1)]), 4.5, phases{ii}, 'Fontsize',4,'HorizontalAlignment','center')
+            end
         end
         
         subplot(4,size(ISIs,2),[i+size(ISIs,2) i+size(ISIs,2)*3])        
@@ -242,7 +252,7 @@ legend box off
 cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
        
 figure(1)
-% exportgraphics(gcf,['Fig',num2str(fig),'.png'])
+exportgraphics(gcf,['Fig',num2str(fig),'.png'])
 
 
 
