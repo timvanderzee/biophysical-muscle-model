@@ -38,7 +38,7 @@ aISIs = repmat(ISIs(:), 1, 8);
 load('biophysical_full_alternative_SRS.mat','Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
 
 % average
-iFs = 11;
+iFs = 9:11;
 SRSrel_m = nan(length(th)-1,7,8,iFs(end));
 F0s_m = nan(length(th)-1, 7,8,iFs(end));
 
@@ -54,15 +54,15 @@ end
 
 k = 3;
 figure(1)
-s = surf(aISIs, aAMPs, squeeze(mean(SRSrel_m(k,:,:,11), 4, 'omitnan')),'edgecolor',[1 0 0],'linestyle',':','Facealpha',.7,'linewidth',.5); hold on
+s = surf(aISIs, aAMPs, squeeze(mean(SRSrel_m(k,:,:,iFs), 4, 'omitnan')),'edgecolor',[1 0 0],'linestyle',':','Facealpha',.7,'linewidth',.5); hold on
 set(gca,'XScale','log', 'Clim', [.7 1.2])
-zlim([.7 1.35])
+zlim([.5 1.35])
 
-plot3(aISIs, aAMPs, squeeze(mean(SRSrel(k,:,:,11), 4, 'omitnan')),'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5],'markersize',5); hold on
-plot3(aISIs(1,:), aAMPs(1,:), squeeze(mean(SRSrel_m(k,1,:,11), 4, 'omitnan')),'r-','linewidth',1)
-plot3(aISIs(:,1), aAMPs(:,1), squeeze(mean(SRSrel_m(k,:,1,11), 4, 'omitnan')),'r-','linewidth',1)
-plot3(aISIs(end,:), aAMPs(end,:), squeeze(mean(SRSrel_m(k,end,:,11), 4, 'omitnan')),'r-','linewidth',1)
-plot3(aISIs(:,end), aAMPs(:,end), squeeze(mean(SRSrel_m(k,:,end,11), 4, 'omitnan')),'r-','linewidth',1)
+plot3(aISIs, aAMPs, squeeze(mean(SRSrel(k,:,:,iFs), 4, 'omitnan')),'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5],'markersize',5); hold on
+plot3(aISIs(1,:), aAMPs(1,:), squeeze(mean(SRSrel_m(k,1,:,iFs), 4, 'omitnan')),'r-','linewidth',1)
+plot3(aISIs(:,1), aAMPs(:,1), squeeze(mean(SRSrel_m(k,:,1,iFs), 4, 'omitnan')),'r-','linewidth',1)
+plot3(aISIs(end,:), aAMPs(end,:), squeeze(mean(SRSrel_m(k,end,:,iFs), 4, 'omitnan')),'r-','linewidth',1)
+plot3(aISIs(:,end), aAMPs(:,end), squeeze(mean(SRSrel_m(k,:,end,iFs), 4, 'omitnan')),'r-','linewidth',1)
 
 set(gca,'XScale','log')
 view(230,20)

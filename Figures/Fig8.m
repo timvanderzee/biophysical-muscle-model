@@ -198,7 +198,7 @@ for kk = 1:length(filenames)
     % include all trials
     for iii = 1:3
         
-        if iii == 3
+        if iii == 3 % all trials
             iid = [1 3 4 5 7];
             aid = [1 2 3 4 7];
             y = SRSrel;
@@ -226,7 +226,12 @@ for kk = 1:length(filenames)
 
         oSST(1,iii) = sum((mSRSrel(:,iid,aid) - mmSRSrel).^2,'all','omitnan');
         oSSE(kk,iii) = sum((mSRSrel(:,iid,aid) - mSRSrel_m(:,iid,aid)).^2,'all','omitnan');
+
     end
+    
+    % for each trial individually
+    oSSEs(:,:,:,kk) = (mSRSrel - mSRSrel_m).^2;
+
     
     atitles = {'Passive', 'Low activation', 'Medium activation', 'Max. activation'};
     for iii = 1:4
@@ -297,10 +302,10 @@ clc
 
 R2 = 1 - SSE ./ SST;
 
-n = repmat([4 4 5], 4, 1); % number of data points
-k = repmat([5; 8; 10; 12], 1, 3); % number of parameters
+% n = repmat([4 4 5], 4, 1); % number of data points
+% k = repmat([5; 8; 10; 12], 1, 3); % number of parameters
 
-AIC = 2*k + n.*log(SSE./n);
+% AIC = 2*k + n.*log(SSE./n);
 
 % AICc = AIC + (2*k.^2 + 2*k) ./ (n-k-1)
 
@@ -308,7 +313,7 @@ AIC = 2*k + n.*log(SSE./n);
 tAIC = 2*k(:,1) + sum(n,2) .* log(sum(SSE,2)./sum(n,2));
 
 %% overal R2 and AIC
-id = 2;
+id = 3;
 
 R2 = 1 - oSSE(:,id) ./ oSST(id);
 

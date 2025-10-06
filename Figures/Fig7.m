@@ -2,15 +2,15 @@ clear all; close all; clc
 [username, githubfolder] = get_paths();
 mcodes = [2 1 1; 1 1 3; 1 1 1; 1 2 1];
 
-iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
+% iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
 
-% iFs = [2,3,5,6,7,8,11];
+iFs = [2,3,5,6,7,8,11];
 
 th = [0 .07 .25 .7 1.5];
 
-RMSDs = nan(length(th)-1,7,8,length(iFs), 7, 2);
-F0s = nan(length(th)-1, 7,8,length(iFs), 2);
-RMSDc = nan(length(th)-1,7,8,length(iFs), 7, 2);
+RMSDs = nan(length(th)-1,7,8,11, 7, 4);
+F0s = nan(length(th)-1, 7,8,11, 4);
+RMSDc = nan(length(th)-1,7,8,11, 7, 4);
 % ps = [1, 2, 7;
 %       4, 5, ];
 
@@ -64,7 +64,7 @@ for p = 1:7
         load([filename, '_SRS.mat'],'F0')
         
         % average
-        for k = 1:length(iFs)
+        for k = iFs
             for i = 1:length(th)-1
                 id = F0(:,1,7,k) > th(i) & F0(:,1,7,k) <= th(i+1);
                 
@@ -77,7 +77,7 @@ for p = 1:7
     %% correct for individual offsets
     % correct for individual offset
     for ii = 1:size(mcodes,1)
-        for k = 1:length(iFs)
+        for k = iFs
             RMSDc(:,:,:,k,p,ii) = RMSDs(:,:,:,k,p,ii) - mean(RMSDs(:,:,:,k,p,ii),'all','omitnan') + mean(RMSDs(:,:,:,:,p,ii),'all','omitnan');
         end
     end
@@ -132,9 +132,6 @@ for p = 1:3
             std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'), std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'),...
             std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'), std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'),sym{kk}, 'color', color(kk,:),'markerfacecolor', color(kk,:), 'markersize',  ms(kk), 'Capsize',3); hold on
        
-                
-       
-        
         pCaid = [1 4];
         errorbar(mean(F0s(pCaid,ISIid,AMPid,:, kk), 4, 'omitnan'), mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1), kk),4, 'omitnan'), ...
             std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'), std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'),...
@@ -170,11 +167,11 @@ for p = 1:3
             plot(ones(1,2) * .1, yrange, 'k-.'); hold on
         end
         
-        ISIid = 4:7;
+        ISIid = [4,5,7];
         errorbar(ISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), ...
             squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),1,4, 'omitnan')),sym{kk}, 'color', color(kk,:),'markerfacecolor', [1 1 1], 'markersize',ms(kk), 'Capsize',3); hold on
         
-        ISIid = 1:3;
+        ISIid = [1, 3];
         errorbar(ISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), ...
             squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),1,4, 'omitnan')),sym{kk}, 'color', color(kk,:),'markerfacecolor', color(kk,:), 'markersize', ms(kk), 'Capsize',3); hold on
         
@@ -232,7 +229,7 @@ h = get(gcf,'position')
 set(gcf,'position', [0.3536    0.2    0.2917    0.5])
 
 %% optionally export to PNG
-cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
+% cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
        
 figure(1)
-exportgraphics(gcf,['Fig7.png'])
+% exportgraphics(gcf,['Fig7.png'])
