@@ -185,20 +185,22 @@ end
 % make nice
 figure(1)
 
-titles = {'Isometric recovery', '------------------------------------------------', '------------------------------------------------', ...
-    'Test stretch', '------------------------------------------------', '------------------------------------------------', ...
-    'Overall', '------------------------------------------------', '------------------------------------------------'};
+titles = {'-----------------------------------', 'Recovery', '-----------------------------------', ...
+    '-----------------------------------', 'Test stretch', '-----------------------------------', ...
+    '-----------------------------------', 'Overall',  '-----------------------------------'};
 
 for j = 1:9
     subplot(3,3,j)
+      set(gca, 'Fontsize', 6)
     
-    
-    title(titles{j})
+    title(titles{j},  'Fontsize', 8)
     box off
     %     title(titles{j})
     %     xlabel(xlabels{j})
     %     ylabel(ylabels)
     ylim(yrange)
+    
+  
     
     
     if j < 7
@@ -208,17 +210,17 @@ for j = 1:9
     if j ~= 1 && j ~= 4 && j ~= 7
         set(gca,'Yticklabel', [])
     else
-        ylabel('RMSD (F_{0})')
+        ylabel('RMSD (F_{0})',  'Fontsize', 8)
     end
     
     
     if j == 7
         %         title('Overall')
-        xlabel('Activation (F_{0})')
+        xlabel('Activation (F_{0})',  'Fontsize', 8)
     elseif j == 8
-        xlabel('Amplitude (L_0)')
+        xlabel('Amplitude (L_0)',  'Fontsize', 8)
     elseif j == 9
-        xlabel('Recovery time (s)')
+        xlabel('Recovery time (s)',  'Fontsize', 8)
     end
 end
 
@@ -226,10 +228,10 @@ end
 figure(1)
 set(gcf,'units','normalized')
 h = get(gcf,'position')
-set(gcf,'position', [0.3536    0.2    0.2917    0.5])
+set(gcf,'position', [0.3536    0.2    0.45    0.45])
 
 %% optionally export to PNG
-% cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
+cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
        
 figure(1)
-% exportgraphics(gcf,['Fig7.png'])
+exportgraphics(gcf,['Fig7.png'])

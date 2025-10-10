@@ -9,9 +9,12 @@ for kk = 1:n
     
     axis([-.35 .15 -.1 5])
     box off
+
+    set(gca, 'Fontsize', 6)
     
     if kk == 1
-        ylabel('Length (%L_0)')
+       
+        ylabel('Length (%L_0)', 'Fontsize', 8)
     end
     
     subplot(4,n,[kk+n kk+3*n])
@@ -20,8 +23,11 @@ for kk = 1:n
     axis([-.35 .15 0 max(Fexp(:,kk)*100)*1.2])
     box off
     
+    set(gca, 'Fontsize', 6)
+    
     if kk == 1
-        ylabel('Force (%F_0)')
+        
+        ylabel('Force (%F_0)', 'Fontsize', 8)
     end
         
 end

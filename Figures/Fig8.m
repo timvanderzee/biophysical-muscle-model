@@ -267,10 +267,15 @@ ylabels = 'Relative short-range stiffness';
 
 for j = 1:3
     subplot(1,3,j)
+    set(gca,'Fontsize', 6)
     box off
-    title(titles{j})
-    xlabel(xlabels{j})
-    ylabel(ylabels)
+    title(titles{j},'Fontsize', 8)
+    xlabel(xlabels{j},'Fontsize', 8)
+    
+    if j == 1
+    ylabel(ylabels,'Fontsize', 8)
+    end
+    
     ylim(yrange)
         yline(1, 'k-')
     
@@ -290,11 +295,17 @@ xlim([-.005 .06])
 subplot(133)
 % xline(ISIs(ISIid), 'k:')
 
-xlim([1e-4 1e1])
+xlim([5e-4 2e1])
 
 %%
 figure(1)
-set(gcf,'units','normalized','position',[.1 .1 .3 .3])
+set(gcf,'units','normalized','position',[.1 .1 .45 .3])
+
+%%
+cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
+       
+figure(1)
+exportgraphics(gcf,['Fig8.png'])
 
 return
 %% R2

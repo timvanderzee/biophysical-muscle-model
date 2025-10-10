@@ -1,5 +1,6 @@
 clear all; close all; clc
 [username, githubfolder] = get_paths();
+savefig = 1;
 
 figure(1)
 color = get(gca,'colororder');
@@ -102,24 +103,11 @@ for j = 1:size(ISIs,1)
         dTc = AMPs(j,i) / .4545; % conditioning stretch
         ISI = ISIs(j,i);
         AMP = AMPs(j,i);
-%         tiso = 3;
-        
-%         [tis, Cas, Lis, vis, ts] = create_input(tiso, dTt, dTc, ISI, Ca, 2000);
-        
-        % center around 2nd stretch
-%         t = tis + 3*dTt - tiso;
-        
-        %         subplot(3,3,i)
-        %         plot(t(t<.15), Lis(t<.15)*100, 'linewidth',2)
-        
+
         tids = sort([Tsrel(i,:) .15]);
         
         for kk = 1:size(mcodes,1)
-            
-
-
-%             ISI = ISIs(jj);
-
+   
             tiso = dTt*3+dTc*2+ISI + 2;
 
             cd([output_mainfolder{2}])
@@ -132,53 +120,7 @@ for j = 1:size(ISIs,1)
                 'tis','Cas','vis','Lis','oFi','parms', 'ts')
             
             t = tis + 3*dTt - tiso;
-%             parms = Parms{kk};
-%             
-%             if contains(filenames{kk}, 'Hill')
-%                 x0 = 0;
-%             else
-%                 x0 = [parms.x0(2:end)'; 0];
-%             end
-%             
-%             xp0 = zeros(size(x0));
-%            
-%             
-%             parms.ti = tis;
-%             parms.vts = vis;
-%             parms.Cas = Cas;
-%             parms.Lts = Lis;
-%             
-%             % run simulation
-%             tic
-%             if contains(filenames{kk}, 'Hill')
-%                 sol = ode15i(@(t,y,yp) hill_type_implicit(t,y,yp, parms), [0 max(tis)], x0, xp0, odeopt);
-%             else
-%                 sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(tis)], x0, xp0, odeopt);
-%             end
-%             toc
-%             
-%             % update x0
-%             x0 = sol.y(:,end);
-%             
-%             Liss = Lis * gamma;
-%             ot = sol.x;
-%             
-%             if contains(filenames{kk}, 'Hill')
-%                 lce = sol.y(1,:);
-%                 
-%                 % elastic elements
-%                 Lse = Liss - interp1(sol.x, lce, tis);
-%                 oFi = parms.Fse_func(Lse, parms) * parms.Fscale + parms.Fpe_func(Liss, parms);
-%                 
-%             else
-%                 F = sol.y(1,:) + sol.y(2,:);
-%                 
-%                 oF = F * parms.Fscale;
-%                 
-%                 oFi = interp1(ot, oF, tis) + parms.Fpe_func(Liss, parms);
-%             end
-            
-           
+
             figure(1)
             subplot(4,size(ISIs,2),[i+size(ISIs,2) i+size(ISIs,2)*3])
             plot(t(t<.15), oFi(t<.15)*100, 'linestyle', ls{j}, 'linewidth',2, 'color', brighten(colors(kk,:), (j-1)/2))
@@ -187,8 +129,10 @@ for j = 1:size(ISIs,1)
             id = t < .15 & t > (-ISI - 2 * dTc - .1);
             oFii = interp1(t(id), oFi(id), texp(:,i));
             
+%             set(gca, 'Fontsize', 6)
+            
 %             RMSDs = sqrt((oFii - Fexp(:,i)).^2) * 100;
-            xlabel('Time (s)')
+            xlabel('Time (s)', 'Fontsize', 8)
             
 %             figure(10)
 %             subplot(1,size(ISIs,2),i)
@@ -219,7 +163,7 @@ for j = 1:size(ISIs,1)
         
         figure(1)
         subplot(4,size(ISIs,2),i)
-        title(titles{i})
+        title(titles{i}, 'Fontsize', 8)
         for ii = 1:(length(tids)-2)
             plot([tids(ii) tids(ii)], [0 20], ':', 'color', [.5 .5 .5]); hold on
             
@@ -242,18 +186,23 @@ figure(1)
 subplot(4,size(ISIs,2),[1+size(ISIs,2) 1+size(ISIs,2)*3])       
 
 if fig == 4 || fig == 5
-legend('Data','Hill','XB','XB coop','location','best')
+legend('Data','Hill','XB','XB coop','location','Southwest', 'Fontsize', 8)
 else
-legend('Data','XB coop','XB coop + FD','location','best')
+legend('Data','XB coop','XB coop + FD','location','Southwest', 'Fontsize', 8)
 end
 legend box off
+
+%% size
+figure(1)
+set(gcf, 'units', 'normalized', 'position', [0.2805    0.3958    0.45    0.45])
 
 %% optionally export to PNG
 cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
        
+if savefig
 figure(1)
 exportgraphics(gcf,['Fig',num2str(fig),'.png'])
-
+end
 
 
 
