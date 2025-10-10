@@ -1,4 +1,6 @@
 clear all; close all; clc
+savefig = 0;
+
 [username, githubfolder] = get_paths();
 th = [0 .07 .25 .7 1.5];
 tid = [3 1 7];
@@ -74,6 +76,10 @@ showline = 1;
 % figure(1)
 filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_alternative_SRS'};
 % visualize_model_SRS_simple(filenames, th, id)
+
+th = [0 .07 .15 .3 .5 .7 1.5];
+tid(1) = 4;
+
 for kk = 1:length(filenames)
     
     load(filenames{kk},'Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
@@ -128,19 +134,19 @@ for kk = 1:length(filenames)
      
     
     if showbar
-    pCaid = 2:3;
+    pCaid = 2:(length(th)-2);
     errorbar(mean(F0s_m(pCaid,ISIid,AMPid,:), 4, 'omitnan'), mean(SRSrel_m(pCaid,ISIid,AMPid,:),4, 'omitnan'), ...
         std(SRSrel_m(pCaid,ISIid,AMPid,:),1,4, 'omitnan'), std(SRSrel_m(pCaid,ISIid,AMPid,:),1,4, 'omitnan'),...
         std(F0s_m(pCaid,ISIid,AMPid,:),1,4, 'omitnan'), std(F0s_m(pCaid,ISIid,AMPid,:),1,4, 'omitnan'),sym(kk), 'color', color(kk,:),'markerfacecolor', color(kk,:), 'markersize', ms(kk)); hold on
     
-    pCaid = [1 4];
+    pCaid = [1 length(th)-1];
     errorbar(mean(F0s_m(pCaid,ISIid,AMPid,:), 4, 'omitnan'), mean(SRSrel_m(pCaid,ISIid,AMPid,:),4, 'omitnan'), ...
         std(SRSrel_m(pCaid,ISIid,AMPid,:),1,4, 'omitnan'), std(SRSrel_m(pCaid,ISIid,AMPid,:),1,4, 'omitnan'),...
         std(F0s_m(pCaid,ISIid,AMPid,:),1,4, 'omitnan'), std(F0s_m(pCaid,ISIid,AMPid,:),1,4, 'omitnan'),sym(kk), 'color', color(kk,:),'markerfacecolor', [1 1 1], 'markersize', ms(kk)); hold on
     end
     
     if showline
-        pCaid = 1:4;
+        pCaid = 1:(length(th)-1);
         plot(mean(F0s_m(pCaid,ISIid,AMPid,:), 4, 'omitnan'), mean(SRSrel_m(pCaid,ISIid,AMPid,:),4, 'omitnan'), 'color', color(kk,:), 'linewidth',2); hold on
     end
     
@@ -224,13 +230,13 @@ for kk = 1:length(filenames)
         mSRSrel_m = mean(SRSrel_m, 4, 'omitnan');
         mmSRSrel = mean(mSRSrel(:,iid,aid), 'all', 'omitnan');
 
-        oSST(1,iii) = sum((mSRSrel(:,iid,aid) - mmSRSrel).^2,'all','omitnan');
-        oSSE(kk,iii) = sum((mSRSrel(:,iid,aid) - mSRSrel_m(:,iid,aid)).^2,'all','omitnan');
+%         oSST(1,iii) = sum((mSRSrel(:,iid,aid) - mmSRSrel).^2,'all','omitnan');
+%         oSSE(kk,iii) = sum((mSRSrel(:,iid,aid) - mSRSrel_m(:,iid,aid)).^2,'all','omitnan');
 
     end
     
     % for each trial individually
-    oSSEs(:,:,:,kk) = (mSRSrel - mSRSrel_m).^2;
+%     oSSEs(:,:,:,kk) = (mSRSrel - mSRSrel_m).^2;
 
     
     atitles = {'Passive', 'Low activation', 'Medium activation', 'Max. activation'};
@@ -302,10 +308,13 @@ figure(1)
 set(gcf,'units','normalized','position',[.1 .1 .45 .3])
 
 %%
+
+if savefig
 cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
        
 figure(1)
 exportgraphics(gcf,['Fig8.png'])
+end
 
 return
 %% R2

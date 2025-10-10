@@ -7,7 +7,7 @@ for kk = 1:n
     subplot(4,n,kk)
     plot(texp(:,kk), Lexp(:,kk)*100, 'color', color, 'linewidth', 2, 'linestyle',ls); hold on
     
-    axis([-.35 .15 -.1 5])
+    axis([-.35 .15 -.5 5])
     box off
 
     set(gca, 'Fontsize', 6)

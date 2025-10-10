@@ -1,9 +1,25 @@
 clear all; close all; clc
 [username, githubfolder] = get_paths();
 
+mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
+iFs = [1 2 3, 5,6, 7, 8, 10, 11];
+AMPs = [0 12 38 121 216 288 383 682]/10000;
+ISIs = [1 10 100 316 1000 3160 10000]/1000;
+pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
+Ca = 10.^(-pCas+6);
+fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
+
+visualize = 0;
+
+AMPs = 532 / 10000;
+
+for iii = 1:size(mcodes,1)
+
 % load parameters
-mcode = [1 2 1];
+mcode = mcodes(iii,:);
 [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcode);
+
+% disp(filename)
 
 cd([githubfolder, '\biophysical-muscle-model\Parameters'])
 load(['parms_',filename,'.mat'], 'pparms')
@@ -12,9 +28,6 @@ gamma = 108.3333; % length scaling
 
 %% step 1: force - pCa
 % pCas = flip([4.5 6.1 6.2 6.3 6.4 6.6 9]);
-pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
-Ca = 10.^(-pCas+6);
-
 parms = pparms(1);
 
 if contains(filename, 'Hill')
@@ -28,17 +41,6 @@ xp0 = zeros(size(x0));
 
 
 %% evaluate
-iFs = [1 2 3, 5,6, 7, 8, 10, 11];
-iFs = [8, 10, 11];
-
-AMPs = [0 12 38 121 216 288 383 682]/10000;
-% ISIs = [1 10 100 316 1000]/1000;
-ISIs = [1 10 100 316 1000 3160 10000]/1000;
-
-fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
-
-visualize = 1;
-
 for iF = iFs
     
     parms = pparms(iF);
@@ -183,4 +185,4 @@ for iF = iFs
         end
     end
 end
-
+end

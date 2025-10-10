@@ -192,6 +192,12 @@ legend('Data','XB coop','XB coop + FD','location','Southwest', 'Fontsize', 8)
 end
 legend box off
 
+subplot(4,size(ISIs,2),1)
+text(-.4, 6, 'A', 'fontsize', 12, 'fontweight', 'bold')
+
+subplot(4,size(ISIs,2),2)
+text(-.4, 6, 'B', 'fontsize', 12, 'fontweight', 'bold')
+
 %% size
 figure(1)
 set(gcf, 'units', 'normalized', 'position', [0.2805    0.3958    0.45    0.45])
@@ -203,7 +209,6 @@ if savefig
 figure(1)
 exportgraphics(gcf,['Fig',num2str(fig),'.png'])
 end
-
 
 
 
