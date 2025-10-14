@@ -25,10 +25,16 @@ color = get(gca,'colororder');
 pcolors = flip(parula(7));
 color = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
 
+for i = 1:3
+    subplot(1,3,i);
+    plot([1e-3 1e2], [1 1], 'k--'); hold on
+end
+set(gca, 'XScale', 'log', 'Xlim', [5e-4 2e1])
+
 for kk = 1:length(filenames)
     
     load(filenames{kk},'Stest', 'Scond', 'AMPs', 'pCas', 'ISIs', 'F0')
-
+    
     % average
     SRSrel_m = nan(length(th)-1,length(ISIs),length(AMPs),iFs(end));
     F0s_m = nan(length(th)-1, length(ISIs),length(AMPs),iFs(end));
@@ -43,30 +49,19 @@ for kk = 1:length(filenames)
     end
     
     figure(1)
-    if kk == 1
-        subplot(131)
-        plot(ones(1,2) * mean(F0s_m(tid(1),tid(2),tid(3),:), 4, 'omitnan'), yrange, 'k--'); hold on
-        
-        subplot(132)
-         plot(ones(1,2) * AMPs(tid(3)), yrange, 'k--'); hold on
-        
-         subplot(133)
-         plot(ones(1,2) * ISIs(tid(2)), yrange, 'k--'); hold on
-         
-    end
     
     subplot(131);
     plot(mean(F0s_m(:,tid(2),tid(3),:), 4, 'omitnan'), mean(SRSrel_m(1:end,tid(2),tid(3),:),4, 'omitnan'), 'color', color(kk,:), 'linewidth',2); hold on
     
-    subplot(132);   
+    subplot(132);
     plot(AMPs, squeeze(mean(SRSrel_m(tid(1),tid(2),1:end,:),4, 'omitnan')),'color',color(kk,:), 'linewidth', 2); hold on
     
-    subplot(133);   
+    subplot(133);
     plot(ISIs, squeeze(mean(SRSrel_m(tid(1),1:end,tid(3),:),4, 'omitnan')),'color',color(kk,:),'linewidth',2); hold on
-   
+    
     set(gca, 'XScale', 'log', 'Xlim', [5e-4 2e1])
-
-   
+    
+    
 end
 
 figure(1)
@@ -88,25 +83,13 @@ for j = 1:3
     end
     
     ylim(yrange)
-        yline(1, 'k-')
+
     
     %     for ii = 1:length(AMPs)
     %         yline(mean(SRSrel(pCaid,ISIid,ii,:),4, 'omitnan'), ':','color', color(ii,:))
     %     end
 end
 
-
-subplot(131)
-% xline(mean(F0s(pCaid,jj,ii,:),4, 'omitnan'), 'k:')
-
-subplot(132)
-xlim([-.005 .06])
-% xline(AMPs(AMPid), 'k:')
-
-subplot(133)
-% xline(ISIs(ISIid), 'k:')
-
-xlim([5e-4 2e1])
 
 
 %% Data
@@ -132,7 +115,7 @@ for k = iFs
         id = F0(:,1,7,k) > eth(i) & F0(:,1,7,k) <= eth(i+1);
         
         SRSrel(i,:,:,k) = mean(SRS_post(id,:,:,k),1,'omitnan') ./ mean(SRS_pre(id,:,7,k),'all', 'omitnan');
-%         SRSrel(i,:,:,k) = mean(SRS_post(id,:,:,k),1,'omitnan') ./ mean(SRS_post(id,1,1,k),'all', 'omitnan');
+        %         SRSrel(i,:,:,k) = mean(SRS_post(id,:,:,k),1,'omitnan') ./ mean(SRS_post(id,1,1,k),'all', 'omitnan');
         F0s(i,:,:,k) = mean(F0(id,:,:,k), 1,'omitnan');
     end
 end
@@ -142,11 +125,14 @@ end
 eAMPs = [0 12 38 121 216 288 383 682]/10000;
 eISIs = [1 10 100 316 1000 3160 10000]/1000;
 
-iid = [1 3 4 5 7];
-aid = [1, 3, 4, 7];
+miid = [1 3 4 5 7];
+maid = [1, 3, 4, 7];
 pCaid = 2:3;
 
 subplot(131)
+plot([0 1], mean(SRSrel(3,ISIid, AMPid, :),4,'omitnan') * ones(1,2), ':', 'color', [.7 .7 .7])
+plot(mean(F0s(3,ISIid, AMPid, :),4,'omitnan') * ones(1,2), ylim,  ':', 'color', [.7 .7 .7])
+
 SST(1) = sum((squeeze(mean(SRSrel(:,ISIid, AMPid, :),4,'omitnan')) - mean(mean(SRSrel(:,ISIid, AMPid, :),4,'omitnan'),'omitnan')).^2,'omitnan');
 
 plot(squeeze(F0s(:,1,7,:)), squeeze(SRSrel(:,ISIid,AMPid,:)), '.', 'color', [.5 .5 .5]); hold on
@@ -161,23 +147,26 @@ errorbar(mean(F0s(pCaid,1,7,:),4,'omitnan'), mean(SRSrel(pCaid,ISIid,AMPid,:),4,
     std(F0s(pCaid,1,7,:),1,4,'omitnan'),std(F0s(pCaid,1,7,:),1,4,'omitnan'),'o', 'color', [.5 .5 .5], 'markerfacecolor', [1 1 1]); hold on
 
 subplot(132)
-SST(2) = sum((squeeze(mean(SRSrel(Cid,ISIid, aid, :),4,'omitnan')) - mean(mean(SRSrel(Cid,ISIid, aid, :),4,'omitnan'),'omitnan')).^2,'omitnan');
+plot([.03 1], mean(SRSrel(3,ISIid, AMPid, :),4,'omitnan') * ones(1,2), ':', 'color', [.7 .7 .7])
+plot(AMPs(AMPid) * ones(1,2), ylim,  ':', 'color', [.7 .7 .7])
+SST(2) = sum((squeeze(mean(SRSrel(Cid,ISIid, maid, :),4,'omitnan')) - mean(mean(SRSrel(Cid,ISIid, maid, :),4,'omitnan'),'omitnan')).^2,'omitnan');
 
-plot(eAMPs(aid), squeeze(SRSrel(Cid,ISIid,aid,:)), '.', 'color', [.5 .5 .5]); hold on
-errorbar(eAMPs(aid(1:3)), squeeze(mean(SRSrel(Cid,ISIid,aid(1:3),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,aid(1:3),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [1 1 1])
-errorbar(eAMPs(aid(4)), squeeze(mean(SRSrel(Cid,ISIid,aid(4),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,aid(4),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5])
-
+plot(eAMPs(maid), squeeze(SRSrel(Cid,ISIid,maid,:)), '.', 'color', [.5 .5 .5]); hold on
+errorbar(eAMPs(maid(1:3)), squeeze(mean(SRSrel(Cid,ISIid,maid(1:3),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,maid(1:3),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [1 1 1])
+errorbar(eAMPs(maid(4)), squeeze(mean(SRSrel(Cid,ISIid,maid(4),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,maid(4),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5])
+set(gca, 'yticklabel', {}, 'yColor', 'none')
+    
 subplot(133)
-SST(3) = sum((squeeze(mean(SRSrel(Cid,iid, AMPid, :),4,'omitnan')) - mean(mean(SRSrel(Cid,iid, AMPid, :),4,'omitnan'),'omitnan')).^2,'omitnan');
+plot([1e-3 1e1], mean(SRSrel(3,ISIid, AMPid, :),4,'omitnan') * ones(1,2), ':', 'color', [.7 .7 .7])
+plot(ISIs(ISIid) * ones(1,2), ylim,  ':', 'color', [.7 .7 .7])
 
-semilogx(eISIs(iid), squeeze(SRSrel(Cid,iid,AMPid,:)), '.', 'color', [.5 .5 .5]); hold on
-errorbar(eISIs(iid(4:5)), squeeze(mean(SRSrel(Cid,iid(4:5),AMPid,:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,iid(4:5),AMPid,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [1 1 1])
-errorbar(eISIs(iid(1:3)), squeeze(mean(SRSrel(Cid,iid(1:3),AMPid,:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,iid(1:3),AMPid,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5])
+SST(3) = sum((squeeze(mean(SRSrel(Cid,miid, AMPid, :),4,'omitnan')) - mean(mean(SRSrel(Cid,miid, AMPid, :),4,'omitnan'),'omitnan')).^2,'omitnan');
 
+semilogx(eISIs(miid), squeeze(SRSrel(Cid,miid,AMPid,:)), '.', 'color', [.5 .5 .5]); hold on
+errorbar(eISIs(miid(4:5)), squeeze(mean(SRSrel(Cid,miid(4:5),AMPid,:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,miid(4:5),AMPid,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [1 1 1])
+errorbar(eISIs(miid(1:3)), squeeze(mean(SRSrel(Cid,miid(1:3),AMPid,:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,miid(1:3),AMPid,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5])
+set(gca, 'yticklabel', {}, 'yColor', 'none')
 %%
-figure(1)
-set(gcf,'units','normalized','position',[.1 .1 .45 .25])
-
 
 %% A, B labels
 figure(1)
@@ -189,7 +178,7 @@ text(-.008, 1.55, 'B', 'fontsize', 12,'fontweight','bold')
 
 subplot(133)
 text(1e-4, 1.55, 'C', 'fontsize', 12,'fontweight','bold')
-    
+
 
 %% calc and diplay R2
 % selected conditions
@@ -204,7 +193,7 @@ sAMP = .0383;
 for kk = 1:length(filenames)
     
     load(filenames{kk},'Stest', 'Scond', 'AMPs', 'pCas', 'ISIs', 'F0')
-
+    
     % average
     SRSrel_m = nan(length(th)-1,length(ISIs),length(AMPs),iFs(end));
     F0s_m = nan(length(th)-1, length(ISIs),length(AMPs),iFs(end));
@@ -248,154 +237,53 @@ for i = 1:3
     plot(xl(i,:), [yl(i) yl(i)]-2*dy, 'color', color(3,:),'linewidth',2)
     plot(xl(i,:), [yl(i) yl(i)]-3*dy, 'color', color(4,:),'linewidth',2)
     
-
+    
     text(xl(i,1), yl(i)+dy, 'Model', 'fontsize',8)
     text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)+dy,'R^2', 'fontsize',8,'horizontalalignment','center')
     
     text(xl(i,2) + diff(xl(i,:)) * .1, yl(i), 'Hill', 'fontsize',6)
     text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i), num2str(round(R2(1,i),2),3), 'fontsize',6,'horizontalalignment','center')
-
+    
     text(xl(i,2) + diff(xl(i,:)) * .1, yl(i)-dy, 'XB', 'fontsize',6)
     text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-dy, num2str(round(R2(2,i),2),3), 'fontsize',6,'horizontalalignment','center')
-
+    
     text(xl(i,2) + diff(xl(i,:)) * .1, yl(i)-2*dy, 'XB coop', 'fontsize',6)
     text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-2*dy, num2str(round(R2(3,i),2),3), 'fontsize',6,'horizontalalignment','center')
-
+    
     text(xl(i,2) + diff(xl(i,:)) * .1, yl(i)-3*dy, 'XB coop + FD', 'fontsize',6)
     text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-3*dy, num2str(round(R2(4,i),2),3), 'fontsize',6,'horizontalalignment','center')
 end
 
 subplot(131)
+text(.8, 0.5, 'HD', 'horizontalalignment','center', 'fontsize',8)
 text(.9, 0.5, 'HD', 'horizontalalignment','center', 'fontsize',8)
-text(1, 0.5, 'HD', 'horizontalalignment','center', 'fontsize',8)
-plot(1, 0.5, 'rx','linewidth',2)
+plot(.9, 0.5, 'rx','linewidth',2)
 
-errorbar(.9, .4, .05, 'o', 'color', [.5 .5 .5], 'markersize', 5, 'markerfacecolor', [.5 .5 .5])
-errorbar(1, .4, .05, 'o', 'color', [.5 .5 .5], 'markersize', 5, 'markerfacecolor', [1 1 1])
+errorbar(.8, .4, .05, 'o', 'color', [.5 .5 .5], 'markersize', 5, 'markerfacecolor', [.5 .5 .5])
+errorbar(.9, .4, .05, 'o', 'color', [.5 .5 .5], 'markersize', 5, 'markerfacecolor', [1 1 1])
 
-xlim([0 1.05])
+xlim([0 1.01])
 
 subplot(132)
-xlim([-.001 .05])
+xlim([0 .05])
+
+subplot(133)
+xlim([1e-3 1e1])
+
+%% set size
+figure(1)
+set(gcf,'units','centimeters','position',[10 10 19 7])
 
 %% save and export
 
+
 if savefig
-cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
-       
-figure(1)
-exportgraphics(gcf,'Fig8.png')
-end
-
-return
-
-%% calc AIC
-
-    % include all trials
-%     for iii = 1:3
-%         
-%         if iii == 3 % all trials
-%             iid = [1 3 4 5 7];
-%             aid = [1 2 3 4 7];
-%             y = SRSrel;
-%             
-%         elseif iii == 2 % no HD
-%             iid = [1 3 4 5 7];
-%             aid = [1 2 3 4 7];
-%             
-%             % exclude high history dependent trials
-%             y = SRSrel;
-%             y(:,[1 3 4], 7,:) = nan;
-%             
-%         elseif iii == 1 % HD
-%             y = SRSrel;
-% 
-%             iid = [1 3 4];
-%             aid = 7; 
-%         end
-%         
-%         % over all conditions in the dataset
-%         mSRSrel = mean(y, 4, 'omitnan');
-%         N(kk,iii) = sum(isfinite(mSRSrel(:,iid,aid)),'all','omitnan');
-%         mSRSrel_m = mean(SRSrel_m, 4, 'omitnan');
-%         mmSRSrel = mean(mSRSrel(:,iid,aid), 'all', 'omitnan');
-% 
-% %         oSST(1,iii) = sum((mSRSrel(:,iid,aid) - mmSRSrel).^2,'all','omitnan');
-% %         oSSE(kk,iii) = sum((mSRSrel(:,iid,aid) - mSRSrel_m(:,iid,aid)).^2,'all','omitnan');
-% 
-%     end
+    cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
     
-    % for each trial individually
-%     oSSEs(:,:,:,kk) = (mSRSrel - mSRSrel_m).^2;
-% 
-%     
-%     atitles = {'Passive', 'Low activation', 'Medium activation', 'Max. activation'};
-%     for iii = 1:4
-%         figure(2)
-%         subplot(4,4,iii + (kk-1)*4)
-%         surf(aAMPs(iid,aid)*100, aISIs(iid,aid), squeeze((mSRSrel(iii,iid,aid) - mSRSrel_m(iii,iid,aid)).^2))
-%         set(gca,'YScale','log', 'Clim', [0 .1])
-%         zlim([0 .2])
-%         
-%         yt = get(gca,'Ytick');
-%         set(gca,'Yticklabel',yt);
-%         
-%         if kk == 1
-%             title(atitles{iii})
-%         end
-%         
-%         if iii > 1
-%             set(gca,'Zticklabel', [])
-%         end
-%         
-%         if kk < 4
-%             set(gca,'Xticklabel', [], 'Yticklabel', [])
-%         end
-%     end
-
-%% R2
-clc
-
-R2 = 1 - SSE ./ SST;
-
-% n = repmat([4 4 5], 4, 1); % number of data points
-% k = repmat([5; 8; 10; 12], 1, 3); % number of parameters
-
-% AIC = 2*k + n.*log(SSE./n);
-
-% AICc = AIC + (2*k.^2 + 2*k) ./ (n-k-1)
-
-%% first sum, then compute AIC
-tAIC = 2*k(:,1) + sum(n,2) .* log(sum(SSE,2)./sum(n,2));
-
-%% overal R2 and AIC
-id = 3;
-
-R2 = 1 - oSSE(:,id) ./ oSST(id);
-
-% n = numel(mSRSrel_m);
-n = N(1,id);
-
-k = [5 8 10 12]';
-
-AIC = 2*k + n.*log(oSSE(:,id)./n);
-
-%% visualize
-close all
-figure(10)
-
-% set(gca,'Colororder',color)
-b = bar(oSSE'./N');
-
-for i = 1:4
-    set(b(i), 'FaceColor', color(i,:))
+    figure(1)
+    exportgraphics(gcf,'Fig8.png')
 end
 
-set(gca, 'Xticklabel', {'HD trials', 'No HD trials', 'All trials'})
-ylabel('Mean SRS error')
-box off
-legend('Hill','XB no coop', 'XB coop', 'XB coop + FD', 'location', 'best')
-legend boxoff
 
 
 

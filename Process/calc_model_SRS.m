@@ -2,6 +2,7 @@ clear all; close all; clc
 [username, githubfolder] = get_paths();
 
 mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
+mcodes = [1 1 1];
 iFs = [1 2 3, 5,6, 7, 8, 10, 11];
 AMPs = [0 12 38 121 216 288 383 532 682]/10000;
 ISIs = [1 10 50 100 200 316 500 1000 3160 10000]/1000;
@@ -110,7 +111,7 @@ end
 %% save
 cd(githubfolder)
 cd('biophysical-muscle-model')
-cd('Model output')
+cd('Model output\SRS')
 save([filename, '_SRS.mat'])
 
 

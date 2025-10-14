@@ -30,28 +30,38 @@ end
 
 %%
 % summary plot
-AMPs = [0 12 38 121 216 288 383 682]/10000;
-ISIs = [1 10 100 316 1000 3160 10000]/1000;
-aAMPs = repmat(AMPs, 7, 1);
-aISIs = repmat(ISIs(:), 1, 8);
+eAMPs = [0 12 38 121 216 288 383 682]/10000;
+eISIs = [1 10 100 316 1000 3160 10000]/1000;
+aeAMPs = repmat(eAMPs, 7, 1);
+aeISIs = repmat(eISIs(:), 1, 8);
+
 
 % model  
 modelnames = {'Hill_regular','biophysical_no_regular', 'biophysical_full_regular', 'biophysical_full_alternative'};
+titles = {'Hill model', 'XB model', 'XB coop', 'XB coop + FD'};
+
 % modelnames =  {'biophysical_full_alternative'};
 
 for ii = 1:length(modelnames)
     modelname = modelnames{ii};
     
+    cd([githubfolder, '\biophysical-muscle-model\Model output\SRS\']);
 load([modelname,'_SRS.mat'],'Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
+
+amAMPs = repmat(AMPs, length(ISIs), 1);
+amISIs = repmat(ISIs(:), 1, length(AMPs));
 
 % average
 % iFsm = 9:11;
 iFsm = [2,3,5,6,7,8,11];
 iFsd = 1:11;
 
-SRSrel_m = nan(length(th)-1,7,8,iFs(end));
-F0s_m = nan(length(th)-1, 7,8,iFs(end));
+SRSrel_m = nan(length(th)-1,length(ISIs),length(AMPs),iFs(end));
+F0s_m = nan(length(th)-1, length(ISIs),length(AMPs),iFs(end));
 
+miid = ismember(ISIs,  eISIs);
+maid = ismember(AMPs,  eAMPs);
+  
 for k = iFsm
     for i = 1:length(th)-1
         id = F0(:,1,7,k) > th(i) & F0(:,1,7,k) <= th(i+1);
@@ -64,39 +74,60 @@ end
 
 k = 2;
 figure(1)
-nexttile
-s = surf(aISIs, aAMPs, squeeze(mean(SRSrel_m(k,:,:,iFsm), 4, 'omitnan')),'edgecolor',[1 0 0],'linestyle',':','Facealpha',.7,'linewidth',.5); hold on
-set(gca,'XScale','log', 'Clim', [.7 1.1])
-zlim([.5 1.1])
+subplot(1,4,ii)
+surf(amAMPs, amISIs, squeeze(mean(SRSrel_m(k,:,:,iFsm), 4, 'omitnan')),'edgecolor',[1 .5 .5],'linestyle','-','Facealpha',.7,'linewidth',.5); hold on
+surf(aeAMPs,aeISIs, 0*ones(size(squeeze(aeISIs))),'facecolor', [.9 .9 .9],'edgecolor', 'none'); hold on
 
-plot3(aISIs, aAMPs, squeeze(mean(SRSrel(k,:,:,iFsd), 4, 'omitnan')),'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5],'markersize',5); hold on
-plot3(aISIs(1,:), aAMPs(1,:), squeeze(mean(SRSrel_m(k,1,:,iFsm), 4, 'omitnan')),'r-','linewidth',1)
-plot3(aISIs(:,1), aAMPs(:,1), squeeze(mean(SRSrel_m(k,:,1,iFsm), 4, 'omitnan')),'r-','linewidth',1)
-plot3(aISIs(end,:), aAMPs(end,:), squeeze(mean(SRSrel_m(k,end,:,iFsm), 4, 'omitnan')),'r-','linewidth',1)
-plot3(aISIs(:,end), aAMPs(:,end), squeeze(mean(SRSrel_m(k,:,end,iFsm), 4, 'omitnan')),'r-','linewidth',1)
+plot3(aeAMPs(:,[5:6, 8]), aeISIs(:,[5:6, 8]), 0*ones(size(aeAMPs(:,[5:6, 8]))), 'color', [.8 .8 1],'linewidth',2)
+plot3(aeAMPs([2 6],:)', aeISIs([2 6],:)', 0*ones(size(aeAMPs([2 6],:)))', 'color', [.8 .8 1],'linewidth',2)
 
-set(gca,'XScale','log')
+plot3(aeAMPs(:,[2:4, 7]), aeISIs(:,[2:4, 7]), 0*ones(size(aeAMPs(:,[2:4, 7]))), 'color', [.6 .6 1],'linewidth',2)
+plot3(aeAMPs([1 3:5 7],:)', aeISIs([1 3:5 7],:)', 0*ones(size(aeAMPs([1 3:5 7],:)))', 'color', [.6 .6 1],'linewidth',2)
+
+plot3([aeAMPs(1,7) aeAMPs(1,7)], [aeISIs(3,1) aeISIs(3,1)], [0 .05], 'r-', 'linewidth',2)
+plot3([aeAMPs(1,1) aeAMPs(1,1)], [aeISIs(1,1) aeISIs(1,1)], [0 .05], 'r-', 'linewidth',2)
+
+set(gca,'YScale','log', 'Clim', [.7 1.1], 'xtick', 0:.02:.1, 'ytick', [1e-3 1e-1 1e1]);
+zlim([0 1.1])
+
+
+plot3(aeAMPs, aeISIs, squeeze(mean(SRSrel(k,:,:,iFsd), 4, 'omitnan')),'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5],'markersize',3); hold on
+
+plot3(amAMPs(1,:), amISIs(1,:), squeeze(mean(SRSrel_m(k,1,:,iFsm), 4, 'omitnan')),'r-','linewidth',1.5)
+plot3(amAMPs(:,1), amISIs(:,1), squeeze(mean(SRSrel_m(k,:,1,iFsm), 4, 'omitnan')),'r-','linewidth',1.5)
+plot3(amAMPs(end,:), amISIs(end,:), squeeze(mean(SRSrel_m(k,end,:,iFsm), 4, 'omitnan')),'r-','linewidth',1.5)
+plot3(amAMPs(:,end), amISIs(:,end), squeeze(mean(SRSrel_m(k,:,end,iFsm), 4, 'omitnan')),'r-','linewidth',1.5)
+
+set(gca,'YScale','log')
 
 %% compute R2
-SSE = sum((mean(SRSrel_m(k,:,:,iFsm), 4, 'omitnan') - mean(SRSrel(k,:,:,iFsd), 4, 'omitnan')).^2,'all', 'omitnan')
+SSE = sum((mean(SRSrel_m(k,miid,maid,iFsm), 4, 'omitnan') - mean(SRSrel(k,:,:,iFsd), 4, 'omitnan')).^2,'all', 'omitnan')
 SST = sum((mean(SRSrel(k,:,:,iFsd), 'all','omitnan') - mean(SRSrel(k,:,:,iFsd), 4, 'omitnan')).^2,'all', 'omitnan')
 
 R2 = 1 - SSE./SST
 
 set(gca,'fontsize',6)
-xlabel('Recovery time (s)','Fontsize',8)
-ylabel('Amplitude (L_0)','Fontsize',8)
+title(titles{ii}, 'fontsize', 8)
+if ii == 1
 zlabel('Relative short-range stiffness','Fontsize',8)
-view(230,20)
+else
+    set(gca, 'zticklabel', {}, 'ZColor', 'none')
+end
+
+view(230-180,20)
+
+text(.07, 1e0, 1.4, ['R^2 = ',num2str(round(R2, 2), 3)], 'fontsize', 6, 'horizontalalignment', 'center')
+
 
 end
 
 %%
 figure(1)
 
-set(gcf,'units','normalized','position', [.2 .2 .6 .2])
+set(gcf,'units','centimeters','position',[10 10 19 7])
 
-% cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
+%%
+cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
        
 % figure(1)
-% exportgraphics(gcf,['Fig9B.png'])
+exportgraphics(gcf,['Fig9.png'])
