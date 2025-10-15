@@ -72,24 +72,27 @@ for k = iFsm
     end
 end
 
+% activation
 k = 2;
-figure(1)
+
+fig = figure(1)
 subplot(1,4,ii)
 surf(amAMPs, amISIs, squeeze(mean(SRSrel_m(k,:,:,iFsm), 4, 'omitnan')),'edgecolor',[1 .5 .5],'linestyle','-','Facealpha',.7,'linewidth',.5); hold on
-surf(aeAMPs,aeISIs, 0*ones(size(squeeze(aeISIs))),'facecolor', [.9 .9 .9],'edgecolor', 'none'); hold on
+surf(aeAMPs,aeISIs, 0*ones(size(squeeze(aeISIs))),'facecolor', [1 1 1],'edgecolor', 'none'); hold on
+surf(aeAMPs(1:4,7:8),aeISIs(1:4,7:8), 0*ones(size(squeeze(aeISIs(1:4,7:8)))),'facecolor', [.9 .9 .9],'edgecolor', 'none'); hold on
 
-plot3(aeAMPs(:,[5:6, 8]), aeISIs(:,[5:6, 8]), 0*ones(size(aeAMPs(:,[5:6, 8]))), 'color', [.8 .8 1],'linewidth',2)
-plot3(aeAMPs([2 6],:)', aeISIs([2 6],:)', 0*ones(size(aeAMPs([2 6],:)))', 'color', [.8 .8 1],'linewidth',2)
+plot3(aeAMPs(:,[5:6, 8]), aeISIs(:,[5:6, 8]), 0*ones(size(aeAMPs(:,[5:6, 8]))), 'color', [.8 .8 .8],'linewidth',2)
+plot3(aeAMPs([2 6],:)', aeISIs([2 6],:)', 0*ones(size(aeAMPs([2 6],:)))', 'color', [.8 .8 .8],'linewidth',2)
 
-plot3(aeAMPs(:,[2:4, 7]), aeISIs(:,[2:4, 7]), 0*ones(size(aeAMPs(:,[2:4, 7]))), 'color', [.6 .6 1],'linewidth',2)
-plot3(aeAMPs([1 3:5 7],:)', aeISIs([1 3:5 7],:)', 0*ones(size(aeAMPs([1 3:5 7],:)))', 'color', [.6 .6 1],'linewidth',2)
+plot3(aeAMPs(:,[2:4, 7]), aeISIs(:,[2:4, 7]), 0*ones(size(aeAMPs(:,[2:4, 7]))), 'color', [.6 .6 .6],'linewidth',2)
+plot3(aeAMPs([1 3:5 7],:)', aeISIs([1 3:5 7],:)', 0*ones(size(aeAMPs([1 3:5 7],:)))', 'color', [.6 .6 .6],'linewidth',2)
 
-plot3([aeAMPs(1,7) aeAMPs(1,7)], [aeISIs(3,1) aeISIs(3,1)], [0 .05], 'r-', 'linewidth',2)
-plot3([aeAMPs(1,1) aeAMPs(1,1)], [aeISIs(1,1) aeISIs(1,1)], [0 .05], 'r-', 'linewidth',2)
+plot3([aeAMPs(3,7) aeAMPs(3,7)], [aeISIs(3,7) aeISIs(3,7)], [0 squeeze(mean(SRSrel(k,3,7,iFsd), 4, 'omitnan'))], '-', 'linewidth',1.5, 'color', [.6 .6 .6])
+plot3([aeAMPs(1,1) aeAMPs(1,1)], [aeISIs(1,1) aeISIs(1,1)], [0 squeeze(mean(SRSrel(k,1,1,iFsd), 4, 'omitnan'))], '-', 'linewidth',1.5, 'color', [.6 .6 .6])
 
-set(gca,'YScale','log', 'Clim', [.7 1.1], 'xtick', 0:.02:.1, 'ytick', [1e-3 1e-1 1e1]);
+set(gca,'YScale','log', 'Clim', [.6 1.1], 'xtick', 0:.02:.1, 'ytick', [1e-3 1e-1 1e1]);
 zlim([0 1.1])
-
+axis([0 .07 8e-4 1.5e1 0 1.1])
 
 plot3(aeAMPs, aeISIs, squeeze(mean(SRSrel(k,:,:,iFsd), 4, 'omitnan')),'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5],'markersize',3); hold on
 
@@ -124,7 +127,14 @@ end
 %%
 figure(1)
 
+subplot(141)
+h = axes(fig,'visible','off');
+set(h, 'Clim', [.6 1.1])
+g = colorbar(h, 'location', 'WestOutside')
+
+
 set(gcf,'units','centimeters','position',[10 10 19 7])
+set(g,'units','centimeters','position',[5 2.5 0.2 1.7], 'fontsize', 6)
 
 %%
 cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])

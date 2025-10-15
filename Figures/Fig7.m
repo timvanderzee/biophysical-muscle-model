@@ -13,10 +13,7 @@ th = [0 .07 .25 .7 1.5];
 RMSDs = nan(length(th)-1,7,8,11, 7, 4);
 F0s = nan(length(th)-1, 7,8,11, 4);
 RMSDc = nan(length(th)-1,7,8,11, 7, 4);
-% ps = [1, 2, 7;
-%       4, 5, ];
 
-% ps = [4, 5, 7];
 
 for p = 1:7
     
@@ -26,52 +23,28 @@ for p = 1:7
         
         load([filename, '_RMSD.mat'], 'RMSD', 'AMPs', 'ISIs')
         
-        %% remove some trials
-        RMSD(1,:,AMPs < .03,2,:) = nan;
-        RMSD(1,ISIs > 1,:,2,:) = nan;
+        sAMPs = AMPs;
+        sISIs = ISIs;
         
-        % %% one fiber, all conditions
-        % close all
-        % aAMPs = repmat(AMPs, 7, 1);
-        % aISIs = repmat(ISIs(:), 1, 8);
-        %
-        % iF = 2;
-        % for i = 1:size(RMSD,1)
-        %     eps = squeeze(RMSD(i,:,:,iF));
-        %
-        %     figure(1)
-        %     nexttile
-        %     surf(aAMPs, aISIs, eps)
-        %     set(gca, 'Yscale', 'log')
-        %
-        % end
-        %
-        % %% all fibers, average over pCa
-        % iF = 2;
-        % close all
-        %
-        % for i = iFs
-        %     eps = squeeze(mean(RMSD(:,:,:,i),1,'omitnan'));
-        %
-        %     figure(1)
-        %     nexttile
-        %     surf(aAMPs, aISIs, eps)
-        %     set(gca, 'Yscale', 'log')
-        %
-        %     xlabel('AMP')
-        %     ylabel('ISI')
-        % end
+        %% remove some trials
+        RMSD(1,:,sAMPs < .03,2,:) = nan;
+        RMSD(1,sISIs > 1,:,2,:) = nan;
         
         %% average over identified force levels
-        load([filename, '_SRS.mat'],'F0')
+        sISI = .001;
+        sAMP = .0383;
+        
+        load([filename, '_SRS.mat'],'F0', 'AMPs', 'ISIs')
+        
+%         sACTis,ISIs==sISI, AMPs==sAMP
         
         % average
         for k = iFs
             for i = 1:length(th)-1
-                id = F0(:,1,7,k) > th(i) & F0(:,1,7,k) <= th(i+1);
+                id = F0(:,ISIs == sISI, AMPs == sAMP,k) > th(i) & F0(:,ISIs == sISI, AMPs == sAMP,k) <= th(i+1);
                 
                 RMSDs(i,:,:,k, p, ii) = mean(RMSD(id,:,:,k,p),1,'omitnan');
-                F0s(i,:,:,k, ii) = mean(F0(id,:,:,k), 1,'omitnan');
+                F0s(i,:,:,k, ii) = mean(F0(id,ismember(ISIs, sISIs),ismember(AMPs, sAMPs),k), 1,'omitnan');
             end
         end
     end
@@ -152,40 +125,42 @@ for p = 1:3
         pCaid = 3;
         
         subplot(3,3,2 + (p-1)*3);
-           plot(AMPs(AMPid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),4, 'omitnan')), '--','color', color(kk,:)); hold on
+           plot(sAMPs(AMPid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),4, 'omitnan')), '--','color', color(kk,:)); hold on
          
         if kk == 1
             plot(ones(1,2) * 0.0383, yrange, 'k-.'); hold on
         end
         
         AMPid = [2, 3, 4];
-        errorbar(AMPs(AMPid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),4, 'omitnan')), ...
+        errorbar(sAMPs(AMPid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),4, 'omitnan')), ...
             squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),1,4, 'omitnan')),sym{kk}, 'color', color(kk,:),'markerfacecolor', [1 1 1], 'markersize', ms(kk), 'Capsize',3); hold on
         
         AMPid = 7;
-        errorbar(AMPs(AMPid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),4, 'omitnan')), ...
+        errorbar(sAMPs(AMPid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),4, 'omitnan')), ...
             squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),1,4, 'omitnan')),sym{kk}, 'color', color(kk,:),'markerfacecolor', color(kk,:), 'markersize', ms(kk), 'Capsize',3); hold on
+        
+        xlim([0 .0383])
         
         % effect of ISI
         ISIid = [1, 3:5, 7];
         AMPid = 7;
         
         subplot(3,3,3 + (p-1)*3);
-              plot(ISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), '--','color', color(kk,:)); hold on
+              plot(sISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), '--','color', color(kk,:)); hold on
           
         if kk == 1
             plot(ones(1,2) * .1, yrange, 'k-.'); hold on
         end
         
-        ISIid = [4,5,7];
-        errorbar(ISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), ...
+        ISIid = [5,7];
+        errorbar(sISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), ...
             squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),1,4, 'omitnan')),sym{kk}, 'color', color(kk,:),'markerfacecolor', [1 1 1], 'markersize',ms(kk), 'Capsize',3); hold on
         
-        ISIid = [1, 3];
-        errorbar(ISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), ...
+        ISIid = [1, 3, 4];
+        errorbar(sISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), ...
             squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),1,4, 'omitnan')),sym{kk}, 'color', color(kk,:),'markerfacecolor', color(kk,:), 'markersize', ms(kk), 'Capsize',3); hold on
         
-        set(gca, 'XScale', 'log', 'Xlim', [5e-4 2e1])
+        set(gca, 'XScale', 'log', 'Xlim', [1e-3 1e1])
         
         
     end
@@ -211,8 +186,10 @@ for j = 1:9
     
     if j ~= 1 && j ~= 4 && j ~= 7
         set(gca,'Yticklabel', [])
+        set(gca, 'Ycolor', 'none')
     else
         ylabel('RMSD (F_{0})',  'Fontsize', 8)
+        xlim([0 1.02])
     end
     
     if j == 7
@@ -223,46 +200,49 @@ for j = 1:9
     elseif j == 9
         xlabel('Recovery time (s)',  'Fontsize', 8)
     end
+    
+%     if 
+    
 end
 
 %% titles
 figure(1)
 
 subplot(331)
-subtitle('Effect of activation', 'fontsize', 8)
-title('Isometric recovery', 'fontsize', 8)
+title('Effect of activation', 'fontsize', 8)
+subtitle('Isometric recovery', 'fontsize', 8)
 
 subplot(332)
-title('Isometric recovery', 'fontsize', 8)
-subtitle('Effect of amplitude', 'fontsize', 8)
+subtitle('Isometric recovery', 'fontsize', 8)
+title('Effect of amplitude', 'fontsize', 8)
 
 subplot(333)
-title('Isometric recovery', 'fontsize', 8)
-subtitle('Effect of recovery', 'fontsize', 8)
+subtitle('Isometric recovery', 'fontsize', 8)
+title('Effect of recovery', 'fontsize', 8)
 
 subplot(334)
-subtitle('Effect of activation', 'fontsize', 8)
-title('Test stretch', 'fontsize', 8)
+% subtitle('Effect of activation', 'fontsize', 8)
+subtitle('Test stretch', 'fontsize', 8)
 
 subplot(335)
-subtitle('Effect of amplitude', 'fontsize', 8)
-title('Test stretch', 'fontsize', 8)
+% subtitle('Effect of amplitude', 'fontsize', 8)
+subtitle('Test stretch', 'fontsize', 8)
 
 subplot(336)
-subtitle('Effect of recovery', 'fontsize', 8)
-title('Test stretch', 'fontsize', 8)
+% subtitle('Effect of recovery', 'fontsize', 8)
+subtitle('Test stretch', 'fontsize', 8)
 
 subplot(337)
-subtitle('Effect of activation', 'fontsize', 8)
-title('Overall', 'fontsize', 8)
+% subtitle('Effect of activation', 'fontsize', 8)
+subtitle('Overall', 'fontsize', 8)
 
 subplot(338)
-subtitle('Effect of amplitude', 'fontsize', 8)
-title('Overall', 'fontsize', 8)
+% subtitle('Effect of amplitude', 'fontsize', 8)
+subtitle('Overall', 'fontsize', 8)
 
 subplot(339)
-subtitle('Effect of recovery', 'fontsize', 8)
-title('Overall', 'fontsize', 8)
+% subtitle('Effect of recovery', 'fontsize', 8)
+subtitle('Overall', 'fontsize', 8)
 
 %% make manual legend
 % if ishandle(2), close(2); end; figure(2)
@@ -287,9 +267,8 @@ plot(.8, .14, 'rx', 'linewidth', 2)
 
 %%
 figure(1)
-set(gcf,'units','normalized')
-h = get(gcf,'position')
-set(gcf,'position', [0.3536    0.2    0.45    0.6])
+set(gcf,'units','centimeters','position',[10 10 14 14])
+
 
 %% A, B labels
 subplot(331)

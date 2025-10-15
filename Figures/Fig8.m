@@ -50,9 +50,20 @@ for kk = 1:length(filenames)
     
     figure(1)
     
+    for i = iFs
+        subplot(131);
+        plot(F0s_m(:,tid(2),tid(3),i), SRSrel_m(1:end,tid(2),tid(3),i), '-', 'color', [color(kk,:) .2], 'linewidth',.1); hold on
+
+        subplot(132);
+        plot(AMPs, squeeze(SRSrel_m(tid(1),tid(2),1:end,i)),'-', 'color',[color(kk,:) .2], 'linewidth', .1); hold on
+
+        subplot(133);
+        plot(ISIs, squeeze(SRSrel_m(tid(1),1:end,tid(3),i)),'-', 'color',[color(kk,:) .2],'linewidth',.1); hold on
+    end
+    
     subplot(131);
     plot(mean(F0s_m(:,tid(2),tid(3),:), 4, 'omitnan'), mean(SRSrel_m(1:end,tid(2),tid(3),:),4, 'omitnan'), 'color', color(kk,:), 'linewidth',2); hold on
-    
+   
     subplot(132);
     plot(AMPs, squeeze(mean(SRSrel_m(tid(1),tid(2),1:end,:),4, 'omitnan')),'color',color(kk,:), 'linewidth', 2); hold on
     
@@ -60,7 +71,8 @@ for kk = 1:length(filenames)
     plot(ISIs, squeeze(mean(SRSrel_m(tid(1),1:end,tid(3),:),4, 'omitnan')),'color',color(kk,:),'linewidth',2); hold on
     
     set(gca, 'XScale', 'log', 'Xlim', [5e-4 2e1])
-    
+
+
     
 end
 
@@ -129,6 +141,8 @@ miid = [1 3 4 5 7];
 maid = [1, 3, 4, 7];
 pCaid = 2:3;
 
+ms = 5;
+
 subplot(131)
 plot([0 1], mean(SRSrel(3,ISIid, AMPid, :),4,'omitnan') * ones(1,2), ':', 'color', [.7 .7 .7])
 plot(mean(F0s(3,ISIid, AMPid, :),4,'omitnan') * ones(1,2), ylim,  ':', 'color', [.7 .7 .7])
@@ -139,12 +153,12 @@ plot(squeeze(F0s(:,1,7,:)), squeeze(SRSrel(:,ISIid,AMPid,:)), '.', 'color', [.5 
 
 errorbar(mean(F0s(pCaid,1,7,:),4,'omitnan'), mean(SRSrel(pCaid,ISIid,AMPid,:),4,'omitnan'),...
     std(SRSrel(pCaid,ISIid,AMPid,:),1,4,'omitnan'),std(SRSrel(pCaid,ISIid,AMPid,:),1,4,'omitnan'),...
-    std(F0s(pCaid,1,7,:),1,4,'omitnan'),std(F0s(pCaid,1,7,:),1,4,'omitnan'),'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5]); hold on
+    std(F0s(pCaid,1,7,:),1,4,'omitnan'),std(F0s(pCaid,1,7,:),1,4,'omitnan'),'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5], 'markersize', ms); hold on
 
 pCaid = [1 4];
 errorbar(mean(F0s(pCaid,1,7,:),4,'omitnan'), mean(SRSrel(pCaid,ISIid,AMPid,:),4,'omitnan'),...
     std(SRSrel(pCaid,ISIid,AMPid,:),1,4,'omitnan'),std(SRSrel(pCaid,ISIid,AMPid,:),1,4,'omitnan'),...
-    std(F0s(pCaid,1,7,:),1,4,'omitnan'),std(F0s(pCaid,1,7,:),1,4,'omitnan'),'o', 'color', [.5 .5 .5], 'markerfacecolor', [1 1 1]); hold on
+    std(F0s(pCaid,1,7,:),1,4,'omitnan'),std(F0s(pCaid,1,7,:),1,4,'omitnan'),'o', 'color', [.5 .5 .5], 'markerfacecolor', [1 1 1], 'markersize', ms); hold on
 
 subplot(132)
 plot([.03 1], mean(SRSrel(3,ISIid, AMPid, :),4,'omitnan') * ones(1,2), ':', 'color', [.7 .7 .7])
@@ -152,8 +166,8 @@ plot(AMPs(AMPid) * ones(1,2), ylim,  ':', 'color', [.7 .7 .7])
 SST(2) = sum((squeeze(mean(SRSrel(Cid,ISIid, maid, :),4,'omitnan')) - mean(mean(SRSrel(Cid,ISIid, maid, :),4,'omitnan'),'omitnan')).^2,'omitnan');
 
 plot(eAMPs(maid), squeeze(SRSrel(Cid,ISIid,maid,:)), '.', 'color', [.5 .5 .5]); hold on
-errorbar(eAMPs(maid(1:3)), squeeze(mean(SRSrel(Cid,ISIid,maid(1:3),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,maid(1:3),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [1 1 1])
-errorbar(eAMPs(maid(4)), squeeze(mean(SRSrel(Cid,ISIid,maid(4),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,maid(4),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5])
+errorbar(eAMPs(maid(1:3)), squeeze(mean(SRSrel(Cid,ISIid,maid(1:3),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,maid(1:3),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [1 1 1], 'markersize', ms)
+errorbar(eAMPs(maid(4)), squeeze(mean(SRSrel(Cid,ISIid,maid(4),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,maid(4),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5], 'markersize', ms)
 set(gca, 'yticklabel', {}, 'yColor', 'none')
     
 subplot(133)
@@ -163,10 +177,9 @@ plot(ISIs(ISIid) * ones(1,2), ylim,  ':', 'color', [.7 .7 .7])
 SST(3) = sum((squeeze(mean(SRSrel(Cid,miid, AMPid, :),4,'omitnan')) - mean(mean(SRSrel(Cid,miid, AMPid, :),4,'omitnan'),'omitnan')).^2,'omitnan');
 
 semilogx(eISIs(miid), squeeze(SRSrel(Cid,miid,AMPid,:)), '.', 'color', [.5 .5 .5]); hold on
-errorbar(eISIs(miid(4:5)), squeeze(mean(SRSrel(Cid,miid(4:5),AMPid,:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,miid(4:5),AMPid,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [1 1 1])
-errorbar(eISIs(miid(1:3)), squeeze(mean(SRSrel(Cid,miid(1:3),AMPid,:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,miid(1:3),AMPid,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5])
+errorbar(eISIs(miid(4:5)), squeeze(mean(SRSrel(Cid,miid(4:5),AMPid,:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,miid(4:5),AMPid,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [1 1 1], 'markersize', ms)
+errorbar(eISIs(miid(1:3)), squeeze(mean(SRSrel(Cid,miid(1:3),AMPid,:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,miid(1:3),AMPid,:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5], 'markersize', ms)
 set(gca, 'yticklabel', {}, 'yColor', 'none')
-%%
 
 %% A, B labels
 figure(1)
@@ -259,8 +272,8 @@ text(.8, 0.5, 'HD', 'horizontalalignment','center', 'fontsize',8)
 text(.9, 0.5, 'HD', 'horizontalalignment','center', 'fontsize',8)
 plot(.9, 0.5, 'rx','linewidth',2)
 
-errorbar(.8, .4, .05, 'o', 'color', [.5 .5 .5], 'markersize', 5, 'markerfacecolor', [.5 .5 .5])
-errorbar(.9, .4, .05, 'o', 'color', [.5 .5 .5], 'markersize', 5, 'markerfacecolor', [1 1 1])
+errorbar(.8, .4, .05, 'o', 'color', [.5 .5 .5], 'markersize', ms, 'markerfacecolor', [.5 .5 .5])
+errorbar(.9, .4, .05, 'o', 'color', [.5 .5 .5], 'markersize', ms, 'markerfacecolor', [1 1 1])
 
 xlim([0 1.01])
 

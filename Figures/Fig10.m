@@ -126,7 +126,7 @@ end
 
 %% overal R2 and AIC
 id = 3;
-
+clc
 R2 = 1 - oSSE(:,id) ./ oSST(id);
 
 % n = numel(mSRSrel_m);
@@ -134,30 +134,67 @@ n = N(1,id);
 
 k = [5 8 10 12]';
 
-AIC = 2*k + n.*log(oSSE(:,id)./n);
+% AIC = 2*k + n.*log(oSSE(:,id)./oSST(id))
+AIC = 2*k + n.*log(oSSE(:,id)./n)
 
-dAIC = AIC - AIC(1);
+dAIC = AIC - AIC(1,:)
 
 %% visualize
+close all
 figure(2)
+   
+
 color = get(gca,'colororder');
 pcolors = flip(parula(7));
 color = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
 
-% set(gca,'Colororder',color)
-b = bar(oSSE'./N');
+bw = .25;
+titles =  {'History-dependent trials', 'History-independent trials', 'All trials'};
 
-for i = 1:4
-    set(b(i), 'FaceColor', color(i,:))
+js = [3 2 1];
+
+for j = 1:3
+    subplot(1,3,j)
+    
+    for i = 1:4
+        bar(i, oSSE(i,js(j))'./N(i,js(j))', bw, 'FaceColor', color(i,:)); hold on
+    end
+    
 end
 
-set(gca, 'Xticklabel', {'HD trials', 'No HD trials', 'All trials'})
-ylabel('Mean SRS error')
-box off
-legend('Hill','XB no coop', 'XB coop', 'XB coop + FD', 'location', 'best')
+for j = 1:3
+    subplot(1,3,j)
+
+    for i = 1:4
+        bar(i+.35, oSSE(i,js(j))'./N(i,js(j))', bw, 'Edgecolor', color(i,:), 'FaceColor', [1 1 1]); hold on
+    end
+    
+     set(gca,'fontsize',6)
+     
+     title(titles{js(j)}, 'fontsize', 8)
+     set(gca, 'xticklabel', {})
+     
+     if j == 1
+         ylabel('Short-range-stiffness error', 'fontsize', 8)
+     else
+         set(gca, 'yticklabel', {}, 'yColor', 'none')
+     end
+     
+%     xlabel('Model', 'fontsize', 8)
+    box off
+    ylim([0 .12])
+end
+
+subplot(131)
+legend('Hill model','XB model', 'XB coop', 'XB coop + FD', 'location', 'best', 'fontsize', 8)
 legend boxoff
 
+%%
+figure(2)
+set(gcf,'units','centimeters','position',[10 10 19 5])
 
-set(gcf,'units','centimeters','position',[10 10 19 7])
-
-
+%%
+cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
+       
+% figure(1)
+exportgraphics(gcf,['Fig10.png'])
