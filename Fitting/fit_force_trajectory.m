@@ -17,8 +17,8 @@ else
     githubfolder = [mainfolder, '\GitHub'];
 end
 
-addpath(genpath([githubfolder, '\muscle-thixotropy']))
-addpath(genpath([mainfolder, '\casadi-3.7.1-windows64-matlab2018b']))
+addpath(genpath([githubfolder, '\muscle-thixotropy\new_model\']))
+addpath(genpath('C:\GBW_MyPrograms\casadi-3.7.1-windows64-matlab2018b'))
 addpath(genpath([githubfolder, '\biophysical-muscle-model']))
 
 % Import casadi libraries
@@ -27,18 +27,24 @@ import casadi.*;
 %% specify data
 load('active_trials.mat', 'Fm')
 iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
-% iFs = 2;
+iFs = 6;
+fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
-for iF = 6
+for iF = iFs
 
 % iF = 6; % fiber number (note: #4 and #9 lack pCa = 4.5)
-Ks = find(Fm(:,iF) > 0); % only consider active trials
+Ks = find(Fm(:,iF) > .05); % only consider active trials
 n = 3; % ISI number
 m = 7; % AMP number
 tiso = 3; % isometric time (s)
 
 %% load data
-Data = prep_data(username, iF,n,m,Ks,tiso);
+cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
+load([fibers{iF},'_cor_new.mat'],'data')
+
+Data = prep_data_v2(data,n,m,Ks,tiso);
+
+% Data = prep_data(username, iF,n,m,Ks,tiso);
 [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks));
 
 % interpolate force
@@ -104,6 +110,7 @@ parms.ti = tis;
 parms.vts = vis;
 parms.Cas = Cas;
 parms.Lts = Lis;
+parms.K = 100;
 
 odeopt = odeset('maxstep', 1e-3);
 x0 = 1e-3 * ones(7,1);
@@ -153,11 +160,9 @@ w3 = 100; 	% weight for regularization
 w = [w1 w2 w3];
 
 % specify biophysical parameters to be fitted
-optparms = {'f', 'k11', 'k22', 'k21', 'JF', 'J1','J2', 'kon', 'koop', 'kse', 'kse0'};
+optparms = {'f', 'k11', 'k22', 'k21', 'JF', 'J1', 'J2', 'kon', 'koop', 'kse', 'kse0'};
 
 fparms = parms;
-% fparms.J1 = 50;
-% fparms.J2 = 200;
 
 figure(2 + iF*10)
 [newparms] = fit_model_parameters_v2(opti, optparms, w, Xdata, fparms);
@@ -185,7 +190,9 @@ legend('Old','IG','New','location','best')
 
 %% test with fitted paramers
 Kss = [Ks; 7]; % only consider active trials
-Data = prep_data(username, iF,n,m,Kss,tiso);
+% Data = prep_data(username, iF,n,m,Kss,tiso);
+Data = prep_data_v2(data,n,m,Kss,tiso);
+
 [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Kss));
 Liss = Lis * gamma;
 

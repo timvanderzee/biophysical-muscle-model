@@ -1,4 +1,4 @@
-function[Data] = prep_data(data,n,m,Ks,tiso)
+function[Data] = prep_data_v2(data,n,m,Ks,tiso)
 
 %% process data
 % load short-range stiffness data (skinned rat soleus muscle fibers),

@@ -23,7 +23,7 @@ for k = 1:length(iFs)
         disp(n)
         for m = 1:8
             
-            Data = prep_data(data,n,m,Kss,tiso);
+            Data = prep_data_v2(data,n,m,Kss,tiso);
             
             if ~isempty(Data.t)
                 ts = 0:tiso:(tiso*(length(Kss)-1));
