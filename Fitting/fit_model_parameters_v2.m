@@ -1,4 +1,4 @@
-function[parms, out] = fit_model_parameters_v2(opti, optparms, w, data, parms)
+function[parms, out] = fit_model_parameters_v2(opti, optparms, w, data, parms, IG)
 
 % parameters
 allparms = {'f','k11','k12','k21','k22','JF','koop','J1','J2', 'kon', 'koff', 'kse','kse0', 'kpe', 'Fpe0','b','k','dLcrit'};
@@ -47,48 +47,6 @@ idC = 1:300;
 N = length(toc);
 dt = mean(diff(toc));
 
-%% obtain initial guess
-% intial guess is obtained through running a forward simulation with the
-% first, simulate an isometric contraction
-parms.vts = [0 0];
-parms.ti = [0 1];
-parms.Cas = Cas(1) * [1 1];
-
-x0 = 1e-3 * ones(7,1);
-xp0 = zeros(size(x0));
-odeopt = odeset('maxstep', 3e-3);
-sol0 = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 1], x0, xp0, odeopt);
-
-% next, simulate response to specified velocity input vector
-parms.vts = vts;
-parms.ti = toc;
-parms.Cas = Cas;
-
-sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(toc)], sol0.y(:,end), xp0, odeopt);
-[~,xdot] = deval(sol, sol.x);
-
-% interpolate solution to time nodes
-Q0i     = interp1(sol.x, sol.y(1,:), toc); % zero-order moment
-Q1i     = interp1(sol.x, sol.y(2,:), toc); % first-order moment
-Q2i     = interp1(sol.x, sol.y(3,:), toc); % second-order moment
-Noni    = interp1(sol.x, sol.y(5,:), toc); % thin filament activation
-DRXi    = interp1(sol.x, sol.y(6,:), toc); % thick filament activation
-Ldi     = interp1(sol.x, sol.y(4,:), toc); % length
-
-dQ0dti  = interp1(sol.x, xdot(1,:), toc); % zero-order moment time derivative
-dQ1dti  = interp1(sol.x, xdot(2,:), toc); % first-order moment time derivative
-dQ2dti  = interp1(sol.x, xdot(3,:), toc); % second-order moment time derivative
-dNondti = interp1(sol.x, xdot(5,:), toc); % thin filament activation time derivative
-dDRXdti = interp1(sol.x, xdot(6,:), toc); % thick filament activation time derivative
-
-% don't allow number too close to 0
-K = 100;
-Q00i = log(1+exp(Q0i*K))/K;
-
-Fi   = log(1+exp((Q00i + Q1i)*K))/K;
-% Fi = (Q00i + Q1i);
-Fdoti = (dQ0dti + dQ1dti);
-
 %% Fit cross-bridge rates using direct collocation
 % define opti states (defined as above)
 Q0  = opti.variable(1,N);
@@ -102,7 +60,7 @@ Ld  = opti.variable(1,N);
 p  = opti.variable(1,N); % mean strain of the distribution
 q  = opti.variable(1,N); % standard deviation strain of the distribution
 F  = opti.variable(1,N);
-Fdot  = opti.variable(1,N);
+F0dot  = opti.variable(1,N);
 
 % (slack) controls (defined as above)
 dQ0dt  = opti.variable(1,N);
@@ -112,7 +70,7 @@ dNondt = opti.variable(1,N);
 dDRXdt = opti.variable(1,N); 
 
 % extra constraints
-opti.subject_to(dQ0dt + dQ1dt - Fdot - Ld .* Q0 == 0);
+opti.subject_to(dQ0dt + dQ1dt - F0dot - Ld .* Q0 == 0);
 opti.subject_to(Q0 + Q1 - F == 0);
 opti.subject_to(Q1 - Q0 .* p == 0);
 opti.subject_to(Q2 - Q0 .* (p.^2 + q) == 0);
@@ -130,33 +88,25 @@ opti.subject_to(DRX >= 0);
 % opti.subject_to(Non <= 1);
 % opti.subject_to(DRX <= 1);
 
-pi = Q1i./Q0i;
-qi = max(Q2i./Q00i - (Q1i./Q00i).^2, 0);
 
 % set initial guess
-opti.set_initial(F, Fi);
-opti.set_initial(Q0, Q00i);
-opti.set_initial(Q1, Q1i);
-opti.set_initial(Q2, Q2i);
-opti.set_initial(Non, Noni);
-opti.set_initial(DRX, DRXi);
-opti.set_initial(p, pi);
-opti.set_initial(q, qi);
-opti.set_initial(Ld, Ldi);
-opti.set_initial(dQ0dt, dQ0dti);
-opti.set_initial(dQ1dt, dQ1dti);
-opti.set_initial(dQ2dt, dQ2dti);
-opti.set_initial(dNondt, dNondti);
-opti.set_initial(dDRXdt, dDRXdti);
+opti.set_initial(F, IG.Fi);
+opti.set_initial(Q0, IG.Q00i);
+opti.set_initial(Q1, IG.Q1i);
+opti.set_initial(Q2, IG.Q2i);
+opti.set_initial(Non, IG.Noni);
+opti.set_initial(DRX, IG.DRXi);
+opti.set_initial(p, IG.pi);
+opti.set_initial(q, IG.qi);
+opti.set_initial(Ld, IG.Ldi);
+opti.set_initial(dQ0dt, IG.dQ0dti);
+opti.set_initial(dQ1dt, IG.dQ1dti);
+opti.set_initial(dQ2dt, IG.dQ2dti);
+opti.set_initial(dNondt, IG.dNondti);
+opti.set_initial(dDRXdt, IG.dDRXdti);
 
-Ri = zeros(1, N);
-dRdti = zeros(1,N);
+opti.set_initial(F0dot, IG.F0doti);
 
-% get initial errors
-error_thini      = ThinEquilibrium(Cas, Q0i, Noni, dNondti, parms.kon, parms.koff, parms.koop, parms.Noverlap); % thin filament dynamics     
-error_thicki     = ThickEquilibrium(Q0i, dQ0dti, Fi, DRXi, dDRXdti, parms.J1, parms.J2, parms.JF, parms.Noverlap); % thick filament dynamics
-[error_Q0i, error_Q1i, error_Q2i, error_Ri] = MuscleEquilibrium(Q0i, Q1i, pi, qi, dQ0dti, dQ1dti, dQ2dti, parms.f, parms.w, parms.k11, parms.k12, parms.k21, parms.k22,  Noni, Ldi, DRXi, Ri, parms.b, parms.k, dRdti, dLcrit); % cross-bridge dynamics
-error_lengthi    = LengthEquilibrium(Q0i, Fi, Fdoti, Ldi, vts, parms.kse0, parms.kse);
 
 %% dynamics constraints
 % F = Q0 + Q1; % cross-bridge force
@@ -168,7 +118,7 @@ dRdt = zeros(1,N);
 error_thin      = ThinEquilibrium(Cas, Q0, Non, dNondt, kon, koff, koop, parms.Noverlap); % thin filament dynamics     
 error_thick     = ThickEquilibrium(Q0, dQ0dt, F, DRX, dDRXdt, J1, J2, JF, parms.Noverlap); % thick filament dynamics
 [error_Q0, error_Q1, error_Q2, error_R] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, parms.w, k11, k12, k21, k22,  Non, Ld, DRX, R, b, k, dRdt, dLcrit); % cross-bridge dynamics
-error_length    = LengthEquilibrium(Q0, F, Fdot, Ld, vts, kse0, kse);
+error_length    = LengthEquilibrium(Q0, F, F0dot, Ld, vts, kse0, kse);
 
 % set errors equal to zero
 opti.subject_to(error_thin(:) == 0);
@@ -254,10 +204,6 @@ out.t     = 0:dt:(N-1)*dt;
 
 % parms.J2 = sol.value(J2);
 
-%% Test the result: run a forward simulation (sanity check)
-[t,x] = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(toc)], sol0.y(:,end), xp0, odeopt);
-F = (x(:,1) + x(:,2)) * parms.Fscale;
-Fn = interp1(t, F, toc) + parms.kpe * Lts + parms.Fpe0;
 
 %% Visualize
 subplot(311)
@@ -267,16 +213,16 @@ title('Velocity')
 
 subplot(312)
 plot(out.t(idF), Fts(idF), 'k.', 'markersize',10); hold on 
-plot(toc, Fi * parms.Fscale + parms.kpe * Lts + parms.Fpe0, ':', 'linewidth',1.5); 
+% plot(toc, Fi * parms.Fscale + parms.kpe * Lts + parms.Fpe0, ':', 'linewidth',1.5); 
 plot(out.t, out.F, 'linewidth',1.5); hold on
-plot(toc, Fn, ':', 'linewidth',1.5); 
+% plot(toc, Fn, ':', 'linewidth',1.5); 
 ylabel('Force')
 title('Force')
-legend('Target','Initial guess','Result','Simulated','location','best')
-legend boxoff
+% legend('Target','Initial guess','Result','Simulated','location','best')
+% legend boxoff
 
 subplot(313);
-plot(toc, Fdoti*parms.Fscale); hold on
+% plot(toc, Fdoti*parms.Fscale); hold on
 plot(out.t, out.Fdot*parms.Fscale, 'linewidth',1.5);
 ylabel('Force-rate')
 title('Force-rate')

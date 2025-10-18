@@ -112,18 +112,15 @@ parms.Cas = Cas;
 parms.Lts = Lis;
 parms.K = 100;
 
-odeopt = odeset('maxstep', 1e-3);
-x0 = 1e-3 * ones(7,1);
-xp0 = zeros(size(x0));
-
-osol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(parms.ti)], x0, xp0, odeopt);
+% get initial guess
+IG = get_initial_guess(tis, Cas, vis, parms);
 
 gamma = 108.3333; % length scaling
 Liss = Lis * gamma;
-oF = (osol.y(1,:) + osol.y(2,:)) * parms.Fscale;
-ot = osol.x;
+% oF = (osol.y(1,:) + osol.y(2,:)) * parms.Fscale;
+% ot = osol.x;
 
-oFi = interp1(ot, oF, tis) + parms.Fpe_func(Liss, parms);
+oFi = (IG.Q0i+IG.Q1i) * parms.Fscale + parms.Fpe_func(Liss, parms);
 
 subplot(414); hold on
 plot(tis, oFi,'b'); hold on
@@ -165,11 +162,17 @@ optparms = {'f', 'k11', 'k22', 'k21', 'JF', 'J1', 'J2', 'kon', 'koop', 'kse', 'k
 fparms = parms;
 
 figure(2 + iF*10)
-[newparms] = fit_model_parameters_v2(opti, optparms, w, Xdata, fparms);
+[newparms] = fit_model_parameters_v2(opti, optparms, w, Xdata, fparms, IG);
 set(gcf,'units','normalized','position',[.2 .2 .4 .6])
 
 sparms(iF) = newparms;
 pparms(iF) = parms;
+
+
+%% Test the result: run a forward simulation (sanity check)
+% [t,x] = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(toc)], sol0.y(:,end), xp0, odeopt);
+% F = (x(:,1) + x(:,2)) * parms.Fscale;
+% Fn = interp1(t, F, toc) + parms.kpe * Lts + parms.Fpe0;
 
 end
 
