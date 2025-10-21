@@ -26,8 +26,10 @@ import casadi.*;
 
 %% specify data
 load('active_trials.mat', 'Fm')
-iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
+% iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
+iFs = [2,3,5,6,7,8,11];
 iFs = 6;
+
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
 for iF = iFs
@@ -43,8 +45,6 @@ cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\
 load([fibers{iF},'_cor_new.mat'],'data')
 
 Data = prep_data_v2(data,n,m,Ks,tiso);
-
-% Data = prep_data(username, iF,n,m,Ks,tiso);
 [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks));
 
 % interpolate force
@@ -84,6 +84,7 @@ end
 %% get parameters
 mcode = [1 1 1];
 vs = {'\', '\'};
+% vs = {'\full\'};
 
 cd([githubfolder, '\muscle-thixotropy\new_model\get_variable'])
 [output_mainfolder, filename, opt_type, ~] = get_folder_and_model(mcode);
@@ -105,13 +106,22 @@ parms.act = 1;
 parms.Noverlap = 1;
 
 %% evaluate current values
-% note: not required for fitting
+h = 10e-9; % powerstroke size
+s = 2.6e-6; % sarcomere length
+
+% parms.k = 100;
+% parms.b = 30;
+% 
+% parms.k = 100;
+% parms.b = 30;
+
+% set some parameters
 parms.ti = tis;
 parms.vts = vis;
 parms.Cas = Cas;
 parms.Lts = Lis;
 parms.K = 100;
-parms.gamma = 108.3333; % length scaling
+parms.gamma = .5*s / h; % length scaling
 
 % get initial guess
 IG = get_initial_guess(tis, Cas, vis, parms);
@@ -174,8 +184,6 @@ pparms(iF) = parms;
 % F = (x(:,1) + x(:,2)) * parms.Fscale;
 % Fn = interp1(t, F, toc) + parms.kpe * Lts + parms.Fpe0;
 
-end
-
 %% visualize fitted parameters
 for i = 1:length(optparms)
     Y(i,1) = eval(['pparms(', num2str(iF),').',optparms{i}]);
@@ -207,6 +215,7 @@ odeopt = odeset('maxstep', 3e-3);
 x0 = 1e-3 * ones(7,1);
 xp0 = zeros(size(x0));
 
+parms.gamma = 108.3;
 osol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(tis)], x0, xp0, odeopt);
 nsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, newparms), [0 max(tis)], x0, xp0, odeopt);
 % [~,xdot] = deval(nsol, nsol.x);
@@ -299,67 +308,62 @@ legend boxoff
 xlim([0 1.05])
 
 %% test on the condition without conditioning stretch
-% n = 1;
-% m = 1;
-% [Data, tis, Lis, vis, Cas, ts, id0, id1, id2] = get_data(iF,n,m,Ks,tiso);
-% 
-% figure(6 + iF * 10)
-% subplot(411)
-% plot(Data.t, Data.Ca,'r.'); hold on
-% plot(tis, Cas, 'b', 'linewidth',1); 
-% box off
-% 
-% subplot(412)
-% plot(Data.t, Data.v,'r.'); hold on
-% plot(tis, vis,'b',  'linewidth',1); 
-% box off
-% 
-% subplot(413)
-% plot(Data.t, Data.L,'r.'); hold on
-% plot(tis, Lis,'b',  'linewidth',1); 
-% box off
-% 
-% subplot(414)
-% plot(Data.t, Data.F,'r.'); hold on
-% box off
-% 
-% parms.ti = tis;
-% parms.vts = vis;
-% parms.Cas = Cas;
-% 
-% osol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(parms.ti)], x0, xp0, odeopt);
-% 
-% newparms.ti = tis;
-% newparms.vts = vis;
-% newparms.Cas = Cas;
-% 
-% oF = (osol.y(1,:) + osol.y(2,:)) * parms.Fscale;
-% ot = osol.x;
-% oFi = interp1(ot, oF, tis) + parms.Fpe_func(Liss, parms);
-% 
-% xsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, newparms), [0 max(newparms.ti)], x0, xp0, odeopt);
-% 
-% xF = (xsol.y(1,:) + xsol.y(2,:)) * parms.Fscale;
-% xt = xsol.x;
-% xFi = interp1(xt, xF, tis) + parms.Fpe_func(Liss, newparms);
-% 
-% 
-% plot(tis, oFi,'b'); hold on
-% plot(tis, xFi,'m');
-% end
+n = 1;
+m = 1;
+Data = prep_data_v2(data,n,m,Ks,tiso);
+[tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks));
+Liss = Lis * parms.gamma;
 
-% %% compare parameter values
-% figure(3)
-% 
-% Ys = nan(length(optparms), iFs(end));
-% Yp = nan(length(optparms), iFs(end));
-% 
-% for iF = iFs
-%     for i = 1:length(optparms)
-%         Ys(i,iF) = eval(['sparms(', num2str(iF),').',optparms{i}]);
-%         Yp(i,iF) = eval(['pparms(', num2str(iF),').',optparms{i}]);
-%     end
-% end
+figure(6 + iF * 10)
+subplot(411)
+plot(Data.t, Data.C,'r.'); hold on
+plot(tis, Cas, 'b', 'linewidth',1); 
+box off
+
+subplot(412)
+plot(Data.t, Data.v,'r.'); hold on
+plot(tis, vis,'b',  'linewidth',1); 
+box off
+
+subplot(413)
+plot(Data.t, Data.L,'r.'); hold on
+plot(tis, Lis,'b',  'linewidth',1); 
+box off
+
+subplot(414)
+plot(Data.t, Data.F,'r.'); hold on
+box off
+
+%%
+parms.ti = tis;
+parms.vts = vis;
+parms.Cas = Cas;
+
+osol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(parms.ti)], x0, xp0, odeopt);
+
+newparms.ti = tis;
+newparms.vts = vis;
+newparms.Cas = Cas;
+
+oF = (osol.y(1,:) + osol.y(2,:)) * parms.Fscale;
+ot = osol.x;
+oFi = interp1(ot, oF, tis) + parms.Fpe_func(Liss, parms);
+
+xsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, newparms), [0 max(newparms.ti)], x0, xp0, odeopt);
+
+xF = (xsol.y(1,:) + xsol.y(2,:)) * parms.Fscale;
+xt = xsol.x;
+xFi = interp1(xt, xF, tis) + parms.Fpe_func(Liss, newparms);
+
+subplot(414)
+plot(tis, oFi,'b'); hold on
+plot(tis, xFi,'m');
+
+end
+
+%% save
+% cd([githubfolder, '\biophysical-muscle-model\Parameters'])
+% save(['parms_', filename, '_v2.mat'])
 
 %%
 

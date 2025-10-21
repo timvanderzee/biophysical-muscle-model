@@ -11,6 +11,7 @@ x0 = 1e-3 * ones(7,1);
 xp0 = zeros(size(x0));
 odeopt = odeset('maxstep', 3e-3);
 
+
 if parms.k == 0
     x0(end) = 0;
 end
@@ -35,10 +36,17 @@ sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(
 % EL = LengthEquilibrium(Q0, F, Fdot, Ld, v, parms.kse0, parms.kse);
 
 %%
-% [error] = fiber_dynamics_implicit_no_tendon(0,sol.y(:,1),xdot(:,1), parms)
+for i = 1:length(xdot)
+error(:,i) = fiber_dynamics_implicit_no_tendon(sol.x(i),sol.y(:,i),xdot(:,i), parms);
+end
 
 %%
+% parms.Cas     = interp1(toc, Cas, sol.x); 
+% parms.vts     = interp1(toc, vts, sol.x); 
 
+
+%%
+% toc = sol.x;
 
 % interpolate solution to time nodes
 Q0i     = interp1(sol.x, sol.y(1,:), toc); % zero-order moment
@@ -47,6 +55,7 @@ Q2i     = interp1(sol.x, sol.y(3,:), toc); % second-order moment
 Ldi     = interp1(sol.x, sol.y(4,:), toc); % velocity
 Noni    = interp1(sol.x, sol.y(5,:), toc); % thin filament activation
 DRXi    = interp1(sol.x, sol.y(6,:), toc); % thick filament activation
+Ri      = interp1(sol.x, sol.y(7,:), toc); % thick filament activation
 
 dQ0dti  = interp1(sol.x, xdot(1,:), toc); % zero-order moment time derivative
 dQ1dti  = interp1(sol.x, xdot(2,:), toc); % first-order moment time derivative
@@ -54,6 +63,7 @@ dQ2dti  = interp1(sol.x, xdot(3,:), toc); % second-order moment time derivative
 
 dNondti = interp1(sol.x, xdot(5,:), toc); % thin filament activation time derivative
 dDRXdti = interp1(sol.x, xdot(6,:), toc); % thick filament activation time derivative
+dRdti   = interp1(sol.x, xdot(7,:), toc);
 
 % don't allow number too close to 0
 K = parms.K;
@@ -69,14 +79,11 @@ Fi   = log(1+exp((Q0i + Q1i)*K))/K;
 % Fi = (Q00i + Q1i);
 % Fdoti = (dQ0dti + dQ1dti);
 
-Ri = zeros(1, N);
-dRdti = zeros(1,N);
-
 % get initial errors
-error_thini      = ThinEquilibrium(Cas, Q0i, Noni, dNondti, parms.kon, parms.koff, parms.koop, parms.Noverlap); % thin filament dynamics     
-error_thicki     = ThickEquilibrium(Q0i, dQ0dti, Fi, DRXi, dDRXdti, parms.J1, parms.J2, parms.JF, parms.Noverlap, 0); % thick filament dynamics
-[error_Q0i, error_Q1i, error_Q2i, error_Ri, F0dot] = MuscleEquilibrium(Q0i, Q1i, pi, qi, dQ0dti, dQ1dti, dQ2dti, parms.f, parms.w, parms.k11, parms.k12, parms.k21, parms.k22,  Noni, Ldi, DRXi, Ri, parms.b, parms.k, dRdti, parms.dLcrit); % cross-bridge dynamics
-error_lengthi    = LengthEquilibrium(Q0i, Fi, F0dot, Ldi, vts, parms.kse0, parms.kse, parms.gamma);
+error_thini      = ThinEquilibrium(parms.Cas, Q0i, Noni, dNondti, parms.kon, parms.koff, parms.koop, parms.Noverlap); % thin filament dynamics     
+error_thicki     = ThickEquilibrium(Q0i, dQ0dti, Fi, DRXi, dDRXdti, parms.J1, parms.J2, parms.JF, parms.Noverlap, Ri); % thick filament dynamics
+[error_Q0i, error_Q1i, error_Q2i, error_Ri, F0dot] = MuscleEquilibrium(Q0i, Q1i, pi, qi, dQ0dti, dQ1dti, dQ2dti, parms.f, parms.w, parms.k11, parms.k12, parms.k21, parms.k22,  Noni, Ldi, DRXi, dRdti, parms.b, parms.k, Ri, parms.dLcrit); % cross-bridge dynamics
+error_lengthi    = LengthEquilibrium(Q0i, Fi, F0dot, Ldi, parms.vts, parms.kse0, parms.kse, parms.gamma);
 
 % save to struct
 IG.Q0i = Q0i;

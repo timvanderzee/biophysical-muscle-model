@@ -1,14 +1,15 @@
 clear all; close all; clc
 [username, githubfolder] = get_paths();
-savefig = 1;
+savefig = 0;
 
 figure(1)
 color = get(gca,'colororder');
 pcolors = flip(parula(7));
 acolors = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
+version = '_v2';
 
 %% chose figure number: specify conditions
-fig = 6;
+fig = 5;
 iF = 6;
 
 % chosen ISIs, AMPs and pCas
@@ -111,7 +112,11 @@ for j = 1:size(ISIs,1)
             tiso = dTt*3+dTc*2+ISI + 2;
 
             cd([output_mainfolder{2}])
-
+            
+            if sum(mcodes(kk,:)== [1 1 1]) == 3
+              cd(['parms', version])
+            end
+            
             [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(kk,:));
             cd([filename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10)])
 

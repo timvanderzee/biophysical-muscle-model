@@ -17,6 +17,7 @@ if k > 0
     phiR1 = -k * (IG{2}(inf, c1) -IG{2}(dLcrit, c1)) + gamma(2) * R;
     phiR2 = -k * (IG{3}(inf, c1) -IG{3}(dLcrit, c1)) + gamma(3) * R;
     
+    
     Rdot = -phiR0;
 
 else

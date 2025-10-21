@@ -5,6 +5,8 @@ mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
 mcodes = [1 1 1];
 
 iFs = [1 2 3, 5,6, 7, 8, 10, 11];
+iFs = 6;
+
 AMPs = [0 12 38 121 216 288 383 682]/10000;
 ISIs = [1 10 100 316 1000 3160 10000]/1000;
 pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
@@ -13,9 +15,11 @@ fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18De
 
 visualize = 1;
 
-AMPs = 682 / 10000;
-ISIs = [3160 10000]/1000;
+version = '_v2';
 
+% AMPs = 682 / 10000;
+% ISIs = [3160 10000]/1000;
+% 
 for iii = 1:size(mcodes,1)
 
 % load parameters
@@ -25,13 +29,11 @@ mcode = mcodes(iii,:);
 % disp(filename)
 
 cd([githubfolder, '\biophysical-muscle-model\Parameters'])
-load(['parms_',filename,'.mat'], 'pparms')
-
-gamma = 108.3333; % length scaling
+load(['parms_',filename,version, '.mat'], 'pparms')
 
 %% step 1: force - pCa
 % pCas = flip([4.5 6.1 6.2 6.3 6.4 6.6 9]);
-parms = pparms(1);
+parms = pparms(2);
 
 if contains(filename, 'Hill')
     x0 = 0;
@@ -47,8 +49,8 @@ xp0 = zeros(size(x0));
 for iF = iFs
     
     parms = pparms(iF);
-    parms.K = 100;
-
+    parms.K = parms.K;
+    gamma = parms.gamma;
 
     for i = 1:length(Ca)
         
@@ -154,6 +156,7 @@ for iF = iFs
                 xs = sol.y(:,end);
                 
                 cd([output_mainfolder{2}])
+                cd(['parms', version])
                 
                 if ~isfolder([filename,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)])
                     mkdir([filename,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)])
@@ -161,6 +164,7 @@ for iF = iFs
                 
                 cd([filename,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)])
                 disp([filename,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'])
+                
                 save([fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'], ...
                     'tis','Cas','vis','Lis','oFi','parms','ts')
                 
