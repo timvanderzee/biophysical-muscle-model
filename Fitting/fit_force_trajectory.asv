@@ -26,8 +26,10 @@ import casadi.*;
 
 %% specify data
 load('active_trials.mat', 'Fm')
-iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
-iFs = 7;
+% iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
+iFs = [2,3,5,6,7,8,11];
+iFs = 6;
+
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
 for iF = iFs
@@ -41,9 +43,6 @@ tiso = 3; % isometric time (s)
 %% load data
 cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
 load([fibers{iF},'_cor_new.mat'],'data')
-
-Data = prep_data_v2(data,n,m,Ks,tiso);
-[tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks));
 
 Data = prep_data_v2(data,n,m,Ks,tiso);
 [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks));
@@ -83,8 +82,9 @@ for j = 1:4
 end
 
 %% get parameters
-mcode = [1 1 1];
-vs = {'\', '\'};
+mcode = [1 2 1];
+% vs = {'\', '\'};
+vs = {'\full\'};
 
 cd([githubfolder, '\muscle-thixotropy\new_model\get_variable'])
 [output_mainfolder, filename, opt_type, ~] = get_folder_and_model(mcode);
@@ -108,6 +108,12 @@ parms.Noverlap = 1;
 %% evaluate current values
 h = 10e-9; % powerstroke size
 s = 2.6e-6; % sarcomere length
+
+% parms.k = 100;
+% parms.b = 30;
+% 
+% parms.k = 100;
+% parms.b = 30;
 
 % set some parameters
 parms.ti = tis;
@@ -161,7 +167,7 @@ w3 = 100; 	% weight for regularization
 w = [w1 w2 w3];
 
 % specify biophysical parameters to be fitted
-optparms = {'f', 'k11', 'k22', 'k21', 'JF', 'J1', 'J2', 'kon', 'koop', 'kse', 'kse0'};
+optparms = {'f', 'k11', 'k22', 'k21', 'JF', 'J1', 'J2', 'kon', 'koop', 'kse', 'kse0', 'k'};
 
 fparms = parms;
 
@@ -177,8 +183,6 @@ pparms(iF) = parms;
 % [t,x] = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(toc)], sol0.y(:,end), xp0, odeopt);
 % F = (x(:,1) + x(:,2)) * parms.Fscale;
 % Fn = interp1(t, F, toc) + parms.kpe * Lts + parms.Fpe0;
-
-end
 
 %% visualize fitted parameters
 for i = 1:length(optparms)
@@ -226,6 +230,11 @@ nFi = interp1(nt, nF, tis) + parms.Fpe_func(Liss, newparms);
 figure(1 + iF * 10)
 subplot(414); hold on
 plot(tis, nFi,'m'); hold on
+
+%% compare ripped
+figure(100)
+plot(nsol.x, osol.y(end,:)); hold on
+plot(nsol.x, nsol.y(end,:))
 
 %% estimate SRS
 % lts   = interp1(Data.t, Data.Lf, parms.ti);
@@ -354,6 +363,12 @@ xFi = interp1(xt, xF, tis) + parms.Fpe_func(Liss, newparms);
 subplot(414)
 plot(tis, oFi,'b'); hold on
 plot(tis, xFi,'m');
+
+end
+
+%% save
+% cd([githubfolder, '\biophysical-muscle-model\Parameters'])
+% save(['parms_', filename, '_v2.mat'])
 
 %%
 

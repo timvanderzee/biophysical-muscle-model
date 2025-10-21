@@ -19,11 +19,14 @@ IGef{3} = @(c,k)(c(1,:)*k(1).*exp(10*tanh((c(3,:)*k(2)^2/4-c(2,:)*k(2))/10))).*(
 % IG{2} =  @(x,c)1/2*c(1,:).*erf((x-c(2,:))./sqrt(c(3,:))).*c(2,:)-1/2.*sqrt(c(3,:)).*c(1,:)/sqrt(pi).*exp(-(x-c(2,:)).^2./c(3,:));
 % IG{3} =  @(x,c)1/2*c(1,:).*erf((x-c(2,:))./sqrt(c(3,:))).*(c(2,:).^2+c(3,:)/2)-1/2*sqrt(c(3,:)).*c(1,:)/sqrt(pi).*exp(-(x-c(2,:)).^2./c(3,:)).*(c(2,:)+min(x,1e4));
 
+
+
 % erf approximation
 erfap = @(x) (exp(x)-exp(-x)) ./ (exp(x)+exp(-x));
 IG{1} =  @(x,c)1/2*c(1,:).*erfap((x-c(2,:))./sqrt(c(3,:)));
 IG{2} =  @(x,c)1/2*c(1,:).*erfap((x-c(2,:))./sqrt(c(3,:))) .* c(2,:)-1/2.*sqrt(c(3,:)).*c(1,:)/sqrt(pi).*exp(-(x-c(2,:)).^2./c(3,:));
 IG{3} =  @(x,c)1/2*c(1,:).*erfap((x-c(2,:))./sqrt(c(3,:))) .* (c(2,:).^2+c(3,:)/2)-1/2*sqrt(c(3,:)).*c(1,:)/sqrt(pi).*exp(-(x-c(2,:)).^2./c(3,:)).*(c(2,:)+min(x,1e4));
+
 
 % Compute Qdot
 [Q0dot, Q1dot, Q2dot, Rdot] = CrossBridge_Dynamics(Q0, p, q, f, w, k1, k2, IGef, Non, DRX, IG, b, k, R, dLcrit);

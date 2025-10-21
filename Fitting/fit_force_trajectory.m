@@ -82,9 +82,9 @@ for j = 1:4
 end
 
 %% get parameters
-mcode = [1 1 1];
-vs = {'\', '\'};
-% vs = {'\full\'};
+mcode = [1 2 1];
+% vs = {'\', '\'};
+vs = {'\full\'};
 
 cd([githubfolder, '\muscle-thixotropy\new_model\get_variable'])
 [output_mainfolder, filename, opt_type, ~] = get_folder_and_model(mcode);
@@ -167,9 +167,10 @@ w3 = 100; 	% weight for regularization
 w = [w1 w2 w3];
 
 % specify biophysical parameters to be fitted
-optparms = {'f', 'k11', 'k22', 'k21', 'JF', 'J1', 'J2', 'kon', 'koop', 'kse', 'kse0'};
+optparms = {'f', 'k11', 'k22', 'k21', 'JF', 'J1', 'J2', 'kon', 'koop', 'kse', 'kse0', 'k'};
 
 fparms = parms;
+fparms.k = 1000;
 
 figure(2 + iF*10)
 [newparms] = fit_model_parameters_v2(opti, optparms, w, Xdata, fparms, IG);
@@ -200,12 +201,19 @@ yline(2e3,'r--')
 legend('Old','IG','New','location','best')
 
 %% test with fitted paramers
+n = 3; % ISI number
+m = 7; % AMP number
+
 Kss = [Ks; 7]; % only consider active trials
 % Data = prep_data(username, iF,n,m,Kss,tiso);
 Data = prep_data_v2(data,n,m,Kss,tiso);
 
 [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Kss));
 Liss = Lis * parms.gamma;
+
+parms.ti = tis;
+parms.vts = vis;
+parms.Cas = Cas;
 
 newparms.ti = tis;
 newparms.vts = vis;
@@ -230,6 +238,16 @@ nFi = interp1(nt, nF, tis) + parms.Fpe_func(Liss, newparms);
 figure(1 + iF * 10)
 subplot(414); hold on
 plot(tis, nFi,'m'); hold on
+
+%% compare ripped
+if ishandle(100), close(100); end; figure(100)
+subplot(211)
+plot(osol.x, oF); hold on
+plot(nsol.x, nF)
+
+subplot(212)
+plot(osol.x, osol.y(end,:)); hold on
+plot(nsol.x, nsol.y(end,:))
 
 %% estimate SRS
 % lts   = interp1(Data.t, Data.Lf, parms.ti);

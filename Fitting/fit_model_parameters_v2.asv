@@ -111,7 +111,7 @@ if parms.b > 0
     R = opti.variable(1,N);
     dRdt = opti.variable(1,N);
 
-%     opti.subject_to(R >= 0);
+    opti.subject_to(R >= 0);
     opti.set_initial(R, IG.Ri);
     opti.set_initial(dRdt, IG.dRdti);
 else
@@ -121,6 +121,8 @@ end
 
 %% dynamics constraints
 % F = Q0 + Q1; % cross-bridge force
+
+
 
 % specify dynamics using error
 error_thin      = ThinEquilibrium(Cas, Q0, Non, dNondt, kon, koff, koop, parms.Noverlap); % thin filament dynamics     
