@@ -207,10 +207,13 @@ odeopt = odeset('maxstep', 3e-3);
 x0 = 1e-3 * ones(7,1);
 xp0 = zeros(size(x0));
 
+osol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(tis)], x0, xp0, odeopt);
 nsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, newparms), [0 max(tis)], x0, xp0, odeopt);
-[~,xdot] = deval(nsol, nsol.x);
+% [~,xdot] = deval(nsol, nsol.x);
 
 nF = (nsol.y(1,:) + nsol.y(2,:)) * parms.Fscale;
+oF = (osol.y(1,:) + osol.y(2,:)) * parms.Fscale;
+
 nt = nsol.x;
 
 nFi = interp1(nt, nF, tis) + parms.Fpe_func(Liss, newparms);

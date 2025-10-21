@@ -10,6 +10,11 @@ parms.Cas = Cas(1) * [1 1];
 x0 = 1e-3 * ones(7,1);
 xp0 = zeros(size(x0));
 odeopt = odeset('maxstep', 3e-3);
+
+if parms.k == 0
+    x0(end) = 0;
+end
+
 sol0 = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 1], x0, xp0, odeopt);
 
 % next, simulate response to specified velocity input vector
@@ -28,6 +33,11 @@ sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(
 % v = interp1(toc, vts, sol.x);
 
 % EL = LengthEquilibrium(Q0, F, Fdot, Ld, v, parms.kse0, parms.kse);
+
+%%
+% [error] = fiber_dynamics_implicit_no_tendon(0,sol.y(:,1),xdot(:,1), parms)
+
+%%
 
 
 % interpolate solution to time nodes
@@ -64,7 +74,7 @@ dRdti = zeros(1,N);
 
 % get initial errors
 error_thini      = ThinEquilibrium(Cas, Q0i, Noni, dNondti, parms.kon, parms.koff, parms.koop, parms.Noverlap); % thin filament dynamics     
-error_thicki     = ThickEquilibrium(Q0i, dQ0dti, Fi, DRXi, dDRXdti, parms.J1, parms.J2, parms.JF, parms.Noverlap); % thick filament dynamics
+error_thicki     = ThickEquilibrium(Q0i, dQ0dti, Fi, DRXi, dDRXdti, parms.J1, parms.J2, parms.JF, parms.Noverlap, 0); % thick filament dynamics
 [error_Q0i, error_Q1i, error_Q2i, error_Ri, F0dot] = MuscleEquilibrium(Q0i, Q1i, pi, qi, dQ0dti, dQ1dti, dQ2dti, parms.f, parms.w, parms.k11, parms.k12, parms.k21, parms.k22,  Noni, Ldi, DRXi, Ri, parms.b, parms.k, dRdti, parms.dLcrit); % cross-bridge dynamics
 error_lengthi    = LengthEquilibrium(Q0i, Fi, F0dot, Ldi, vts, parms.kse0, parms.kse);
 
