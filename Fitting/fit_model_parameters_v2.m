@@ -10,7 +10,7 @@ end
 
 % % bounds on parameter values
 % lb = .1 * ones(1, length(optparms));
-% ub = 2e3 * ones(1, length(optparms));
+% ub = 1e3 * ones(1, length(optparms));
 % 
 % % exception for exponential coefficient
 % for i = 1:length(optparms)
@@ -42,7 +42,7 @@ Fts = data.F;
 toc = data.t;
 Lts = data.L;
 idF = data.idF;
-idC = 1:300;
+idC = [1:300 data.idC];
 
 N = length(toc);
 dt = mean(diff(toc));
@@ -140,7 +140,7 @@ if parms.b > 0
    opti.subject_to(error_R(:) == 0);
 end
 
-opti.subject_to(J2 - J1 * parms.SRX0 / (1-parms.SRX0) == 0);
+% opti.subject_to(J2 - J1 * parms.SRX0 / (1-parms.SRX0) == 0);
 
 %% derivative constraints
 opti.subject_to((dNondt(1:N-1) + dNondt(2:N))*dt/2 + Non(1:N-1) == Non(2:N));
@@ -155,10 +155,11 @@ end
 
 %% cost
 Frel = F * parms.Fscale + kpe * Lts + Fpe0;
+Fcost = (Frel(idF) - Fts(idF)).^2;
 
 % cost function
 J = 0;
-J = J + w(1) * sum((Frel(idF) - Fts(idF)).^2); % force-velocity fitting
+J = J + w(1) * sum(Fcost); % force-velocity fitting
 J = J + w(3) * (sum(dQ0dt(idC).^2) + sum(dQ1dt(idC).^2) + sum(dQ2dt(idC).^2)); % regularization term
 
 % optimize
@@ -190,6 +191,7 @@ try
     out.dQ2dt = sol.value(dQ2dt); 
     out.F     = sol.value(Frel); 
     out.J     = sol.value(J);
+    out.Fcost = sol.value(Fcost);
     
     % extract the parameters
     for i = 1:length(optparms)
@@ -208,6 +210,7 @@ catch
     out.dQ2dt = opti.debug.value(dQ2dt); 
     out.F     = opti.debug.value(Frel); 
     out.J     = opti.debug.value(J);
+    out.Fcost = opti.debug.value(Fcost);
     
     % extract the parameters
     for i = 1:length(optparms)

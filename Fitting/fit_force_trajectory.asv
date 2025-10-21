@@ -22,7 +22,7 @@ addpath(genpath('C:\GBW_MyPrograms\casadi-3.7.1-windows64-matlab2018b'))
 addpath(genpath([githubfolder, '\biophysical-muscle-model']))
 
 % Import casadi libraries
-import casadi.*; 
+% import casadi.*; 
 
 %% specify data
 load('active_trials.mat', 'Fm')
@@ -36,15 +36,15 @@ for iF = iFs
 
 % iF = 6; % fiber number (note: #4 and #9 lack pCa = 4.5)
 Ks = find(Fm(:,iF) > .05); % only consider active trials
-n = 3; % ISI number
-m = 7; % AMP number
+n = [3 1]; % ISI number
+m = [7 1]; % AMP number
 tiso = 3; % isometric time (s)
 
 %% load data
 cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
 load([fibers{iF},'_cor_new.mat'],'data')
 
-Data = prep_data_v2(data,n,m,Ks,tiso);
+Data = prep_data_v2(data,n, m,Ks,tiso);
 [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks));
 
 % interpolate force
@@ -74,11 +74,11 @@ for j = 1:4
      subplot(4,1,j)
      box off
     
-    for i = 1:length(ts)
-        xline(ts(i),'k--')
-        xline(ts(i) + mean(diff(ts)) - 3*Data.dTt - 2*Data.dTc - Data.ISI, 'k:')
-        xline(ts(i) + mean(diff(ts)) - 3*Data.dTt, 'k:')
-    end
+%     for i = 1:length(ts)
+%         xline(ts(i),'k--')
+%         xline(ts(i) + mean(diff(ts)) - 3*Data.dTt - 2*Data.dTc - Data.ISI, 'k:')
+%         xline(ts(i) + mean(diff(ts)) - 3*Data.dTt, 'k:')
+%     end
 end
 
 %% get parameters
@@ -109,12 +109,6 @@ parms.Noverlap = 1;
 h = 10e-9; % powerstroke size
 s = 2.6e-6; % sarcomere length
 
-% parms.k = 100;
-% parms.b = 30;
-% 
-% parms.k = 100;
-% parms.b = 30;
-
 % set some parameters
 parms.ti = tis;
 parms.vts = vis;
@@ -136,13 +130,18 @@ subplot(414); hold on
 plot(tis, oFi,'b'); hold on
 
 %% intervals of interest
-id = nan(length(Ks), length(parms.ti));
+id = nan(length(Ks), length(parms.ti), length(m));
+tmax = [0 tiso * length(Ks)];
 
-for k = 1:length(Ks)
-    id(k,:) = parms.ti > (ts(k) + tiso - 4*Data.dTt - 2*Data.dTc - Data.ISI) & (parms.ti < (ts(k)+tiso - Data.dTt));
+for i = 1:length(m)
+    for k = 1:length(Ks)
+        id(k,:,i) = (parms.ti > (tmax(i) + ts(k) + tiso - 4*Data.dTt - 2*Data.dTc(i) - Data.ISI(i))) & (parms.ti < (tmax(i) + ts(k)+tiso - Data.dTt));
+    end
 end
 
-idF = find(sum(id,1) & isfinite(Fis));
+ID = sum(id,3, 'omitnan');
+
+idF = find(sum(ID,1) & isfinite(Fis));
 
 subplot(414); hold on
 plot(tis(idF), oFi(idF),'b.'); hold on
@@ -170,9 +169,10 @@ w = [w1 w2 w3];
 optparms = {'f', 'k11', 'k22', 'k21', 'JF', 'J1', 'J2', 'kon', 'koop', 'kse', 'kse0', 'k'};
 
 fparms = parms;
+% fparms.k = 1000;
 
 figure(2 + iF*10)
-[newparms] = fit_model_parameters_v2(opti, optparms, w, Xdata, fparms, IG);
+[newparms, out] = fit_model_parameters_v2(opti, optparms, w, Xdata, fparms, IG);
 set(gcf,'units','normalized','position',[.2 .2 .4 .6])
 
 sparms(iF) = newparms;
@@ -200,12 +200,19 @@ yline(2e3,'r--')
 legend('Old','IG','New','location','best')
 
 %% test with fitted paramers
-Kss = [Ks; 7]; % only consider active trials
+n = [3 1]; % ISI number
+m = [7 1]; % AMP number
+
+Kss = [Ks]; % only consider active trials
 % Data = prep_data(username, iF,n,m,Kss,tiso);
 Data = prep_data_v2(data,n,m,Kss,tiso);
 
 [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Kss));
 Liss = Lis * parms.gamma;
+
+parms.ti = tis;
+parms.vts = vis;
+parms.Cas = Cas;
 
 newparms.ti = tis;
 newparms.vts = vis;
@@ -216,7 +223,10 @@ x0 = 1e-3 * ones(7,1);
 xp0 = zeros(size(x0));
 
 parms.gamma = 108.3;
+parms.approx = 0;
 osol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(tis)], x0, xp0, odeopt);
+
+newparms.approx = 1;
 nsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, newparms), [0 max(tis)], x0, xp0, odeopt);
 % [~,xdot] = deval(nsol, nsol.x);
 
@@ -227,13 +237,31 @@ nt = nsol.x;
 
 nFi = interp1(nt, nF, tis) + parms.Fpe_func(Liss, newparms);
 
-figure(1 + iF * 10)
-subplot(414); hold on
-plot(tis, nFi,'m'); hold on
+% figure(1 + iF * 10)
+% subplot(414); hold on
+% plot(tis, nFi,'m'); hold on
+
+%%
+figure(100)
+subplot(211)
+plot(Data.t, Data.F, 'k.'); hold on
+plot(nsol.x, nF); hold on
+plot(osol.x, oF);
+
+%%
+nDF = (interp1(Data.t, Data.F, tis) - interp1(osol.x, oF, tis)).^2;
+oDF = (interp1(Data.t, Data.F, tis) - interp1(nsol.x, nF, tis)).^2;
+subplot(21
+plot(tis, [nDF(:) oDF(:)],'.')
 
 %% compare ripped
-figure(100)
-plot(nsol.x, osol.y(end,:)); hold on
+if ishandle(100), close(100); end; figure(100)
+subplot(211)
+plot(osol.x, oF); hold on
+plot(nsol.x, nF)
+
+subplot(212)
+plot(osol.x, osol.y(end,:)); hold on
 plot(nsol.x, nsol.y(end,:))
 
 %% estimate SRS
@@ -313,56 +341,56 @@ legend boxoff
 xlim([0 1.05])
 
 %% test on the condition without conditioning stretch
-n = 1;
-m = 1;
-Data = prep_data_v2(data,n,m,Ks,tiso);
-[tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks));
-Liss = Lis * parms.gamma;
-
-figure(6 + iF * 10)
-subplot(411)
-plot(Data.t, Data.C,'r.'); hold on
-plot(tis, Cas, 'b', 'linewidth',1); 
-box off
-
-subplot(412)
-plot(Data.t, Data.v,'r.'); hold on
-plot(tis, vis,'b',  'linewidth',1); 
-box off
-
-subplot(413)
-plot(Data.t, Data.L,'r.'); hold on
-plot(tis, Lis,'b',  'linewidth',1); 
-box off
-
-subplot(414)
-plot(Data.t, Data.F,'r.'); hold on
-box off
+% n = 1;
+% m = 1;
+% Data = prep_data_v2(data,n,m,Ks,tiso);
+% [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks));
+% Liss = Lis * parms.gamma;
+% 
+% figure(6 + iF * 10)
+% subplot(411)
+% plot(Data.t, Data.C,'r.'); hold on
+% plot(tis, Cas, 'b', 'linewidth',1); 
+% box off
+% 
+% subplot(412)
+% plot(Data.t, Data.v,'r.'); hold on
+% plot(tis, vis,'b',  'linewidth',1); 
+% box off
+% 
+% subplot(413)
+% plot(Data.t, Data.L,'r.'); hold on
+% plot(tis, Lis,'b',  'linewidth',1); 
+% box off
+% 
+% subplot(414)
+% plot(Data.t, Data.F,'r.'); hold on
+% box off
 
 %%
-parms.ti = tis;
-parms.vts = vis;
-parms.Cas = Cas;
-
-osol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(parms.ti)], x0, xp0, odeopt);
-
-newparms.ti = tis;
-newparms.vts = vis;
-newparms.Cas = Cas;
-
-oF = (osol.y(1,:) + osol.y(2,:)) * parms.Fscale;
-ot = osol.x;
-oFi = interp1(ot, oF, tis) + parms.Fpe_func(Liss, parms);
-
-xsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, newparms), [0 max(newparms.ti)], x0, xp0, odeopt);
-
-xF = (xsol.y(1,:) + xsol.y(2,:)) * parms.Fscale;
-xt = xsol.x;
-xFi = interp1(xt, xF, tis) + parms.Fpe_func(Liss, newparms);
-
-subplot(414)
-plot(tis, oFi,'b'); hold on
-plot(tis, xFi,'m');
+% parms.ti = tis;
+% parms.vts = vis;
+% parms.Cas = Cas;
+% 
+% osol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(parms.ti)], x0, xp0, odeopt);
+% 
+% newparms.ti = tis;
+% newparms.vts = vis;
+% newparms.Cas = Cas;
+% 
+% oF = (osol.y(1,:) + osol.y(2,:)) * parms.Fscale;
+% ot = osol.x;
+% oFi = interp1(ot, oF, tis) + parms.Fpe_func(Liss, parms);
+% 
+% xsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, newparms), [0 max(newparms.ti)], x0, xp0, odeopt);
+% 
+% xF = (xsol.y(1,:) + xsol.y(2,:)) * parms.Fscale;
+% xt = xsol.x;
+% xFi = interp1(xt, xF, tis) + parms.Fpe_func(Liss, newparms);
+% 
+% subplot(414)
+% plot(tis, oFi,'b'); hold on
+% plot(tis, xFi,'m');
 
 end
 

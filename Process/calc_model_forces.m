@@ -33,7 +33,7 @@ load(['parms_',filename,version, '.mat'], 'pparms')
 
 %% step 1: force - pCa
 % pCas = flip([4.5 6.1 6.2 6.3 6.4 6.6 9]);
-parms = pparms(2);
+parms = pparms(6);
 
 if contains(filename, 'Hill')
     x0 = 0;

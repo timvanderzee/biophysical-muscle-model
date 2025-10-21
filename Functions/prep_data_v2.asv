@@ -23,8 +23,8 @@ for i = 1:length(ns)
         t = data.texp(:,Ks(k),n,m);
         Ca = 10^(6-data.pCas(Ks(k))) * ones(size(F));
 
-        Data.ISI(i) = data.ISIs(n)/1000;
-        Data.dTc(i) = data.AMPs(m)/10000 / .4545; % conditioning stretch
+        Data.ISI = data.ISIs(n)/1000;
+        Data.dTc = data.AMPs(m)/10000 / .4545; % conditioning stretch
 
         trange = [-.8 .2];
         id1 = t > trange(1) & t < trange(2);
@@ -37,8 +37,7 @@ for i = 1:length(ns)
 
 
     end
-    
-    tmax = tiso * k;
+    tmax = t(id1) + k * tiso - 3*Data.dTt - .005;
 
 end
 
