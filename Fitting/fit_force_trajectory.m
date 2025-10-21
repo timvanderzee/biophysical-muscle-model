@@ -111,12 +111,12 @@ parms.vts = vis;
 parms.Cas = Cas;
 parms.Lts = Lis;
 parms.K = 100;
+parms.gamma = 108.3333; % length scaling
 
 % get initial guess
 IG = get_initial_guess(tis, Cas, vis, parms);
 
-gamma = 108.3333; % length scaling
-Liss = Lis * gamma;
+Liss = Lis * parms.gamma;
 % oF = (osol.y(1,:) + osol.y(2,:)) * parms.Fscale;
 % ot = osol.x;
 
@@ -197,7 +197,7 @@ Kss = [Ks; 7]; % only consider active trials
 Data = prep_data_v2(data,n,m,Kss,tiso);
 
 [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Kss));
-Liss = Lis * gamma;
+Liss = Lis * parms.gamma;
 
 newparms.ti = tis;
 newparms.vts = vis;
@@ -224,8 +224,8 @@ plot(tis, nFi,'m'); hold on
 
 %% estimate SRS
 % lts   = interp1(Data.t, Data.Lf, parms.ti);
-nFi = interp1(nsol.x, nF, Data.t)  + parms.Fpe_func(Data.L * gamma, newparms);
-oFi = interp1(osol.x, oF, Data.t)  + parms.Fpe_func(Data.L * gamma, parms);
+nFi = interp1(nsol.x, nF, Data.t)  + parms.Fpe_func(Data.L * parms.gamma, newparms);
+oFi = interp1(osol.x, oF, Data.t)  + parms.Fpe_func(Data.L * parms.gamma, parms);
 
 figure(4 + iF * 10)
 subplot(131);

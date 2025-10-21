@@ -1,6 +1,6 @@
-function[error_length] = LengthEquilibrium(Q0, F, F0dot, Ld, vMtilda, kse0, kse1)
+function[error_length] = LengthEquilibrium(Q0, F, F0dot, Ld, vMtilda, kse0, kse1, gamma)
 
-gamma = 108.3333; % length scaling
+% gamma = 108.3333; % length scaling
 % F = Q1 + Q0;
 kse = kse1 * (F + kse0);
 

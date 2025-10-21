@@ -76,7 +76,7 @@ dRdti = zeros(1,N);
 error_thini      = ThinEquilibrium(Cas, Q0i, Noni, dNondti, parms.kon, parms.koff, parms.koop, parms.Noverlap); % thin filament dynamics     
 error_thicki     = ThickEquilibrium(Q0i, dQ0dti, Fi, DRXi, dDRXdti, parms.J1, parms.J2, parms.JF, parms.Noverlap, 0); % thick filament dynamics
 [error_Q0i, error_Q1i, error_Q2i, error_Ri, F0dot] = MuscleEquilibrium(Q0i, Q1i, pi, qi, dQ0dti, dQ1dti, dQ2dti, parms.f, parms.w, parms.k11, parms.k12, parms.k21, parms.k22,  Noni, Ldi, DRXi, Ri, parms.b, parms.k, dRdti, parms.dLcrit); % cross-bridge dynamics
-error_lengthi    = LengthEquilibrium(Q0i, Fi, F0dot, Ldi, vts, parms.kse0, parms.kse);
+error_lengthi    = LengthEquilibrium(Q0i, Fi, F0dot, Ldi, vts, parms.kse0, parms.kse, parms.gamma);
 
 % save to struct
 IG.Q0i = Q0i;

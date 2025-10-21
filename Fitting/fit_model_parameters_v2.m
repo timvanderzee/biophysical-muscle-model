@@ -1,7 +1,7 @@
 function[parms, out] = fit_model_parameters_v2(opti, optparms, w, data, parms, IG)
 
 % parameters
-allparms = {'f','k11','k12','k21','k22','JF','koop','J1','J2', 'kon', 'koff', 'kse','kse0', 'kpe', 'Fpe0','b','k','dLcrit'};
+allparms = {'f','k11','k12','k21','k22','JF','koop','J1','J2', 'kon', 'koff', 'kse','kse0', 'kpe', 'Fpe0','b','k','dLcrit', 'gamma'};
 
 % create variables for all parameters
 for i = 1:length(allparms)
@@ -118,7 +118,7 @@ dRdt = zeros(1,N);
 error_thin      = ThinEquilibrium(Cas, Q0, Non, dNondt, kon, koff, koop, parms.Noverlap); % thin filament dynamics     
 error_thick     = ThickEquilibrium(Q0, dQ0dt, F, DRX, dDRXdt, J1, J2, JF, parms.Noverlap); % thick filament dynamics
 [error_Q0, error_Q1, error_Q2, error_R] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, parms.w, k11, k12, k21, k22,  Non, Ld, DRX, R, b, k, dRdt, dLcrit); % cross-bridge dynamics
-error_length    = LengthEquilibrium(Q0, F, F0dot, Ld, vts, kse0, kse);
+error_length    = LengthEquilibrium(Q0, F, F0dot, Ld, vts, kse0, kse, parms.gamma);
 
 % set errors equal to zero
 opti.subject_to(error_thin(:) == 0);
