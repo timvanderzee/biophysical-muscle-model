@@ -27,8 +27,8 @@ addpath(genpath([githubfolder, '\biophysical-muscle-model']))
 %% specify data
 load('active_trials.mat', 'Fm')
 % iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
-iFs = [2,3,5,6,7,8,11];
-% iFs = 6;
+% iFs = [2,3,5,6,7,8,11];
+iFs = 5;
 
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
