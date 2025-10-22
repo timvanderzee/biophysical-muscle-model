@@ -1,7 +1,9 @@
-function[parms, out] = fit_model_parameters_v2(opti, optparms, w, data, parms, IG)
+function[parms, out] = fit_model_parameters_v2(opti, optparms, w, data, parms, IG, bnds)
+
+import casadi.*
 
 % parameters
-allparms = {'f','k11','k12','k21','k22','JF','koop','J1','J2', 'kon', 'koff', 'kse','kse0', 'kpe', 'Fpe0','b','k','dLcrit', 'gamma'};
+allparms = {'f','k11','k12','k21','k22','JF','koop','J1','J2', 'kon', 'koff', 'kse','kse0', 'kpe', 'Fpe0','b','k','dLcrit', 'gamma', 'kF'};
 
 % create variables for all parameters
 for i = 1:length(allparms)
@@ -20,9 +22,14 @@ end
 %     end
 % end
 
+% for i = 1:length(optparms)
+%     lb(i) = .2 * parms.(optparms{i});
+%     ub(i) = 5 * parms.(optparms{i});
+% end
+
 for i = 1:length(optparms)
-    lb(i) = .2 * parms.(optparms{i});
-    ub(i) = 5 * parms.(optparms{i});
+    lb(i) = bnds.(optparms{i})(1);
+    ub(i) = bnds.(optparms{i})(2);
 end
 
 % create opti variables for parameters that are fitted
@@ -31,6 +38,8 @@ for i = 1:length(optparms)
     eval(['opti.subject_to(',num2str(lb(i)), '<', optparms{i}, '<', num2str(ub(i)),');']);
     eval(['opti.set_initial(',optparms{i},',', num2str(parms.(optparms{i})),');']);
 end
+
+JF = kF / J1;
 
 % dependent parameter
 % J2 = J1 * parms.SRX0 / (1-parms.SRX0);

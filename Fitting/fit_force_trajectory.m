@@ -17,18 +17,19 @@ else
     githubfolder = [mainfolder, '\GitHub'];
 end
 
-addpath(genpath([githubfolder, '\muscle-thixotropy\new_model\']))
-addpath(genpath('C:\GBW_MyPrograms\casadi-3.7.1-windows64-matlab2018b'))
-addpath(genpath([githubfolder, '\biophysical-muscle-model']))
+casadifolder = 'C:\Users\u0167448\Documents\casadi-3.7.1-windows64-matlab2018b';
 
-% Import casadi libraries
-% import casadi.*; 
+addpath(genpath([githubfolder, '\muscle-thixotropy\new_model\']))
+addpath(genpath(casadifolder))
+% rmpath(genpath('C:\Users\u0167448\Documents\casadi-3.7.1-windows64-matlab2018b'))
+% addpath(genpath('C:\GBW_MyPrograms\casadi-3.6.7-windows64-matlab2018b'))
+addpath(genpath([githubfolder, '\biophysical-muscle-model']))
 
 %% specify data
 load('active_trials.mat', 'Fm')
 % iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
-% iFs = [2,3,5,6,7,8,11];
-iFs = 5;
+iFs = [2,3,5,6,7,8,11];
+iFs = 6;
 
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
@@ -68,7 +69,8 @@ plot(tis, Lis,'b',  'linewidth',1);
 box off
 
 subplot(414)
-plot(Data.t, Data.F,'r.');
+plot(Data.t, Data.F,'r.'); hold on
+% plot(tis, Fis, 'r--')
 box off
 
 for j = 1:4
@@ -105,6 +107,9 @@ parms = calc_dependent_parms(parms);
 
 parms.act = 1;
 parms.Noverlap = 1;
+parms.approx = 0;
+parms.K = 100;
+oparms = parms;
 
 %% evaluate current values
 h = 10e-9; % powerstroke size
@@ -115,9 +120,10 @@ parms.ti = tis;
 parms.vts = vis;
 parms.Cas = Cas;
 parms.Lts = Lis;
-parms.K = 100;
 parms.gamma = .5*s / h; % length scaling
-parms.approx = 1;
+parms.J1 = 6.17;
+parms.koop = 5.7;
+parms.JF = 1e3;
 
 % get initial guess
 IG = get_initial_guess(tis, Cas, vis, parms);
@@ -164,6 +170,18 @@ Xdata.idF = idF;
 Xdata.idC = idC;
 
 %% do fitting
+bnds.f = [1 200];
+bnds.k11 = [1e-2 200];
+bnds.k22 = [0 1];
+bnds.k21 = [1 200];
+bnds.kF = [1 1e4];
+bnds.J1 = [1e-3 200];
+bnds.J2 = [1 1e3];
+bnds.kon = [1 200];
+bnds.kse = [1e-3 1];
+bnds.kse0 = [1e-4 1];
+bnds.koop = [1 200];
+
 % initialise opti structure
 opti = casadi.Opti(); 
 
@@ -174,13 +192,15 @@ w3 = 1000; 	% weight for regularization
 w = [w1 w2 w3];
 
 % specify biophysical parameters to be fitted
-optparms = {'f', 'k11', 'k22', 'k21', 'JF', 'J1', 'J2', 'kon', 'koop', 'kse', 'kse0'};
+optparms = {'f', 'k11', 'k22', 'k21', 'J2', 'kon', 'kse', 'kse0'};
 
+parms.kF = parms.J1 * parms.JF;
 fparms = parms;
+
 % fparms.k = 1000;
 
 figure(2 + iF*10)
-[newparms, out] = fit_model_parameters_v2(opti, optparms, w, Xdata, fparms, IG);
+[newparms, out] = fit_model_parameters_v2(opti, optparms, w, Xdata, fparms, IG, bnds);
 set(gcf,'units','normalized','position',[.2 .2 .4 .6])
 
 sparms(iF) = newparms;
@@ -192,23 +212,29 @@ pparms(iF) = parms;
 % Fn = interp1(t, F, toc) + parms.kpe * Lts + parms.Fpe0;
 
 %% visualize fitted parameters
+
+% for i = 1:length(optparms)
+%     Y(i,1) = eval(['pparms(', num2str(iF),').',optparms{i}]);
+%     Y(i,2) = eval(['fparms.',optparms{i}]);
+%     Y(i,3) = eval(['sparms(', num2str(iF),').',optparms{i}]);
+% end
+
+clear Y
 for i = 1:length(optparms)
-    Y(i,1) = eval(['pparms(', num2str(iF),').',optparms{i}]);
-    Y(i,2) = eval(['fparms.',optparms{i}]);
-    Y(i,3) = eval(['sparms(', num2str(iF),').',optparms{i}]);
+    Y(i,1) = (newparms.(optparms{i}) - bnds.(optparms{i})(1)) / diff(bnds.(optparms{i}));
 end
 
 figure(1)
-nexttile 
+% nexttile 
 bar(categorical(optparms), Y)
-set(gca,'YScale','log')
-yline(.1,'r--')
-yline(2e3,'r--')
-legend('Old','IG','New','location','best')
+% set(gca,'YScale','log')
+% ylrine(.1,'r--')
+% yline(2e3,'r--')
+% legend('Old','IG','New','location','best')
 
 %% test with fitted paramers
-n = [3 1]; % ISI number
-m = [7 1]; % AMP number
+% n = [3 1]; % ISI number
+% m = [7 1]; % AMP number
 
 Kss = [Ks]; % only consider active trials
 % Data = prep_data(username, iF,n,m,Kss,tiso);
@@ -217,9 +243,9 @@ Data = prep_data_v2(data,n,m,Kss,tiso);
 [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Kss));
 Liss = Lis * parms.gamma;
 
-parms.ti = tis;
-parms.vts = vis;
-parms.Cas = Cas;
+oparms.ti = tis;
+oparms.vts = vis;
+oparms.Cas = Cas;
 
 newparms.ti = tis;
 newparms.vts = vis;
@@ -229,24 +255,29 @@ odeopt = odeset('maxstep', 3e-3);
 x0 = 1e-3 * ones(7,1);
 xp0 = zeros(size(x0));
 
-parms.gamma = 108.3;
-parms.approx = 0;
-osol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(tis)], x0, xp0, odeopt);
+oparms.gamma = 108.3;
+% parms.approx = 0;
+osol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, oparms), [0 max(tis)], x0, xp0, odeopt);
 
 newparms.approx = 1;
+newparms.JF = newparms.kF / newparms.J1;
 nsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, newparms), [0 max(tis)], x0, xp0, odeopt);
 % [~,xdot] = deval(nsol, nsol.x);
 
 nF = (nsol.y(1,:) + nsol.y(2,:)) * parms.Fscale;
-oF = (osol.y(1,:) + osol.y(2,:)) * parms.Fscale;
+oF = (osol.y(1,:) + osol.y(2,:)) * oparms.Fscale;
 
 nt = nsol.x;
+ot = osol.x;
 
 nFi = interp1(nt, nF, tis) + parms.Fpe_func(Liss, newparms);
+oFi = interp1(ot, oF, tis) + parms.Fpe_func(Liss, newparms);
 
-% figure(1 + iF * 10)
-% subplot(414); hold on
-% plot(tis, nFi,'m'); hold on
+figure(1 + iF * 10)
+subplot(414); hold on
+plot(tis, nFi,'m'); hold on
+plot(tis, oFi,'g'); hold on
+
 
 %%
 % close all
@@ -403,11 +434,18 @@ xlim([0 1.05])
 % plot(tis, oFi,'b'); hold on
 % plot(tis, xFi,'m');
 
-end
+
 
 %% save
-% cd([githubfolder, '\biophysical-muscle-model\Parameters'])
-% save(['parms_', filename, '_v2.mat'])
+% foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
+% if ~isfolder(foldername)
+%     mkdir(foldername)
+% end
+% 
+% cd(foldername)
+% save(['parms_', filename, '.mat'], 'newparms')
+
+end
 
 %%
 

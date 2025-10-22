@@ -4,16 +4,21 @@ clear all; close all; clc
 mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
 mcodes = [1 1 1];
 
-iFs = [1 2 3, 5,6, 7, 8, 10, 11];
-iFs = 6;
+% iFs = [1 2 3, 5, 7, 8, 10, 11];
+% iFs = 6;
+iFs = [2,3,5,6,7,8,11];
 
 AMPs = [0 12 38 121 216 288 383 682]/10000;
-ISIs = [1 10 100 316 1000 3160 10000]/1000;
+% ISIs = [1 10 100 316 1000 3160 10000]/1000;
+ISIs = [.05 .2 .5];
+% AMPs = [0    0.0012    0.0038    0.0121    0.0216    0.0288    0.0383    0.0532    0.0682];
+% ISIs = [ 0.0010    0.0100    0.0500    0.1000    0.2000    0.3160    0.5000    1.0000    3.1600   10.0000];
+
 pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
 Ca = 10.^(-pCas+6);
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
-visualize = 1;
+visualize = 0;
 
 version = '_v2';
 
@@ -24,33 +29,33 @@ for iii = 1:size(mcodes,1)
 
 % load parameters
 mcode = mcodes(iii,:);
-[output_mainfolder, filename, ~, ~] = get_folder_and_model(mcode);
-
-% disp(filename)
-
-cd([githubfolder, '\biophysical-muscle-model\Parameters'])
-load(['parms_',filename,version, '.mat'], 'pparms')
-
-%% step 1: force - pCa
-% pCas = flip([4.5 6.1 6.2 6.3 6.4 6.6 9]);
-parms = pparms(6);
-
-if contains(filename, 'Hill')
-    x0 = 0;
-else
-    x0 = parms.x0';
- 
-end
-
-xp0 = zeros(size(x0));
-
+[output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
 
 %% evaluate
 for iF = iFs
     
-    parms = pparms(iF);
-    parms.K = parms.K;
-    gamma = parms.gamma;
+    % disp(filename)
+    foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
+    cd(foldername)
+    load(['parms_',modelname, '.mat'], 'newparms')
+
+    %% step 1: force - pCa
+    % pCas = flip([4.5 6.1 6.2 6.3 6.4 6.6 9]);
+    parms = newparms;
+
+    if contains(modelname, 'Hill')
+        x0 = 0;
+    else
+        x0 = parms.x0';
+
+    end
+
+    xp0 = zeros(size(x0));
+
+
+%     parms = pparms(iF);
+%     parms.K = parms.K;
+%     gamma = parms.gamma;
 
     for i = 1:length(Ca)
         
@@ -96,11 +101,11 @@ for iF = iFs
                 parms.vts = vis;
                 parms.Cas = mean(Cas);
                 parms.Lts = Lis;
-                Liss = Lis * gamma;
+                Liss = Lis * parms.gamma;
                 
                 % run simulation
 %                 tic
-                if contains(filename, 'Hill')
+                if contains(modelname, 'Hill')
                     % simulate
                     sol = ode15i(@(t,y,yp) hill_type_implicit(t,y,yp, parms), [0 max(tis)], X0, xp0, odeopt);
                     
@@ -158,12 +163,12 @@ for iF = iFs
                 cd([output_mainfolder{2}])
                 cd(['parms', version])
                 
-                if ~isfolder([filename,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)])
-                    mkdir([filename,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)])
+                if ~isfolder([modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)])
+                    mkdir([modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)])
                 end
                 
-                cd([filename,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)])
-                disp([filename,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'])
+                cd([modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)])
+                disp([modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'])
                 
                 save([fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'], ...
                     'tis','Cas','vis','Lis','oFi','parms','ts')

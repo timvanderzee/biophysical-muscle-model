@@ -33,6 +33,7 @@ set(gca, 'XScale', 'log', 'Xlim', [5e-4 2e1])
 
 for kk = 1:length(filenames)
     
+    cd('C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Model output\SRS')
     load(filenames{kk},'Stest', 'Scond', 'AMPs', 'pCas', 'ISIs', 'F0')
     
     % average
@@ -62,13 +63,13 @@ for kk = 1:length(filenames)
     end
     
     subplot(131);
-    plot(mean(F0s_m(:,tid(2),tid(3),:), 4, 'omitnan'), mean(SRSrel_m(1:end,tid(2),tid(3),:),4, 'omitnan'), 'color', color(kk,:), 'linewidth',2); hold on
+    plot(mean(F0s_m(:,tid(2),tid(3),:), 4, 'omitnan'), mean(SRSrel_m(1:end,tid(2),tid(3),:),4, 'omitnan'),'-x', 'color', color(kk,:), 'linewidth',2); hold on
    
     subplot(132);
-    plot(AMPs, squeeze(mean(SRSrel_m(tid(1),tid(2),1:end,:),4, 'omitnan')),'color',color(kk,:), 'linewidth', 2); hold on
+    plot(AMPs, squeeze(mean(SRSrel_m(tid(1),tid(2),1:end,:),4, 'omitnan')),'-x','color',color(kk,:), 'linewidth', 2); hold on
     
     subplot(133);
-    plot(ISIs, squeeze(mean(SRSrel_m(tid(1),1:end,tid(3),:),4, 'omitnan')),'color',color(kk,:),'linewidth',2); hold on
+    plot(ISIs, squeeze(mean(SRSrel_m(tid(1),1:end,tid(3),:),4, 'omitnan')),'-x', 'color',color(kk,:),'linewidth',2); hold on
     
     set(gca, 'XScale', 'log', 'Xlim', [5e-4 2e1])
 

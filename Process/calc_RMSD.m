@@ -10,11 +10,11 @@ fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18De
 
 visualize = 0;
 
-mcode = [1 1 3];
-[output_mainfolder, filename, ~, ~] = get_folder_and_model(mcode);
+mcode = [1 1 1];
+[output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
 
-cd([githubfolder, '\biophysical-muscle-model\Parameters'])
-load(['parms_',filename,'.mat'], 'pparms')
+% cd([githubfolder, '\biophysical-muscle-model\Parameters'])
+% load(['parms_',modelname,'.mat'], 'pparms')
 
 %% calc RMSD
 AMPs = [0 12 38 121 216 288 383 682]/10000;
@@ -30,9 +30,10 @@ for iF = iFs
     load([fibers{iF},'_cor_new.mat'],'data')
     
     for i = 1:length(Ca)
-        cd([output_mainfolder{2}])
+        %         cd([output_mainfolder{2}])
+        cd([output_mainfolder{2}, '\parms_v2'])
         
-        cd([filename,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)])
+        cd([modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)])
         
         for m = 1:length(AMPs)
             
@@ -43,42 +44,45 @@ for iF = iFs
             for n = 1:length(ISIs)
                 ISI = ISIs(n);
                 
-                disp([fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'])
-                load([fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'], ...
-                    'tis','Cas','vis','Lis','oFi','parms', 'ts')
+                filename = [fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
+                disp(filename)
                 
-                tiso = dTt*3+dTc*2+ISI;
-                
-                texp = data.texp(:,i,n,m) - .005;
-                Fexp = data.Fexp(:,i,n,m);
-                
-                % center around second stretch
-                tm = tis - 2 -ISI - 2 * dTc;
-                oFii = interp1(tm, oFi, texp);
-                
-                tids = [-ISI - 2*dTc - .1; -ISI - 2*dTc; -ISI - dTc; -ISI; 0; dTt; .16];
-                
-                for ii = 1:length(tids)
-                    if ii < length(tids)
-                        id = texp < tids(ii+1) & texp >= tids(ii);
-                    else % overall
-                        id = texp < tids(end) & texp >= tids(1);
-                    end
+                if exist(filename, 'file')
+                    load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts')
                     
-                    if sum(id) > 0
-                        % compute RMSD
-                        %                 id = tm < .16 & tm > (-ISI - 2 * dTc - .1);
-                        if visualize
-                            figure(1)
-                            plot(tm, oFi, '-', texp, Fexp, '-', texp(id), oFii(id), '.')
-                            pause
+                    tiso = dTt*3+dTc*2+ISI;
+                    
+                    texp = data.texp(:,i,n,m) - .005;
+                    Fexp = data.Fexp(:,i,n,m);
+                    
+                    % center around second stretch
+                    tm = tis - 2 -ISI - 2 * dTc;
+                    oFii = interp1(tm, oFi, texp);
+                    
+                    tids = [-ISI - 2*dTc - .1; -ISI - 2*dTc; -ISI - dTc; -ISI; 0; dTt; .16];
+                    
+                    for ii = 1:length(tids)
+                        if ii < length(tids)
+                            id = texp < tids(ii+1) & texp >= tids(ii);
+                        else % overall
+                            id = texp < tids(end) & texp >= tids(1);
                         end
                         
-                        RMSDs = sqrt((oFii(id) - Fexp(id)).^2) * 100;
-                        
-                        RMSD(i,n,m,iF,ii) = sqrt(mean((oFii(id) - Fexp(id)).^2, 'omitnan'));
-                    else
-                        RMSD(i,n,m,iF,ii) = nan;
+                        if sum(id) > 0
+                            % compute RMSD
+                            %                 id = tm < .16 & tm > (-ISI - 2 * dTc - .1);
+                            if visualize
+                                figure(1)
+                                plot(tm, oFi, '-', texp, Fexp, '-', texp(id), oFii(id), '.')
+                                pause
+                            end
+                            
+                            RMSDs = sqrt((oFii(id) - Fexp(id)).^2) * 100;
+                            
+                            RMSD(i,n,m,iF,ii) = sqrt(mean((oFii(id) - Fexp(id)).^2, 'omitnan'));
+                        else
+                            RMSD(i,n,m,iF,ii) = nan;
+                        end
                     end
                 end
                 
@@ -87,13 +91,15 @@ for iF = iFs
     end
 end
 
-return
+
 
 %% save
 cd(githubfolder)
-cd('biophysical-muscle-model/Model output')
+cd('biophysical-muscle-model/Model output/RMSD')
 
-save([filename, '_RMSD.mat'])
+save([modelname, '_RMSD.mat'])
+
+return
 
 %%
 close all
