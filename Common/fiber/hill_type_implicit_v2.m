@@ -1,4 +1,4 @@
-function[error, Fse] = hill_type_implicit(t, x, xdot, parms)
+function[error, Fse] = hill_type_implicit_v2(t, x, xdot, parms)
 
 % gamma = (.5*parms.s)/parms.h;
 
@@ -12,11 +12,8 @@ end
 % Ca   = interp1(parms.ti, parms.Cas, t);
 
 % states
-lce = x(1);
-%     lmtc = x(2);
-
-vce = xdot(1);
-%     vmtc = xdot(2);
+Fce = x(1);
+Fdot = xdot(1);
 
 Fce_rel = parms.vF_func(vce, parms);
 

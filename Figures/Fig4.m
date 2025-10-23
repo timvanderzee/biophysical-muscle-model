@@ -9,7 +9,7 @@ acolors = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
 version = '_v2';
 
 %% chose figure number: specify conditions
-fig = 6;
+fig = 4;
 iF = 6;
 
 % chosen ISIs, AMPs and pCas

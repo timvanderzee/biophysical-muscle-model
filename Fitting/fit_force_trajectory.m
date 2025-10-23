@@ -1,5 +1,16 @@
 clear all; close all; clc
 
+mcode = [2 1 1];
+
+if sum(mcode == [1 1 1]) == 3
+    optparms = {'f', 'k11', 'k22', 'k21', 'J2', 'kon', 'kse', 'kse0'};
+elseif sum(mcode == [1 1 3]) == 3
+    optparms = {'f', 'k11', 'k22', 'k21', 'n','kappa', 'kse', 'kse0'};
+elseif sum(mcode == [2 1 1]) == 3
+    optparms = {'n','kappa', 'kse', 'kse0', 'vmax'};
+%     optparms = {'n'};
+end
+
 usernames = {'timvd','u0167448'};
 
 for i = 1:length(usernames)
@@ -29,7 +40,7 @@ addpath(genpath([githubfolder, '\biophysical-muscle-model']))
 load('active_trials.mat', 'Fm')
 % iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
 iFs = [2,3,5,6,7,8,11];
-iFs = 6;
+% iFs = 8;
 
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
@@ -85,7 +96,6 @@ for j = 1:4
 end
 
 %% get parameters
-mcode = [1 1 1];
 vs = {'\', '\'};
 % vs = {'\full\'};
 
@@ -121,18 +131,27 @@ parms.vts = vis;
 parms.Cas = Cas;
 parms.Lts = Lis;
 parms.gamma = .5*s / h; % length scaling
-parms.J1 = 6.17;
-parms.koop = 5.7;
-parms.JF = 1e3;
+
+if sum(mcode == [1 1 1]) == 3 
+    parms.J1 = 6.17;
+    parms.koop = 5.7;
+    parms.JF = 1e3;
+    
+elseif sum(mcode == [2 1 1]) == 3 % Hill-type
+    parms.f = 0;
+    parms.vF_func = @(vcerel,parms)parms.e(1)*log((parms.e(2)*vcerel./parms.vmax+parms.e(3))+sqrt((parms.e(2)*vcerel./parms.vmax+parms.e(3)).^2+1))+parms.e(4);
+    parms.k = 0;
+    parms.dLcrit = 0;
+end
 
 % get initial guess
-IG = get_initial_guess(tis, Cas, vis, parms);
+IG = get_initial_guess(tis, Cas, vis, Lis, parms);
 
 Liss = Lis * parms.gamma;
 % oF = (osol.y(1,:) + osol.y(2,:)) * parms.Fscale;
 % ot = osol.x;
 
-oFi = (IG.Q0i+IG.Q1i) * parms.Fscale + parms.Fpe_func(Liss, parms);
+oFi = IG.Fi * parms.Fscale + parms.Fpe_func(Liss, parms);
 
 subplot(414); hold on
 plot(tis, oFi,'b'); hold on
@@ -171,7 +190,7 @@ Xdata.idC = idC;
 
 %% do fitting
 bnds.f = [1 200];
-bnds.k11 = [1e-2 200];
+bnds.k11 = [1e-5 200];
 bnds.k22 = [0 1];
 bnds.k21 = [1 200];
 bnds.kF = [1 1e4];
@@ -181,6 +200,9 @@ bnds.kon = [1 200];
 bnds.kse = [1e-3 1];
 bnds.kse0 = [1e-4 1];
 bnds.koop = [1 200];
+bnds.n = [.1 10];
+bnds.kappa = [.1 10];
+bnds.vmax = [1 200];
 
 % initialise opti structure
 opti = casadi.Opti(); 
@@ -192,8 +214,6 @@ w3 = 1000; 	% weight for regularization
 w = [w1 w2 w3];
 
 % specify biophysical parameters to be fitted
-optparms = {'f', 'k11', 'k22', 'k21', 'J2', 'kon', 'kse', 'kse0'};
-
 parms.kF = parms.J1 * parms.JF;
 fparms = parms;
 
@@ -232,6 +252,7 @@ bar(categorical(optparms), Y)
 % yline(2e3,'r--')
 % legend('Old','IG','New','location','best')
 
+
 %% test with fitted paramers
 % n = [3 1]; % ISI number
 % m = [7 1]; % AMP number
@@ -253,6 +274,11 @@ newparms.Cas = Cas;
 
 odeopt = odeset('maxstep', 3e-3);
 x0 = 1e-3 * ones(7,1);
+
+if newparms.J1 == 0
+    x0(6) = 1;
+end
+
 xp0 = zeros(size(x0));
 
 oparms.gamma = 108.3;
@@ -260,7 +286,11 @@ oparms.gamma = 108.3;
 osol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, oparms), [0 max(tis)], x0, xp0, odeopt);
 
 newparms.approx = 1;
+
+if newparms.J1 > 0
 newparms.JF = newparms.kF / newparms.J1;
+end
+
 nsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, newparms), [0 max(tis)], x0, xp0, odeopt);
 % [~,xdot] = deval(nsol, nsol.x);
 
@@ -278,33 +308,6 @@ subplot(414); hold on
 plot(tis, nFi,'m'); hold on
 plot(tis, oFi,'g'); hold on
 
-
-%%
-% close all
-
-% figure(100)
-% color = get(gca,'colororder');
-% 
-% subplot(211)
-% plot(Data.t, Data.F, 'k.'); hold on
-% plot(nsol.x, nF, 'color', color(1,:)); hold on
-% plot(osol.x, oF, 'color', color(2,:));
-% 
-% oDF = (Data.F - interp1(osol.x, oF, Data.t)).^2;
-% nDF = (Data.F - interp1(nsol.x, nF, Data.t)).^2;
-% 
-% subplot(212)
-% plot(Data.t, [nDF(:) oDF(:)],'.')
-% 
-% %% compare ripped
-% if ishandle(100), close(100); end; figure(100)
-% subplot(211)
-% plot(osol.x, oF); hold on
-% plot(nsol.x, nF)
-% 
-% subplot(212)
-% plot(osol.x, osol.y(end,:)); hold on
-% plot(nsol.x, nsol.y(end,:))
 
 %% estimate SRS
 % lts   = interp1(Data.t, Data.Lf, parms.ti);
@@ -381,58 +384,6 @@ ylabel('Relative stiffness')
 legend('Data', 'Old parameters', 'New parameters', 'location', 'best')
 legend boxoff
 xlim([0 1.05])
-
-%% test on the condition without conditioning stretch
-% n = 1;
-% m = 1;
-% Data = prep_data_v2(data,n,m,Ks,tiso);
-% [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks));
-% Liss = Lis * parms.gamma;
-% 
-% figure(6 + iF * 10)
-% subplot(411)
-% plot(Data.t, Data.C,'r.'); hold on
-% plot(tis, Cas, 'b', 'linewidth',1); 
-% box off
-% 
-% subplot(412)
-% plot(Data.t, Data.v,'r.'); hold on
-% plot(tis, vis,'b',  'linewidth',1); 
-% box off
-% 
-% subplot(413)
-% plot(Data.t, Data.L,'r.'); hold on
-% plot(tis, Lis,'b',  'linewidth',1); 
-% box off
-% 
-% subplot(414)
-% plot(Data.t, Data.F,'r.'); hold on
-% box off
-
-%%
-% parms.ti = tis;
-% parms.vts = vis;
-% parms.Cas = Cas;
-% 
-% osol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(parms.ti)], x0, xp0, odeopt);
-% 
-% newparms.ti = tis;
-% newparms.vts = vis;
-% newparms.Cas = Cas;
-% 
-% oF = (osol.y(1,:) + osol.y(2,:)) * parms.Fscale;
-% ot = osol.x;
-% oFi = interp1(ot, oF, tis) + parms.Fpe_func(Liss, parms);
-% 
-% xsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, newparms), [0 max(newparms.ti)], x0, xp0, odeopt);
-% 
-% xF = (xsol.y(1,:) + xsol.y(2,:)) * parms.Fscale;
-% xt = xsol.x;
-% xFi = interp1(xt, xF, tis) + parms.Fpe_func(Liss, newparms);
-% 
-% subplot(414)
-% plot(tis, oFi,'b'); hold on
-% plot(tis, xFi,'m');
 
 
 

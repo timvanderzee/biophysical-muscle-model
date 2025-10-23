@@ -1,8 +1,11 @@
-function[IG] = get_initial_guess(toc, Cas, vts, parms)
+function[IG] = get_initial_guess(toc, Cas, vts, Lts, parms)
 
 % obtain initial guess
 % intial guess is obtained through running a forward simulation with the
 % first, simulate an isometric contraction
+
+
+if parms.f > 0
 parms.vts = [0 0];
 parms.ti = [0 1];
 parms.Cas = Cas(1) * [1 1];
@@ -11,9 +14,12 @@ x0 = 1e-3 * ones(7,1);
 xp0 = zeros(size(x0));
 odeopt = odeset('maxstep', 3e-3);
 
-
 if parms.k == 0
     x0(end) = 0;
+end
+
+if parms.J1 == 0
+    x0(6) = 1;
 end
 
 sol0 = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 1], x0, xp0, odeopt);
@@ -110,5 +116,79 @@ IG.Q00i = Q00i;
 
 % errors
 IG.error = [error_thini; error_thicki; error_Q0i; error_Q1i; error_Q2i; error_Ri; error_lengthi];
+
+else
+    parms.vts = 0;
+
+    
+    parms.ti = 0;
+parms.Cas = Cas(1);
+parms.Lts = 0;
+
+x0 =  0;
+xp0 = 0; 
+odeopt = odeset('maxstep', 3e-3);
+
+% simulate
+sol0 = ode15i(@(t,y,yp) hill_type_implicit(t,y,yp, parms), [0 max(toc)], x0, xp0, odeopt);
+
+% next, simulate response to specified velocity input vector
+parms.vts = vts;
+parms.ti = toc;
+parms.Cas = Cas;
+parms.Lts = Lts;
+
+% simulate
+sol = ode15i(@(t,y,yp) hill_type_implicit(t,y,yp, parms), [0 max(toc)], sol0.y(end), xp0, odeopt);
+[~,xdot] = deval(sol, sol.x);
+
+%%
+% toc = sol.x;
+
+% interpolate solution to time nodes
+Li     = interp1(sol.x, sol.y(1,:), toc); % zero-order moment
+vi     = interp1(sol.x, xdot(1,:), toc); % zero-order moment time derivative
+
+Fce_rel = parms.vF_func(vi, parms);
+
+% activation from Ca
+a = parms.actfunc(Cas, parms);
+a(a<parms.amin) = parms.amin;
+
+Fce = a .* Fce_rel;
+
+% elastic elements
+Lse = parms.Lts * parms.gamma - Li;
+
+Fse = parms.Fse_func(Lse, parms);
+Fse(Lse < 0) = 0;
+
+% error terms
+IG.error = Fse - Fce;
+IG.Fi = Fce;
+
+IG.vi = vi;
+IG.Li = Li;
+% IG.Firel = Fce_rel;
+
+%%
+    % activation from Ca
+    Act = 1/2 * Cas.^parms.n ./ (parms.kappa^parms.n + Cas.^parms.n);
+    
+    Frel = Fce ./ Act;
+    
+    vt = parms.vmax/(2*parms.e(2))*(-exp(parms.e(4)/parms.e(1)-Frel/parms.e(1))+exp(Frel/parms.e(1)-parms.e(4)/parms.e(1))-2*parms.e(3));
+    
+    dL = log(Fce./parms.kse0 + 1) / parms.kse;
+    
+    Lt = parms.Lts * parms.gamma  - dL;
+
+    % error terms
+    error1 = vt - vi;
+    error2 = Lt - Li;
+    
+%     opti.subject_to((v(1:N-1) + v(2:N))*dt/2 + L(1:N-1) == L(2:N));
+
+end
 
 end

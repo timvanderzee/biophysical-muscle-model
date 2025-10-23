@@ -2,7 +2,7 @@ clear all; close all; clc
 [username, githubfolder] = get_paths();
 
 mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
-mcodes = [1 1 1];
+mcodes = [2 1 1];
 
 % iFs = [1 2 3, 5, 7, 8, 10, 11];
 % iFs = 6;
