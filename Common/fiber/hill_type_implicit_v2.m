@@ -4,39 +4,31 @@ function[error, Fse] = hill_type_implicit_v2(t, x, xdot, parms)
 
 if numel(parms.Cas) == 1
     Ca = parms.Cas;
-    lmtc = parms.Lts * parms.gamma;
 else
-    lmtc    = interp1(parms.ti, parms.Lts, t) * parms.gamma;
     Ca      = interp1(parms.ti, parms.Cas, t);
 end
-% Ca   = interp1(parms.ti, parms.Cas, t);
+
+lmtc    = interp1(parms.ti, parms.Lts, t) * parms.gamma;
 
 % states
-Fce = x(1);
-Fdot = xdot(1);
-
-Fce_rel = parms.vF_func(vce, parms);
+lce = x(1);
+vce = xdot(1);
 
 % activation from Ca
 a = parms.actfunc(Ca, parms);
 a(a<parms.amin) = parms.amin;
 
-Fce = a * Fce_rel;
-
 % elastic elements
 Lse = lmtc - lce;
-
-if isfield(parms, 'Fpece_func')
-    Fpe = parms.Fpece_func(lce, parms);
-else
-    Fpe = 0;
-end
-
 Fse = parms.Fse_func(Lse, parms);
 Fse(Lse < 0) = 0;
 
+% activation-normalized force
+Fce_rel = Fse ./ a;
+
+vi = parms.Fv_func(Fce_rel, parms);
+
 % error terms
-error(1,1) = Fse - Fce - Fpe;
-%     error(2,1) = parms.vmtc - vmtc;
+error(1,1) = vce - vi;
 
 end

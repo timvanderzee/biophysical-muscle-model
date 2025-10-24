@@ -1,4 +1,4 @@
-function[Q0dot, Q1dot, Q2dot, Rdot] = CrossBridge_Dynamics(Q0, p, q, f, w, k1, k2, IGef, Non, DRX, IG, b, k, R, dLcrit)
+function[Q0dot, Q1dot, Q2dot, Rdot] = CrossBridge_Dynamics(Q0, p, q, f, w, k1, k2, IGef, Non, DRX, IG, b, k, R, dLcrit, ps2)
 
 % attaching
 beta = f .* [1 0 w^2];
@@ -11,8 +11,8 @@ phi2 = -IGef{3}(c1,k1) -IGef{3}(c1,k2);
 phi = [phi0; phi1; phi2];
 
 % forcible detachment
-if b > 0
-    gamma = b .*  [1 0 w^2];
+% if b > 0
+    gamma = b .*  [1 ps2 w^2];
 %     phiR0 = -k * (IG{1}(inf, c1) -IG{1}(dLcrit, c1)) + gamma(1) * R;
 %     phiR1 = -k * (IG{2}(inf, c1) -IG{2}(dLcrit, c1)) + gamma(2) * R;
 %     phiR2 = -k * (IG{3}(inf, c1) -IG{3}(dLcrit, c1)) + gamma(3) * R;
@@ -21,15 +21,14 @@ if b > 0
     phiR1 = -k * (IG{2}(10, c1) -IG{2}(dLcrit, c1)) + gamma(2) * R;
     phiR2 = -k * (IG{3}(10, c1) -IG{3}(dLcrit, c1)) + gamma(3) * R;
     
-    
     Rdot = -phiR0;
 
-else
-    Rdot = 0;
-    phiR0 = 0;
-    phiR1 = 0;
-    phiR2 = 0;
-end
+% else
+%     Rdot = 0;
+%     phiR0 = 0;
+%     phiR1 = 0;
+%     phiR2 = 0;
+% end
 
 phiR = [phiR0; phiR1; phiR2];
 

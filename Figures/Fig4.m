@@ -10,7 +10,7 @@ version = '_v2';
 
 %% chose figure number: specify conditions
 fig = 4;
-iF = 6;
+iF = 11;
 
 % chosen ISIs, AMPs and pCas
 if fig == 4
@@ -113,9 +113,9 @@ for j = 1:size(ISIs,1)
 
             cd([output_mainfolder{2}])
             
-            if sum(mcodes(kk,:)== [1 1 1]) == 3
+%             if sum(mcodes(kk,:)== [1 1 1]) == 3 || sum(mcodes(kk,:)== [2 1 1]) == 3
               cd(['parms', version])
-            end
+%             end
             
             [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(kk,:));
             cd([filename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10)])

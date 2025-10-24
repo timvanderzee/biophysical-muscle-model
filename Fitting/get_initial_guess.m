@@ -43,15 +43,12 @@ sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(
 
 %%
 for i = 1:length(xdot)
-error(:,i) = fiber_dynamics_implicit_no_tendon(sol.x(i),sol.y(:,i),xdot(:,i), parms);
+    error(:,i) = fiber_dynamics_implicit_no_tendon(sol.x(i),sol.y(:,i),xdot(:,i), parms);
 end
 
 %%
 % parms.Cas     = interp1(toc, Cas, sol.x); 
 % parms.vts     = interp1(toc, vts, sol.x); 
-
-
-%%
 % toc = sol.x;
 
 % interpolate solution to time nodes
@@ -87,8 +84,9 @@ Fi   = log(1+exp((Q0i + Q1i)*K))/K;
 
 % get initial errors
 error_thini      = ThinEquilibrium(parms.Cas, Q0i, Noni, dNondti, parms.kon, parms.koff, parms.koop, parms.Noverlap); % thin filament dynamics     
-error_thicki     = ThickEquilibrium(Q0i, dQ0dti, Fi, DRXi, dDRXdti, parms.J1, parms.J2, parms.JF, parms.Noverlap, Ri); % thick filament dynamics
-[error_Q0i, error_Q1i, error_Q2i, error_Ri, F0dot] = MuscleEquilibrium(Q0i, Q1i, pi, qi, dQ0dti, dQ1dti, dQ2dti, parms.f, parms.w, parms.k11, parms.k12, parms.k21, parms.k22,  Noni, Ldi, DRXi, dRdti, parms.b, parms.k, Ri, parms.dLcrit); % cross-bridge dynamics
+error_thicki     = ThickEquilibrium(Q0i, dQ0dti, Fi, DRXi, dDRXdti, parms.J1, parms.J2, parms.JF, parms.Noverlap, Ri, dRdti); % thick filament dynamics
+[error_Q0i, error_Q1i, error_Q2i, error_Ri, F0dot] = MuscleEquilibrium(Q0i, Q1i, pi, qi, dQ0dti, dQ1dti, dQ2dti, parms.f, parms.w, parms.k11, parms.k12, parms.k21, parms.k22,  Noni, Ldi, DRXi, dRdti, parms.b, parms.k, Ri, parms.dLcrit, parms.ps2, parms.approx); % cross-bridge dynamics
+
 error_lengthi    = LengthEquilibrium(Q0i, Fi, F0dot, Ldi, parms.vts, parms.kse0, parms.kse, parms.gamma);
 
 % save to struct
@@ -130,7 +128,7 @@ xp0 = 0;
 odeopt = odeset('maxstep', 3e-3);
 
 % simulate
-sol0 = ode15i(@(t,y,yp) hill_type_implicit(t,y,yp, parms), [0 max(toc)], x0, xp0, odeopt);
+sol0 = ode15i(@(t,y,yp) hill_type_implicit_v2(t,y,yp, parms), [0 max(toc)], x0, xp0, odeopt);
 
 % next, simulate response to specified velocity input vector
 parms.vts = vts;
@@ -139,7 +137,7 @@ parms.Cas = Cas;
 parms.Lts = Lts;
 
 % simulate
-sol = ode15i(@(t,y,yp) hill_type_implicit(t,y,yp, parms), [0 max(toc)], sol0.y(end), xp0, odeopt);
+sol = ode15i(@(t,y,yp) hill_type_implicit_v2(t,y,yp, parms), [0 max(toc)], sol0.y(end), xp0, odeopt);
 [~,xdot] = deval(sol, sol.x);
 
 %%

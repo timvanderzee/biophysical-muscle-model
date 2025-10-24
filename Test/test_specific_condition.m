@@ -1,68 +1,155 @@
 clear all; close all; clc
+save_results = 1;
 
-iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
-% iFs = [5, 6, 7];
-load('active_trials.mat', 'Fm')
-username = 'timvd';
+[username, githubfolder] = get_paths();
 
-for iF = 5
+mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
+mcodes = [1 1 1];
 
-Ks = find(Fm(:,iF) > 0.1); % only consider active trials
-n = 1; % ISI number
-m = 1; % AMP number
-tiso = 3; % isometric time (s)
+iFs = [2,3,5,6,7,8,11];
+AMPs = [0    0.0012    0.0038    0.0121    0.0216    0.0288    0.0383    0.0532    0.0682];
+ISIs = [ 0.0010    0.0100    0.0500    0.1000    0.2000    0.3160    0.5000    1.0000    3.1600   10.0000];
+pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
+Ca = 10.^(-pCas+6);
+fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
-load('parms_v2.mat','sparms','pparms');
+visualize = 0;
+version = '_v2';
 
+iii = 1;
 
-Data = get_data(username, iF,n,m,Ks,tiso);
-[tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks));
-gamma = 108.3333; % length scaling
-Liss = Lis * gamma;
+% load parameters
+mcode = mcodes(iii,:);
+[output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
 
-figure(6 + iF * 10)
-subplot(411)
-plot(Data.t, Data.C,'r.'); hold on
-plot(tis, Cas, 'b', 'linewidth',1); 
-box off
-
-subplot(412)
-plot(Data.t, Data.v,'r.'); hold on
-plot(tis, vis,'b',  'linewidth',1); 
-box off
-
-subplot(413)
-plot(Data.t, Data.L,'r.'); hold on
-plot(tis, Lis,'b',  'linewidth',1); 
-box off
-
-subplot(414)
-plot(Data.t, Data.F,'r.'); hold on
-box off
+%% evaluate
 
 
-for kk = 1:2
-    if kk == 1
-        parms = sparms(iF);
-    else
-        parms = pparms(iF);
+iF = 6;
+
+% disp(filename)
+input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
+cd(input_foldername)
+load(['parms_',modelname, '.mat'], 'newparms')
+parms = newparms;
+
+% parms.ps2 = 2;
+
+for i = 1:2
+    if i == 2
+        parms.k = 1000;
+        parms.b = 1e4;
+        parms.dLcrit = 2;
     end
     
-    parms.ti = tis;
-    parms.vts = vis;
-    parms.Cas = Cas;
-
-    odeopt = odeset('maxstep', 1e-3);
-    x0 = 1e-3 * ones(6,1);
+    
+    if contains(modelname, 'Hill')
+        x0 = 0;
+    else
+        x0 = parms.x0';
+        
+    end
+    
     xp0 = zeros(size(x0));
-
-    xsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(parms.ti)], x0, xp0, odeopt);
-
-    xF = (xsol.y(1,:) + xsol.y(2,:)) * parms.Fscale;
-    xt = xsol.x;
-    xFi = interp1(xt, xF, tis) + parms.Fpe_func(Liss, parms);
-
-    plot(tis, xFi);
+    
+    X0 = x0;
+    
+    pCa = 6.1;
+    Ca = 10.^(-pCa+6);
+    
+    AMPs = [.0383 .5];
+    
+    for j = 1:2
+        AMP = AMPs(j);
+        ISI = 1;
+        
+        parms.kpe = 0;
+        
+        dTt = .0383/.4545; % test stretch (= constant)
+        dTc = AMP / .4545; % conditioning stretch
+        
+        odeopt = [];
+        
+        tiso = dTt*3+dTc*2+ISI + 2;
+        dt = .001; % gives 10 points in SRS zone
+        N = round(tiso / dt);
+        
+        [tis, Cas, Lis, vis, ts, Ts] = create_input(tiso, dTt, dTc, ISI, Ca, N);
+        
+        parms.ti = tis;
+        parms.vts = vis;
+        parms.Cas = mean(Cas);
+        parms.Lts = Lis;
+        Liss = Lis * parms.gamma;
+        
+        % run simulation
+        %                 tic
+        if contains(modelname, 'Hill')
+            % simulate
+            sol = ode15i(@(t,y,yp) hill_type_implicit_v2(t,y,yp, parms), [0 max(tis)], X0, xp0, odeopt);
+            
+            % get SE length
+            Lse = Liss - interp1(sol.x, sol.y(1,:), tis);
+            
+            % get force
+            oFi = parms.Fse_func(Lse, parms) * parms.Fscale + parms.Fpe_func(Liss, parms);
+            
+        else
+            
+            aTs = [0; Ts];
+            X0 = x0;
+            vts = [0 .4545 -.4545 0 .4545 0 0];
+            
+            % splitting it up makes things much faster
+            tall = [];
+            Fall = [];
+            
+            % interval needs to have finite duration
+            nzi = find(diff(aTs) > 0);
+            
+            for p = 1:(length(nzi)-1)
+                
+                
+                % simulate
+                sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, xp0, []);
+                
+                X0 = sol.y(:,end);
+                
+                % get force
+                t = sol.x;
+                F = (sol.y(1,:) + sol.y(2,:));
+                
+                tall = [tall t];
+                Fall = [Fall F];
+                
+                %                         figure(100)
+                %                         plot(t, F); hold on
+            end
+            
+            % find unique values
+            [~, ui] = unique(tall);
+            
+            % interpolate force
+            oFi = interp1(tall(ui), Fall(ui), tis) * parms.Fscale + parms.Fpe_func(Liss, parms);
+        end
+        
+        
+        figure(1)
+        subplot(2,2,j)
+        plot(tis, Liss, 'linewidth', 2); hold on
+        box off
+        xlabel('Time (s)')
+        ylabel('Length (-)')
+        
+        subplot(2,2,2+j)
+        plot(tis, oFi, 'linewidth', 2); hold on
+        box off
+        xlabel('Time (s)')
+        ylabel('Force (-)')
+    end
+    
 end
 
-end
+%%
+legend('No FD', 'FD', 'location', 'best')
+legend boxoff

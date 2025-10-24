@@ -3,7 +3,6 @@ clear all; close all; clc
 
 mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
 mcodes = [1 1 1];
-% iFs = [1 2 3, 5,6, 7, 8, 10, 11];
 iFs = [2,3,5,6,7,8,11];
 
 AMPs = [0 12 38 121 216 288 383 532 682]/10000;
@@ -14,28 +13,10 @@ fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18De
 
 % visualize = 0;
 
-% AMPs = 532 / 10000;
-
 for iii = 1:size(mcodes,1)
     
-    % load parameters
     mcode = mcodes(iii,:);
-    
-    % load parameters
-    % mcode = [1 1 3];
     [output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
-    
-    % cd([githubfolder, '\biophysical-muscle-model\Parameters'])
-    % % load(['parms_',filename,'.mat'], 'pparms')
-    
-    
-    %% step 2: stretch-shortening
-    % conditions
-    % AMPs = [0 12 38 121 216 288 383 532 682]/10000;
-    % % ISIs = [1 10 100 316 1000]/1000;
-    % ISIs = [1 10 100 316 1000 3160 10000]/1000;
-    % pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
-    % Ca = 10.^(-pCas+6);
     
     % outputs
     F0      = nan(length(pCas), length(ISIs),length(AMPs), 11);
@@ -111,9 +92,7 @@ for iii = 1:size(mcodes,1)
         end
     end
     
-    
-    
-    
+
     %% save
     cd(githubfolder)
     cd('biophysical-muscle-model')
@@ -123,22 +102,5 @@ for iii = 1:size(mcodes,1)
     
 end
 
-return
-%% plot for all fibers
-close all
-SRSrel = Stest./Scond(:,:,AMPs == .0383,:);
 
-aAMPs = repmat(AMPs, 7, 1);
-aISIs = repmat(ISIs(:), 1, 8);
-
-iF = 6;
-for i = 1:size(SRSrel,1)
-    SRS = squeeze(SRSrel(i,:,:,iF));
-    
-    figure(1)
-    nexttile
-    surf(aAMPs, aISIs, SRS)
-    set(gca, 'Yscale', 'log')
-    
-end
 

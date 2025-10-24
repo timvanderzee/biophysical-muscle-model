@@ -1,5 +1,5 @@
 clear all; close all; clc
-savefig = 1;
+savefig = 0;
 
 [username, githubfolder] = get_paths();
 
@@ -7,11 +7,11 @@ savefig = 1;
 %% Model
 tid = [3 1 7];
 
-
 showbar = 0;
 showline = 1;
 % figure(1)
 filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_alternative_SRS'};
+filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS'};
 % visualize_model_SRS_simple(filenames, th, id)
 
 th = [0 .07 .15 .3 .5 .7 1.5];
@@ -264,8 +264,8 @@ for i = 1:3
     text(xl(i,2) + diff(xl(i,:)) * .1, yl(i)-2*dy, 'XB coop', 'fontsize',6)
     text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-2*dy, num2str(round(R2(3,i),2),3), 'fontsize',6,'horizontalalignment','center')
     
-    text(xl(i,2) + diff(xl(i,:)) * .1, yl(i)-3*dy, 'XB coop + FD', 'fontsize',6)
-    text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-3*dy, num2str(round(R2(4,i),2),3), 'fontsize',6,'horizontalalignment','center')
+%     text(xl(i,2) + diff(xl(i,:)) * .1, yl(i)-3*dy, 'XB coop + FD', 'fontsize',6)
+%     text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-3*dy, num2str(round(R2(4,i),2),3), 'fontsize',6,'horizontalalignment','center')
 end
 
 subplot(131)

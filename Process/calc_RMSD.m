@@ -10,7 +10,7 @@ fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18De
 
 visualize = 0;
 
-mcode = [1 1 1];
+mcode = [1 1 3];
 [output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
 
 % cd([githubfolder, '\biophysical-muscle-model\Parameters'])

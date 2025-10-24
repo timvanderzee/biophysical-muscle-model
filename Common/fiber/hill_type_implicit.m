@@ -24,6 +24,7 @@ Fce_rel = parms.vF_func(vce, parms);
 a = parms.actfunc(Ca, parms);
 a(a<parms.amin) = parms.amin;
 
+Fce_rel(Fce_rel<0) = 0;
 Fce = a * Fce_rel;
 
 % elastic elements
