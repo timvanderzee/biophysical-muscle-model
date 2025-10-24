@@ -32,11 +32,26 @@ for i = 1:length(optparms)
     ub(i) = bnds.(optparms{i})(2);
 end
 
-% create opti variables for parameters that are fitted
+% normalized initial values
 for i = 1:length(optparms)
-    eval([optparms{i}, '= opti.variable(1);'])
-    eval(['opti.subject_to(',num2str(lb(i)), '<', optparms{i}, '<', num2str(ub(i)),');']);
-    eval(['opti.set_initial(',optparms{i},',', num2str(parms.(optparms{i})),');']);
+    nv(i) = (parms.(optparms{i}) - lb(i)) / (ub(i)-lb(i));
+end
+
+% create opti variables for parameters that are fitted
+s = opti.variable(1, length(optparms));
+opti.subject_to(0 < s < 1);
+opti.set_initial(s, nv);
+
+for i = 1:length(optparms)
+%     eval(['s', num2str(i), ms{i}, '= opti.variable(1);'])
+%     eval(['opti.subject_to(0<s_', optparms{i}, '<1);']);
+%     eval(['opti.set_initial(s_',optparms{i},',', num2str(nv(i)),');']);
+
+    % scale back
+%     eval([optparms{i},' = s_', optparms{i} , '* ', num2str(ub(i)-lb(i)), '+', num2str(lb(i)), ''])
+
+    eval([optparms{i},' = s(', num2str(i), ')* ', num2str(ub(i)-lb(i)), '+', num2str(lb(i)), ''])
+
 end
 
 JF = kF / J1;
@@ -235,7 +250,7 @@ opti.minimize(J);
 % opti.solver('ipopt',options);
 
 % Solve the OCP
-p_opts = struct('detect_simple_bounds', true);
+p_opts = struct('detect_simple_bounds', false);
 s_opts = struct('max_iter', 500);
 opti.solver('ipopt',p_opts,s_opts);
 
@@ -248,6 +263,7 @@ try
     out.F     = sol.value(Frel); 
     out.J     = sol.value(J);
     out.Fcost = sol.value(Fcost);
+    out.s = sol.value(s);
     
     if parms.f > 0
     % Extract the result

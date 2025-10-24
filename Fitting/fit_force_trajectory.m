@@ -17,9 +17,9 @@ bnds.kappa = [.1 10];
 bnds.vmax = [1 200];
 
 bnds.ps2 = [-1 2];
-bnds.k = [1000 5000];
-bnds.b = [100 5000];
-bnds.dLcrit = [1 3];
+bnds.k = [1 5000];
+bnds.b = [1 5000];
+bnds.dLcrit = [1 4];
 
 mcode = [1 2 1];
 
@@ -30,7 +30,7 @@ elseif sum(mcode == [1 1 3]) == 3
 elseif sum(mcode == [2 1 1]) == 3
     optparms = {'n','kappa', 'kse', 'kse0', 'vmax'};
 elseif sum(mcode == [1 2 1]) == 3
-    optparms = {'f', 'k11', 'k22', 'k21', 'J2', 'kon', 'kse', 'kse0','ps2'};
+    optparms = {'f', 'k11', 'k22', 'k21', 'J2', 'kon', 'kse', 'kse0','ps2', 'dLcrit'};
 end
 
 usernames = {'timvd','u0167448'};
@@ -62,7 +62,7 @@ addpath(genpath([githubfolder, '\biophysical-muscle-model']))
 load('active_trials.mat', 'Fm')
 % iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
 iFs = [2,3,5,6,7,8,11];
-iFs = 6;
+iFs = 5;
 
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
@@ -120,14 +120,14 @@ for iF = iFs
     end
     
     %% get parameters
-    if sum(mcode == [1 2 1]) == 3
-        vs = {'\full\'};
-    else
+%     if sum(mcode == [1 2 1]) == 3
+%         vs = {'\full\'};
+%     else
         vs = {'\'};
-    end
+%     end
     
     cd([githubfolder, '\muscle-thixotropy\new_model\get_variable'])
-    [output_mainfolder, filename, opt_type, ~] = get_folder_and_model(mcode);
+    [output_mainfolder, filename, opt_type, ~] = get_folder_and_model([1 1 1]);
     
     disp(filename)
     output_folder = [opt_type,'\normalized\with_PE_optimized\2_trials'];
@@ -173,6 +173,15 @@ for iF = iFs
         parms.f = 0;
         parms.k = 0;
         parms.dLcrit = 0;
+
+    elseif sum(mcode == [1 2 1]) == 3 
+        parms.J1 = 6.17;
+        parms.koop = 5.7;
+        parms.JF = 1e3;
+        
+        parms.k = 3000;
+        parms.b = 1000;
+        parms.dLcrit = 2.5;
     end
     
     % get initial guess
@@ -258,15 +267,15 @@ for iF = iFs
     %     Y(i,2) = eval(['fparms.',optparms{i}]);
     %     Y(i,3) = eval(['sparms(', num2str(iF),').',optparms{i}]);
     % end
-    
-    clear Y
-    for i = 1:length(optparms)
-        Y(i,1) = (newparms.(optparms{i}) - bnds.(optparms{i})(1)) / diff(bnds.(optparms{i}));
-    end
-    
+%     
+%     clear Y
+%     for i = 1:length(optparms)
+%         Y(i,1) = (newparms.(optparms{i}) - bnds.(optparms{i})(1)) / diff(bnds.(optparms{i}));
+%     end
+%     
     figure(1)
     % nexttile
-    bar(categorical(optparms), Y)
+    bar(categorical(optparms), out.s)
     % set(gca,'YScale','log')
     % ylrine(.1,'r--')
     % yline(2e3,'r--')
@@ -421,6 +430,9 @@ for iF = iFs
     %% save
     if save_results
 
+       [output_mainfolder, filename, opt_type, ~] = get_folder_and_model(mcode);
+   
+        
         foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
         if ~isfolder(foldername)
             mkdir(foldername)
