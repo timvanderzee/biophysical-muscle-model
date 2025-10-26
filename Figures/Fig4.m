@@ -6,11 +6,11 @@ figure(1)
 color = get(gca,'colororder');
 pcolors = flip(parula(7));
 acolors = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
-version = '_v2';
+version = '_v3';
 
 %% chose figure number: specify conditions
-fig = 4;
-iF = 11;
+fig = 6;
+iF = 6;
 
 % chosen ISIs, AMPs and pCas
 if fig == 4

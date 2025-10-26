@@ -41,6 +41,7 @@ filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full
 
 for kk = 1:length(filenames)
     
+    cd('C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Model output\SRS')
     load(filenames{kk},'Stest', 'Scond', 'AMPs', 'pCas', 'ISIs', 'F0')
     
     % average
@@ -132,7 +133,7 @@ R2 = 1 - oSSE(:,id) ./ oSST(id);
 % n = numel(mSRSrel_m);
 n = N(1,id);
 
-k = [5 8 10 12]';
+k = [5 8 8 10]';
 
 % AIC = 2*k + n.*log(oSSE(:,id)./oSST(id))
 AIC = 2*k + n.*log(oSSE(:,id)./n)
@@ -197,4 +198,4 @@ set(gcf,'units','centimeters','position',[10 10 19 5])
 cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
        
 % figure(1)
-exportgraphics(gcf,['Fig10.png'])
+% exportgraphics(gcf,['Fig10.png'])

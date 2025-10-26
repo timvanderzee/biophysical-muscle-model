@@ -3,8 +3,7 @@ save_results = 1;
 
 [username, githubfolder] = get_paths();
 
-mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
-mcodes = [1 1 1];
+mcodes = [1 1 1; 1 2 1];
 
 iFs = [2,3,5,6,7,8,11];
 AMPs = [0    0.0012    0.0038    0.0121    0.0216    0.0288    0.0383    0.0532    0.0682];
@@ -14,40 +13,34 @@ Ca = 10.^(-pCas+6);
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
 visualize = 0;
-version = '_v2';
 
-iii = 1;
-
-% load parameters
-mcode = mcodes(iii,:);
-[output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
-
-%% evaluate
-
-
-iF = 6;
-
-% disp(filename)
-input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
-cd(input_foldername)
-load(['parms_',modelname, '.mat'], 'newparms')
-parms = newparms;
-
-% parms.ps2 = 2;
+iF = 7;
 
 for i = 1:2
-    if i == 2
-        parms.k = 1000;
-        parms.b = 1e4;
-        parms.dLcrit = 2;
-    end
+%     if i == 2
+%         parms.k = 1000;
+%         parms.b = 1e4;
+%         parms.dLcrit = 2;
+%     end
     
-    
+    % load parameters
+    mcode = mcodes(i,:);
+    [output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
+
+
+
+    % disp(filename)
+    input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
+    cd(input_foldername)
+    load(['parms_',modelname, '.mat'], 'newparms')
+    parms = newparms;
+
+    % parms.ps2 = 2;
+
     if contains(modelname, 'Hill')
         x0 = 0;
     else
         x0 = parms.x0';
-        
     end
     
     xp0 = zeros(size(x0));
@@ -79,8 +72,7 @@ for i = 1:2
         parms.ti = tis;
         parms.vts = vis;
         parms.Cas = mean(Cas);
-        parms.Lts = Lis;
-        Liss = Lis * parms.gamma;
+        parms.Lts = Lis * parms.gamma;
         
         % run simulation
         %                 tic
@@ -89,10 +81,10 @@ for i = 1:2
             sol = ode15i(@(t,y,yp) hill_type_implicit_v2(t,y,yp, parms), [0 max(tis)], X0, xp0, odeopt);
             
             % get SE length
-            Lse = Liss - interp1(sol.x, sol.y(1,:), tis);
+            Lse = parms.Lts - interp1(sol.x, sol.y(1,:), tis);
             
             % get force
-            oFi = parms.Fse_func(Lse, parms) * parms.Fscale + parms.Fpe_func(Liss, parms);
+            oFi = parms.Fse_func(Lse, parms) * parms.Fscale + parms.Fpe_func(parms.Lts, parms);
             
         else
             
@@ -130,13 +122,13 @@ for i = 1:2
             [~, ui] = unique(tall);
             
             % interpolate force
-            oFi = interp1(tall(ui), Fall(ui), tis) * parms.Fscale + parms.Fpe_func(Liss, parms);
+            oFi = interp1(tall(ui), Fall(ui), tis) * parms.Fscale + parms.Fpe_func(parms.Lts, parms);
         end
         
         
         figure(1)
         subplot(2,2,j)
-        plot(tis, Liss, 'linewidth', 2); hold on
+        plot(tis, parms.Lts, 'linewidth', 2); hold on
         box off
         xlabel('Time (s)')
         ylabel('Length (-)')

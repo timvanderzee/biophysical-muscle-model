@@ -7,14 +7,9 @@ tiso = 3;
 % iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
 iFs = [2,3,5,6,7,8,11];
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
+mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
 
 visualize = 0;
-
-mcode = [1 1 3];
-[output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
-
-% cd([githubfolder, '\biophysical-muscle-model\Parameters'])
-% load(['parms_',modelname,'.mat'], 'pparms')
 
 %% calc RMSD
 AMPs = [0 12 38 121 216 288 383 682]/10000;
@@ -22,82 +17,92 @@ ISIs = [1 10 100 316 1000 3160 10000]/1000;
 pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
 Ca = 10.^(-pCas+6);
 
-RMSD = nan(length(pCas), length(ISIs), length(AMPs), iFs(end), 7);
-
-%%
-for iF = iFs
-    cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
-    load([fibers{iF},'_cor_new.mat'],'data')
+for iii = 1:size(mcodes,1)
+    RMSD = nan(length(pCas), length(ISIs), length(AMPs), iFs(end), 7);
     
-    for i = 1:length(Ca)
-        %         cd([output_mainfolder{2}])
-        cd([output_mainfolder{2}, '\parms_v2'])
+    mcode = mcodes(iii,:);
+    [output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
+    
+    for iF = iFs
+        cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
+        load([fibers{iF},'_cor_new.mat'],'data')
         
-        cd([modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)])
-        
-        for m = 1:length(AMPs)
+        for i = 1:length(Ca)
+            %         cd([output_mainfolder{2}])
+            cd([output_mainfolder{2}, '\parms_v3'])
             
-            AMP = AMPs(m);
-            dTt = .0383/.4545; % test stretch (= constant)
-            dTc = AMP / .4545; % conditioning stretch
+            cd([modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)])
             
-            for n = 1:length(ISIs)
-                ISI = ISIs(n);
+            for m = 1:length(AMPs)
                 
-                filename = [fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
-                disp(filename)
+                AMP = AMPs(m);
+                dTt = .0383/.4545; % test stretch (= constant)
+                dTc = AMP / .4545; % conditioning stretch
                 
-                if exist(filename, 'file')
-                    load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts')
+                for n = 1:length(ISIs)
+                    ISI = ISIs(n);
                     
-                    tiso = dTt*3+dTc*2+ISI;
+                    filename = [fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
+                    disp(filename)
                     
-                    texp = data.texp(:,i,n,m) - .005;
-                    Fexp = data.Fexp(:,i,n,m);
-                    
-                    % center around second stretch
-                    tm = tis - 2 -ISI - 2 * dTc;
-                    oFii = interp1(tm, oFi, texp);
-                    
-                    tids = [-ISI - 2*dTc - .1; -ISI - 2*dTc; -ISI - dTc; -ISI; 0; dTt; .16];
-                    
-                    for ii = 1:length(tids)
-                        if ii < length(tids)
-                            id = texp < tids(ii+1) & texp >= tids(ii);
-                        else % overall
-                            id = texp < tids(end) & texp >= tids(1);
-                        end
+                    if exist(filename, 'file')
                         
-                        if sum(id) > 0
-                            % compute RMSD
-                            %                 id = tm < .16 & tm > (-ISI - 2 * dTc - .1);
-                            if visualize
-                                figure(1)
-                                plot(tm, oFi, '-', texp, Fexp, '-', texp(id), oFii(id), '.')
-                                pause
+                        try
+                            load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts')
+                            
+                            tiso = dTt*3+dTc*2+ISI;
+                            
+                            texp = data.texp(:,i,n,m) - .005;
+                            Fexp = data.Fexp(:,i,n,m);
+                            
+                            % center around second stretch
+                            tm = tis - 2 -ISI - 2 * dTc;
+                            oFii = interp1(tm, oFi, texp);
+                            
+                            tids = [-ISI - 2*dTc - .1; -ISI - 2*dTc; -ISI - dTc; -ISI; 0; dTt; .16];
+                            
+                            for ii = 1:length(tids)
+                                if ii < length(tids)
+                                    id = texp < tids(ii+1) & texp >= tids(ii);
+                                else % overall
+                                    id = texp < tids(end) & texp >= tids(1);
+                                end
+                                
+                                if sum(id) > 0
+                                    % compute RMSD
+                                    %                 id = tm < .16 & tm > (-ISI - 2 * dTc - .1);
+                                    if visualize
+                                        figure(1)
+                                        plot(tm, oFi, '-', texp, Fexp, '-', texp(id), oFii(id), '.')
+                                        pause
+                                    end
+                                    
+                                    RMSDs = sqrt((oFii(id) - Fexp(id)).^2) * 100;
+                                    
+                                    RMSD(i,n,m,iF,ii) = sqrt(mean((oFii(id) - Fexp(id)).^2, 'omitnan'));
+                                else
+                                    RMSD(i,n,m,iF,ii) = nan;
+                                end
                             end
                             
-                            RMSDs = sqrt((oFii(id) - Fexp(id)).^2) * 100;
-                            
-                            RMSD(i,n,m,iF,ii) = sqrt(mean((oFii(id) - Fexp(id)).^2, 'omitnan'));
-                        else
-                            RMSD(i,n,m,iF,ii) = nan;
+                        catch
+                            disp(['Unable to read: ', filename])
                         end
+                        
                     end
+                    
                 end
-                
             end
         end
     end
+    
+    
+    %% save
+    cd(githubfolder)
+    cd('biophysical-muscle-model/Model output/RMSD')
+    
+    save([modelname, '_RMSD.mat'])
 end
-
-
-
-%% save
-cd(githubfolder)
-cd('biophysical-muscle-model/Model output/RMSD')
-
-save([modelname, '_RMSD.mat'])
 
 return
 

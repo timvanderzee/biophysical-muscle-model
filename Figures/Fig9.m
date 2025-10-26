@@ -140,4 +140,4 @@ set(g,'units','centimeters','position',[5 2.5 0.2 1.7], 'fontsize', 6)
 cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
        
 % figure(1)
-exportgraphics(gcf,['Fig9.png'])
+% exportgraphics(gcf,['Fig9.png'])
