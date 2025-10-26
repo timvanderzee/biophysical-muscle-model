@@ -21,7 +21,7 @@ bnds.k = [1 5000];
 bnds.b = [1 5000];
 bnds.dLcrit = [1 4];
 
-mcode = [1 2 1];
+mcode = [1 1 3];
 
 if sum(mcode == [1 1 1]) == 3
     optparms = {'f', 'k11', 'k22', 'k21', 'J2', 'kon', 'kse', 'kse0'};

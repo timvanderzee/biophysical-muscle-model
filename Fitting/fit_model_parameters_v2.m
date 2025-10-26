@@ -177,6 +177,8 @@ else % Hill-type
     opti.subject_to((v(1:N-1) + v(2:N))*dt/2 + L(1:N-1) == L(2:N));
 end
 
+
+
 if parms.f > 0
 %% dynamics constraints
 % F = Q0 + Q1; % cross-bridge force
@@ -228,6 +230,9 @@ end
 
 %% cost
 Frel = F * parms.Fscale + kpe * Lts + Fpe0;
+
+opti.subject_to(Frel(1) == 1);
+
 Fcost = (Frel(idF) - Fts(idF)).^2;
 
 % cost function
