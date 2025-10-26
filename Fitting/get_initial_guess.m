@@ -6,172 +6,170 @@ function[IG] = get_initial_guess(toc, Cas, vts, Lts, parms)
 
 
 if parms.f > 0
-parms.vts = [0 0];
-parms.ti = [0 1];
-parms.Cas = Cas(1) * [1 1];
-
-x0 = 1e-3 * ones(7,1);
-xp0 = zeros(size(x0));
-odeopt = odeset('maxstep', 3e-3);
-
-if parms.k == 0
-    x0(end) = 0;
-end
-
-if parms.J1 == 0
-    x0(6) = 1;
-end
-
-sol0 = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 1], x0, xp0, odeopt);
-
-% next, simulate response to specified velocity input vector
-parms.vts = vts;
-parms.ti = toc;
-parms.Cas = Cas;
-N = length(toc);
-
-sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(toc)], sol0.y(:,end), xp0, odeopt);
-[~,xdot] = deval(sol, sol.x);
-% 
-% Q0 = sol.y(1,:);
-% F = sol.y(1,:) + sol.y(2,:);
-% Fdot = xdot(1,:) + xdot(2,:);
-% Ld = sol.y(4,:);
-% v = interp1(toc, vts, sol.x);
-
-% EL = LengthEquilibrium(Q0, F, Fdot, Ld, v, parms.kse0, parms.kse);
-
-%%
-for i = 1:length(xdot)
-    error(:,i) = fiber_dynamics_implicit_no_tendon(sol.x(i),sol.y(:,i),xdot(:,i), parms);
-end
-
-%%
-% parms.Cas     = interp1(toc, Cas, sol.x); 
-% parms.vts     = interp1(toc, vts, sol.x); 
-% toc = sol.x;
-
-% interpolate solution to time nodes
-Q0i     = interp1(sol.x, sol.y(1,:), toc); % zero-order moment
-Q1i     = interp1(sol.x, sol.y(2,:), toc); % first-order moment
-Q2i     = interp1(sol.x, sol.y(3,:), toc); % second-order moment
-Ldi     = interp1(sol.x, sol.y(4,:), toc); % velocity
-Noni    = interp1(sol.x, sol.y(5,:), toc); % thin filament activation
-DRXi    = interp1(sol.x, sol.y(6,:), toc); % thick filament activation
-Ri      = interp1(sol.x, sol.y(7,:), toc); % thick filament activation
-
-dQ0dti  = interp1(sol.x, xdot(1,:), toc); % zero-order moment time derivative
-dQ1dti  = interp1(sol.x, xdot(2,:), toc); % first-order moment time derivative
-dQ2dti  = interp1(sol.x, xdot(3,:), toc); % second-order moment time derivative
-
-dNondti = interp1(sol.x, xdot(5,:), toc); % thin filament activation time derivative
-dDRXdti = interp1(sol.x, xdot(6,:), toc); % thick filament activation time derivative
-dRdti   = interp1(sol.x, xdot(7,:), toc);
-
-% don't allow number too close to 0
-K = parms.K;
-Q00i = log(1+exp(Q0i*K))/K;
-
-% mean and standard deviation
-pi = Q1i./Q00i;
-% qi = max(Q2i./Q00i - (Q1i./Q00i).^2, 0);
-q = Q2i./Q00i - (Q1i./Q00i).^2;
-qi = log(1+exp(q*K))/K;
-
-Fi   = log(1+exp((Q0i + Q1i)*K))/K;
-% Fi = (Q00i + Q1i);
-% Fdoti = (dQ0dti + dQ1dti);
-
-% get initial errors
-error_thini      = ThinEquilibrium(parms.Cas, Q0i, Noni, dNondti, parms.kon, parms.koff, parms.koop, parms.Noverlap); % thin filament dynamics     
-error_thicki     = ThickEquilibrium(Q0i, dQ0dti, Fi, DRXi, dDRXdti, parms.J1, parms.J2, parms.JF, parms.Noverlap, Ri, dRdti); % thick filament dynamics
-[error_Q0i, error_Q1i, error_Q2i, error_Ri, F0dot] = MuscleEquilibrium(Q0i, Q1i, pi, qi, dQ0dti, dQ1dti, dQ2dti, parms.f, parms.w, parms.k11, parms.k12, parms.k21, parms.k22,  Noni, Ldi, DRXi, dRdti, parms.b, parms.k, Ri, parms.dLcrit, parms.ps2, parms.approx); % cross-bridge dynamics
-
-error_lengthi    = LengthEquilibrium(Q0i, Fi, F0dot, Ldi, parms.vts, parms.kse0, parms.kse, parms.gamma);
-
-% save to struct
-IG.Q0i = Q0i;
-IG.Q1i = Q1i;
-IG.Q2i = Q2i;
-IG.Fi = Fi;
-IG.Noni = Noni;
-IG.DRXi = DRXi;
-IG.Ldi = Ldi;
-IG.Ri = Ri;
-
-IG.dQ0dti = dQ0dti;
-IG.dQ1dti = dQ1dti;
-IG.dQ2dti = dQ2dti;
-IG.dNondti = dNondti;
-IG.dDRXdti = dDRXdti;
-IG.dRdti = dRdti;
-
-IG.F0doti = F0dot;
-
-IG.pi = pi;
-IG.qi = qi;
-IG.Q00i = Q00i;
-
-% errors
-IG.error = [error_thini; error_thicki; error_Q0i; error_Q1i; error_Q2i; error_Ri; error_lengthi];
-
+    parms.vts = [0 0];
+    parms.ti = [0 1];
+    parms.Cas = Cas(1) * [1 1];
+    
+    x0 = 1e-3 * ones(7,1);
+    xp0 = zeros(size(x0));
+    odeopt = odeset('maxstep', 3e-3);
+    
+    if parms.k == 0
+        x0(end) = 0;
+    end
+    
+    if parms.J1 == 0
+        x0(6) = 1;
+    end
+    
+    sol0 = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 1], x0, xp0, odeopt);
+    
+    % next, simulate response to specified velocity input vector
+    parms.vts = vts;
+    parms.ti = toc;
+    parms.Cas = Cas;
+    N = length(toc);
+    
+    sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(toc)], sol0.y(:,end), xp0, odeopt);
+    [~,xdot] = deval(sol, sol.x);
+    %
+    % Q0 = sol.y(1,:);
+    % F = sol.y(1,:) + sol.y(2,:);
+    % Fdot = xdot(1,:) + xdot(2,:);
+    % Ld = sol.y(4,:);
+    % v = interp1(toc, vts, sol.x);
+    
+    % EL = LengthEquilibrium(Q0, F, Fdot, Ld, v, parms.kse0, parms.kse);
+    
+    %%
+    for i = 1:length(xdot)
+        error(:,i) = fiber_dynamics_implicit_no_tendon(sol.x(i),sol.y(:,i),xdot(:,i), parms);
+    end
+    
+    %%
+    % parms.Cas     = interp1(toc, Cas, sol.x);
+    % parms.vts     = interp1(toc, vts, sol.x);
+    % toc = sol.x;
+    
+    % interpolate solution to time nodes
+    Q0i     = interp1(sol.x, sol.y(1,:), toc); % zero-order moment
+    Q1i     = interp1(sol.x, sol.y(2,:), toc); % first-order moment
+    Q2i     = interp1(sol.x, sol.y(3,:), toc); % second-order moment
+    Ldi     = interp1(sol.x, sol.y(4,:), toc); % velocity
+    Noni    = interp1(sol.x, sol.y(5,:), toc); % thin filament activation
+    DRXi    = interp1(sol.x, sol.y(6,:), toc); % thick filament activation
+    Ri      = interp1(sol.x, sol.y(7,:), toc); % thick filament activation
+    
+    dQ0dti  = interp1(sol.x, xdot(1,:), toc); % zero-order moment time derivative
+    dQ1dti  = interp1(sol.x, xdot(2,:), toc); % first-order moment time derivative
+    dQ2dti  = interp1(sol.x, xdot(3,:), toc); % second-order moment time derivative
+    
+    dNondti = interp1(sol.x, xdot(5,:), toc); % thin filament activation time derivative
+    dDRXdti = interp1(sol.x, xdot(6,:), toc); % thick filament activation time derivative
+    dRdti   = interp1(sol.x, xdot(7,:), toc);
+    
+    % don't allow number too close to 0
+    K = parms.K;
+    Q00i = log(1+exp(Q0i*K))/K;
+    
+    % mean and standard deviation
+    pi = Q1i./Q00i;
+    % qi = max(Q2i./Q00i - (Q1i./Q00i).^2, 0);
+    q = Q2i./Q00i - (Q1i./Q00i).^2;
+    qi = log(1+exp(q*K))/K;
+    
+    Fi   = log(1+exp((Q0i + Q1i)*K))/K;
+    % Fi = (Q00i + Q1i);
+    % Fdoti = (dQ0dti + dQ1dti);
+    
+    % get initial errors
+    error_thini      = ThinEquilibrium(parms.Cas, Q0i, Noni, dNondti, parms.kon, parms.koff, parms.koop, parms.Noverlap); % thin filament dynamics
+    error_thicki     = ThickEquilibrium(Q0i, dQ0dti, Fi, DRXi, dDRXdti, parms.J1, parms.J2, parms.JF, parms.Noverlap, Ri, dRdti); % thick filament dynamics
+    [error_Q0i, error_Q1i, error_Q2i, error_Ri, F0dot] = MuscleEquilibrium(Q0i, Q1i, pi, qi, dQ0dti, dQ1dti, dQ2dti, parms.f, parms.w, parms.k11, parms.k12, parms.k21, parms.k22,  Noni, Ldi, DRXi, dRdti, parms.b, parms.k, Ri, parms.dLcrit, parms.ps2, parms.approx); % cross-bridge dynamics
+    
+    error_lengthi    = LengthEquilibrium(Q0i, Fi, F0dot, Ldi, parms.vts, parms.kse0, parms.kse, parms.gamma);
+    
+    % save to struct
+    IG.Q0i = Q0i;
+    IG.Q1i = Q1i;
+    IG.Q2i = Q2i;
+    IG.Fi = Fi;
+    IG.Noni = Noni;
+    IG.DRXi = DRXi;
+    IG.Ldi = Ldi;
+    IG.Ri = Ri;
+    
+    IG.dQ0dti = dQ0dti;
+    IG.dQ1dti = dQ1dti;
+    IG.dQ2dti = dQ2dti;
+    IG.dNondti = dNondti;
+    IG.dDRXdti = dDRXdti;
+    IG.dRdti = dRdti;
+    
+    IG.F0doti = F0dot;
+    
+    IG.pi = pi;
+    IG.qi = qi;
+    IG.Q00i = Q00i;
+    
+    % errors
+    IG.error = [error_thini; error_thicki; error_Q0i; error_Q1i; error_Q2i; error_Ri; error_lengthi];
+    
 else
     parms.vts = 0;
-
-    
     parms.ti = 0;
-parms.Cas = Cas(1);
-parms.Lts = 0;
-
-x0 =  0;
-xp0 = 0; 
-odeopt = odeset('maxstep', 3e-3);
-
-% simulate
-sol0 = ode15i(@(t,y,yp) hill_type_implicit_v2(t,y,yp, parms), [0 max(toc)], x0, xp0, odeopt);
-
-% next, simulate response to specified velocity input vector
-parms.vts = vts;
-parms.ti = toc;
-parms.Cas = Cas;
-parms.Lts = Lts;
-
-% simulate
-sol = ode15i(@(t,y,yp) hill_type_implicit_v2(t,y,yp, parms), [0 max(toc)], sol0.y(end), xp0, odeopt);
-[~,xdot] = deval(sol, sol.x);
-
-%%
-% toc = sol.x;
-
-% interpolate solution to time nodes
-Li     = interp1(sol.x, sol.y(1,:), toc); % zero-order moment
-vi     = interp1(sol.x, xdot(1,:), toc); % zero-order moment time derivative
-
-Fce_rel = parms.vF_func(vi, parms);
-
-% activation from Ca
-a = parms.actfunc(Cas, parms);
-a(a<parms.amin) = parms.amin;
-
-Fce = a .* Fce_rel;
-
-% elastic elements
-Lse = parms.Lts * parms.gamma - Li;
-
-Fse = parms.Fse_func(Lse, parms);
-Fse(Lse < 0) = 0;
-
-% error terms
-IG.error = Fse - Fce;
-IG.Fi = Fce;
-
-IG.vi = vi;
-IG.Li = Li;
-% IG.Firel = Fce_rel;
-
-%%
+    parms.Cas = Cas(1);
+    parms.Lts = 0;
+    
+    x0 =  0;
+    xp0 = 0;
+    odeopt = odeset('maxstep', 3e-3);
+    
+    % simulate
+    sol0 = ode15i(@(t,y,yp) hill_type_implicit_v2(t,y,yp, parms), [0 max(toc)], x0, xp0, odeopt);
+    
+    % next, simulate response to specified velocity input vector
+    parms.vts = vts;
+    parms.ti = toc;
+    parms.Cas = Cas;
+    parms.Lts = Lts;
+    
+    % simulate
+    sol = ode15i(@(t,y,yp) hill_type_implicit_v2(t,y,yp, parms), [0 max(toc)], sol0.y(end), xp0, odeopt);
+    [~,xdot] = deval(sol, sol.x);
+    
+    %%
+    % toc = sol.x;
+    
+    % interpolate solution to time nodes
+    Li     = interp1(sol.x, sol.y(1,:), toc); % zero-order moment
+    vi     = interp1(sol.x, xdot(1,:), toc); % zero-order moment time derivative
+    
+    Fce_rel = parms.vF_func(vi, parms);
+    
     % activation from Ca
-    Act = 1/2 * Cas.^parms.n ./ (parms.kappa^parms.n + Cas.^parms.n);
+    a = parms.actfunc(Cas, parms);
+    a(a<parms.amin) = parms.amin;
+    
+    Fce = a .* Fce_rel;
+    
+    % elastic elements
+    Lse = parms.Lts - Li;
+    
+    Fse = parms.Fse_func(Lse, parms);
+    Fse(Lse < 0) = 0;
+    
+    % error terms
+    IG.error = Fse - Fce;
+    IG.Fi = Fce;
+    
+    IG.vi = vi;
+    IG.Li = Li;
+    % IG.Firel = Fce_rel;
+    
+    %%
+    % activation from Ca
+    Act = parms.act_max * Cas.^parms.n ./ (parms.kappa^parms.n + Cas.^parms.n);
     
     Frel = Fce ./ Act;
     
@@ -179,14 +177,14 @@ IG.Li = Li;
     
     dL = log(Fce./parms.kse0 + 1) / parms.kse;
     
-    Lt = parms.Lts * parms.gamma  - dL;
-
+    Lt = parms.Lts - dL;
+    
     % error terms
     error1 = vt - vi;
     error2 = Lt - Li;
     
-%     opti.subject_to((v(1:N-1) + v(2:N))*dt/2 + L(1:N-1) == L(2:N));
-
+    %     opti.subject_to((v(1:N-1) + v(2:N))*dt/2 + L(1:N-1) == L(2:N));
+    
 end
 
 end

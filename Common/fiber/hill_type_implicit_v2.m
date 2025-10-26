@@ -8,8 +8,12 @@ else
     Ca      = interp1(parms.ti, parms.Cas, t);
 end
 
-lmtc    = interp1(parms.ti, parms.Lts, t) * parms.gamma;
-
+if numel(parms.Lts) == 1
+    lmtc = parms.Lts;
+else
+    lmtc    = interp1(parms.ti, parms.Lts, t);
+end
+    
 % states
 lce = x(1);
 vce = xdot(1);

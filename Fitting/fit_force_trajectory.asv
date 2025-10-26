@@ -168,7 +168,7 @@ for iF = iFs
         for k = 1:length(Ks)
             id1(k,:,i) = (parms.ti > (tmax(i) + ts(k) + tiso - 4*Data.dTt - 2*Data.dTc(i) - Data.ISI(i))) & (parms.ti < (tmax(i) + ts(k)+tiso - Data.dTt));
             
-            id2(k,:,i) = (parms.ti > (tmax(i) + ts(k) + tiso - 5*Data.dTt - 2*Data.dTc(i) - Data.ISI(i))) & (parms.ti < (tmax(i) + ts(k) + tiso - 4*Data.dTt - 2*Data.dTc(i) - Data.ISI(i)));
+            id2(k,:,i) = (parms.ti > (tmax(i) + ts(k) + tiso - 5*Data.dTt - 2*Data.dTc(i) - Data.ISI(i))) & (parms.ti < (tmax(i) + ts(k) + tiso - 3.5*Data.dTt - 2*Data.dTc(i) - Data.ISI(i)));
         end
     end
     
@@ -177,8 +177,8 @@ for iF = iFs
     idC = find(sum(sum(id2,3, 'omitnan'),1));
 
     subplot(414); hold on
-    plot(tis(idF), oFi(idF),'m*', 'markersize', 1); hold on
-    plot(tis(idC), oFi(idC),'g.'); hold on
+    plot(tis(idF), oFi(idF),'m.'); hold on
+    plot(tis(idC), oFi(idC),'r.'); hold on
     
     %% select data for fitting
     Xdata.t = tis;
@@ -368,7 +368,8 @@ for iF = iFs
     if save_results
 
        [output_mainfolder, filename, opt_type, ~] = get_folder_and_model(mcode);
-
+   
+        
         foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
         if ~isfolder(foldername)
             mkdir(foldername)
