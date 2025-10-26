@@ -2,6 +2,7 @@ function[tis, Cas, Lis, vis, ts, Ts] = create_input(tiso, dTt, dTc, ISI, Ca, N)
 
 if nargin < 6
     N = 500;
+    N = 200;
 end
 
 %% create idealized input

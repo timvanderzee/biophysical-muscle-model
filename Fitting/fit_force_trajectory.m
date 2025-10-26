@@ -3,11 +3,11 @@ clear all; close all; clc
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
 % model to be fitted
-mcode = [2 1 1];
+mcode = [1 1 1];
 
 % settings
 save_results = 0;
-iFs = 5; %[2,3,5,6,7,8,11];
+iFs = 7; %[2,3,5,6,7,8,11];
 n = [3 1]; % ISI number
 m = [7 1]; % AMP number
 tiso = 3; % isometric time (s)
@@ -48,20 +48,20 @@ load('active_trials.mat', 'Fm')
 
 for iF = iFs
     
-   
     %% load data
     cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
     load([fibers{iF},'_cor_new.mat'],'data')
    
-    Ks = find(Fm(:,iF) > .05); % only consider active trials
+    Ks = find(Fm(:,iF) > .07); % only consider active trials
     Data = prep_data_v2(data,n, m,Ks,tiso);
-    [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks));
+    [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), 400);
     
     Lis(Lis<0) = 0;
     
     % interpolate force
     Fis = interp1(Data.t, Data.F, tis);
     
+    if ishandle(1), close(1); end
     figure(1)
     subplot(411)
     plot(Data.t, Data.C,'k.', tis, Cas, 'b');
@@ -203,7 +203,7 @@ for iF = iFs
     parms.kF = parms.J1 * parms.JF;
     fparms = parms;
     
-    figure(2)
+    figure(100)
     [newparms, out] = fit_model_parameters_v2(opti, optparms, w, Xdata, fparms, IG, bnds);
     set(gcf,'units','normalized','position',[.2 .2 .4 .6])
     
@@ -292,7 +292,8 @@ for iF = iFs
     %% estimate SRS
     nFii = interp1(tis, nFi, Data.t);
     oFii = interp1(tis, oFi, Data.t);
-    
+       
+    if ishandle(5), close(5); end
     figure(5)
     subplot(131);
     plot(Data.L, Data.F,'.'); hold on
@@ -375,7 +376,7 @@ for iF = iFs
         end
 
         cd(foldername)
-        save(['parms_', filename, '.mat'], 'newparms')
+        save(['parms_', filename, '.mat'], 'newparms', 'optparms', 'out', 'bnds')
     end
     
 end
