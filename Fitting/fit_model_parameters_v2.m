@@ -123,7 +123,7 @@ if parms.f > 0 % biophysical models
         opti.set_initial(R, IG.Ri);
         opti.set_initial(dRdt, IG.dRdti);
         
-%         opti.subject_to(R >= 0);
+        opti.subject_to(R >= 0);
     else
         R = zeros(1, N);
         dRdt = zeros(1,N);

@@ -6,14 +6,14 @@ fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18De
 mcode = [1 2 1];
 
 % settings
-save_results = 1;
+save_results = 0;
 iFs = 11; %[2,3,5,6,7,8,11];
 n = [3 1]; % ISI number
 m = [7 1]; % AMP number
 tiso = 3; % isometric time (s)
 
 % bounds
-bnds.f = [1 500];
+bnds.f = [20 500];
 bnds.k11 = [1e-5 200];
 bnds.k22 = [0 1];
 bnds.k21 = [1 200];
@@ -102,7 +102,7 @@ for iF = iFs
 %     cd(output_dir)
 %     load([filename,'_F', num2str(iF),'_best.mat'],'parms','exitflag','fopt','C0','Cbounds','model','P0','P')
     
-    foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
+    foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{6}];
     cd(foldername)
     load(['parms_', filename, '_v2.mat'], 'newparms')
 

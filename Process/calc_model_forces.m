@@ -7,7 +7,7 @@ parms_version = '_v2';
 [username, githubfolder] = get_paths();
 
 % mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
-mcodes = [1 1 1];
+mcodes = [1 2 1];
 
 iFs = [2,3,5,6,7,8,11];
 AMPs = [0    0.0012    0.0038    0.0121    0.0216    0.0288    0.0383    0.0532    0.0682];

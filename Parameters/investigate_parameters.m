@@ -3,7 +3,7 @@ fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18De
 [username, githubfolder] = get_paths();
 iFs = [2,3,5,6,7,8,11];
 
-mcode = [1 1 1];
+mcode = [1 2 1];
 nv = nan(length(iFs), 10);
 
 for i = 1:length(iFs)
