@@ -23,6 +23,7 @@ end
 
 if (sum(nv > 1) + sum(nv < 0)) > 0
     disp('Warning: initial guess out of bounds')
+    keyboard
 end
 
 % create opti variable for normalized parameters that are fitted
@@ -236,7 +237,7 @@ opti.minimize(J);
 % opti.solver('ipopt',options);
 
 % Solve the OCP
-p_opts = struct('detect_simple_bounds', false);
+p_opts = struct('detect_simple_bounds', true);
 s_opts = struct('max_iter', 500);
 opti.solver('ipopt',p_opts,s_opts);
 

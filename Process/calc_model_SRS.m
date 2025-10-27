@@ -1,8 +1,8 @@
 clear all; close all; clc
 [username, githubfolder] = get_paths();
 
-mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
-% mcodes = [1 1 1];
+% mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
+mcodes = [1 1 1];
 iFs = [2,3,5,6,7,8,11];
 
 AMPs = [0 12 38 121 216 288 383 532 682]/10000;
@@ -39,7 +39,7 @@ for iii = 1:size(mcodes,1)
                     
                     tiso = dTt*3+dTc*2+ISI + 2;
                     
-                    cd([output_mainfolder{2}, '\parms_v3'])
+                    cd([output_mainfolder{2}, '\parms_v4'])
                     
                     cd([modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)])
                     

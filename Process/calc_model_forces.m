@@ -1,12 +1,13 @@
 clear all; close all; clc
 save_results = 1;
 visualize = 0;
-version = '_v3';
+output_version = '_v4';
+parms_version = '_v2'; 
 
 [username, githubfolder] = get_paths();
 
-mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
-% mcodes = [1 2 1];
+% mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
+mcodes = [1 1 1];
 
 iFs = [2,3,5,6,7,8,11];
 AMPs = [0    0.0012    0.0038    0.0121    0.0216    0.0288    0.0383    0.0532    0.0682];
@@ -27,7 +28,7 @@ for iii = 1:size(mcodes,1)
         % disp(filename)
         input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
         cd(input_foldername)
-        load(['parms_',modelname, '.mat'], 'newparms')
+        load(['parms_',modelname, parms_version, '.mat'], 'newparms')
         parms = newparms;
         
         if contains(modelname, 'Hill')
@@ -43,7 +44,7 @@ for iii = 1:size(mcodes,1)
         for i = 1:length(Ca)
             X0 = x0;
             
-            output_foldername = [output_mainfolder{2}, '\parms', version, '\', modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)];
+            output_foldername = [output_mainfolder{2}, '\parms', output_version, '\', modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)];
             
             if ~isfolder(output_foldername)
                 mkdir(output_foldername)

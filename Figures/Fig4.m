@@ -6,10 +6,10 @@ figure(1)
 color = get(gca,'colororder');
 pcolors = flip(parula(7));
 acolors = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
-version = '_v3';
+% version = {'_v3';
 
 %% chose figure number: specify conditions
-fig = 6;
+fig = 5;
 iF = 6;
 
 % chosen ISIs, AMPs and pCas
@@ -66,17 +66,19 @@ else
     colors = acolors(3:end,:);
 end
 
-for kk = 1:size(mcodes,1)
-    mcode = mcodes(kk,:);
-    
-    [output_mainfolder, filenames{kk}, opt_types{kk}, ~] = get_folder_and_model(mcode);
 
-    cd([githubfolder, '\biophysical-muscle-model\Parameters'])
-    load(['parms_',filenames{kk},'.mat'], 'pparms')
-    Parms{kk} = pparms(iF);
-end
+% for kk = 1:size(mcodes,1)
+%     mcode = mcodes(kk,:);
+%     
+%     [output_mainfolder, filenames{kk}, opt_types{kk}, ~] = get_folder_and_model(mcode);
+% 
+%     cd([githubfolder, '\biophysical-muscle-model\Parameters'])
+%     load(['parms_',filenames{kk},'.mat'], 'pparms')
+%     Parms{kk} = pparms(iF);
+% end
 
 % load data 
+[output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(1,:));
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 cd([output_mainfolder{2},'\data'])
 load([fibers{iF},'_cor_new.mat'],'data');
@@ -108,16 +110,21 @@ for j = 1:size(ISIs,1)
         tids = sort([Tsrel(i,:) .15]);
         
         for kk = 1:size(mcodes,1)
-   
+            mcode = mcodes(kk,:);
+            [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(kk,:));
             tiso = dTt*3+dTc*2+ISI + 2;
 
             cd([output_mainfolder{2}])
+%             cd(['parms', version{kk}])
             
-%             if sum(mcodes(kk,:)== [1 1 1]) == 3 || sum(mcodes(kk,:)== [2 1 1]) == 3
-              cd(['parms', version])
+            if sum(mcodes(kk,:)== [1 1 1]) == 3
+              cd('parms_v4')
+            else
+                cd('parms_v3');
+            end
 %             end
             
-            [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(kk,:));
+%             [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(kk,:));
             cd([filename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10)])
 
             disp([fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'])

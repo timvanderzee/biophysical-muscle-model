@@ -3,7 +3,8 @@ fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18De
 [username, githubfolder] = get_paths();
 iFs = [2,3,5,6,7,8,11];
 
-mcodes = [1 2 1; 1 1 1; 1 1 3; 2 1 1];
+mcodes = [1 1 1; 1 1 1];
+v = {'','_v2'};
 
 for j = 1:size(mcodes,1)
     mcode = mcodes(j,:);
@@ -13,7 +14,7 @@ for i = 1:length(iFs)
     foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iFs(i)}];
 
     cd(foldername)
-    load(['parms_', filename, '.mat'], 'newparms', 'optparms', 'out', 'bnds')
+    load(['parms_', filename, v{j}, '.mat'], 'newparms', 'optparms', 'out', 'bnds')
 
 
     J(i,j) = out.J;
@@ -23,4 +24,4 @@ end
 %%
 figure(1)
 plot(J)
-legend('FD', 'Coop', 'Regular', 'Hill', 'location', 'best')
+% legend('FD', 'Coop', 'Regular', 'Hill', 'location', 'best')

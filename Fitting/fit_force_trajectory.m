@@ -3,21 +3,21 @@ clear all; close all; clc
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
 % model to be fitted
-mcode = [1 1 1];
+mcode = [1 2 1];
 
 % settings
-save_results = 0;
-iFs = 7; %[2,3,5,6,7,8,11];
+save_results = 1;
+iFs = 11; %[2,3,5,6,7,8,11];
 n = [3 1]; % ISI number
 m = [7 1]; % AMP number
 tiso = 3; % isometric time (s)
 
 % bounds
-bnds.f = [1 200];
+bnds.f = [1 500];
 bnds.k11 = [1e-5 200];
 bnds.k22 = [0 1];
 bnds.k21 = [1 200];
-bnds.kF = [1 1e4];
+bnds.kF = [1 1e5];
 bnds.J1 = [1e-3 200];
 bnds.J2 = [1 1e3];
 bnds.kon = [1 200];
@@ -34,13 +34,14 @@ bnds.dLcrit = [1 4];
 
 % parameters to be fitted
 if sum(mcode == [1 1 1]) == 3
-    optparms = {'f', 'k11', 'k22', 'k21', 'J2', 'kon', 'kse', 'kse0'};
+    optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop'};
+%     optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF'};
 elseif sum(mcode == [1 1 3]) == 3
     optparms = {'f', 'k11', 'k22', 'k21', 'n','kappa', 'kse', 'kse0'};
 elseif sum(mcode == [2 1 1]) == 3
     optparms = {'n','kappa', 'kse', 'kse0', 'vmax'};
 elseif sum(mcode == [1 2 1]) == 3
-    optparms = {'f', 'k11', 'k22', 'k21', 'J2', 'kon', 'kse', 'kse0','ps2', 'dLcrit'};
+    optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop','ps2', 'dLcrit'};
 end
 
 %% specify data
@@ -54,7 +55,7 @@ for iF = iFs
    
     Ks = find(Fm(:,iF) > .07); % only consider active trials
     Data = prep_data_v2(data,n, m,Ks,tiso);
-    [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), 400);
+    [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), 500);
     
     Lis(Lis<0) = 0;
     
@@ -94,26 +95,34 @@ for iF = iFs
     [output_mainfolder, filename, opt_type, ~] = get_folder_and_model(mmcode);
     
     disp(filename)
-    output_folder = [opt_type,'\normalized\with_PE_optimized\2_trials'];
+%     output_folder = [opt_type,'\normalized\with_PE_optimized\2_trials'];
     
     % get other parameters from other fiber    
-    output_dir = [output_mainfolder{1}, '\', filename,vs{1}, output_folder];
-    cd(output_dir)
-    load([filename,'_F', num2str(iF),'_best.mat'],'parms','exitflag','fopt','C0','Cbounds','model','P0','P')
+%     output_dir = [output_mainfolder{1}, '\', filename,vs{1}, output_folder];
+%     cd(output_dir)
+%     load([filename,'_F', num2str(iF),'_best.mat'],'parms','exitflag','fopt','C0','Cbounds','model','P0','P')
     
+    foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
+    cd(foldername)
+    load(['parms_', filename, '_v2.mat'], 'newparms')
+
+    parms = newparms;
     % convert to parms
-    C = p_to_c(P, Cbounds);
-    parms = C_to_parms(C, parms, parms.optvars);
-    parms = calc_dependent_parms(parms);
+%     C = p_to_c(P, Cbounds);
+%     parms = C_to_parms(C, parms, parms.optvars);
+%     parms = calc_dependent_parms(parms);
     
     % add some parameters that didn't exist before
-    parms.ps2 = 0;
+%     parms.ps2 = 0;
     parms.act = 1;
     parms.Noverlap = 1;
     parms.approx = 1;
     parms.K = 100;
     parms.vF_func = @(vcerel,parms)parms.e(1)*log((parms.e(2)*vcerel./parms.vmax+parms.e(3))+sqrt((parms.e(2)*vcerel./parms.vmax+parms.e(3)).^2+1))+parms.e(4);
-    parms.gamma = .5*parms.s / parms.h; % length scaling
+    
+    if ~isfield(parms, 'gamma')
+        parms.gamma = .5*parms.s / parms.h; % length scaling
+    end
     
     % store old parameters
     oparms = parms;
@@ -128,6 +137,7 @@ for iF = iFs
         parms.J1 = 6.17;
         parms.koop = 5.7;
         parms.JF = 1e3;
+        parms.J2 = 200;
         
     elseif sum(mcode == [2 1 1]) == 3 % Hill-type
         parms.f = 0;
@@ -137,9 +147,9 @@ for iF = iFs
         parms.act_max = (1 - parms.Fpe0) / parms.Fscale;
 
     elseif sum(mcode == [1 2 1]) == 3 
-        parms.J1 = 6.17;
-        parms.koop = 5.7;
-        parms.JF = 1e3;
+%         parms.J1 = 6.17;
+%         parms.koop = 5.7;
+%         parms.JF = 1e3;
         
         parms.k = 3000;
         parms.b = 1000;
@@ -376,7 +386,7 @@ for iF = iFs
         end
 
         cd(foldername)
-        save(['parms_', filename, '.mat'], 'newparms', 'optparms', 'out', 'bnds')
+        save(['parms_', filename, '_v2.mat'], 'newparms', 'optparms', 'out', 'bnds')
     end
     
 end
