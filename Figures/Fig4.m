@@ -9,7 +9,7 @@ acolors = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
 % version = {'_v3';
 
 %% chose figure number: specify conditions
-fig = 5;
+fig = 6;
 iF = 6;
 
 % chosen ISIs, AMPs and pCas
@@ -85,8 +85,6 @@ load([fibers{iF},'_cor_new.mat'],'data');
 
 %% evaluate
 odeopt = odeset('maxstep', 1e-2);
-gamma = 108.3333; % length scaling
-
 ls = {'-',':'};
 
 for j = 1:size(ISIs,1)
@@ -117,7 +115,7 @@ for j = 1:size(ISIs,1)
             cd([output_mainfolder{2}])
 %             cd(['parms', version{kk}])
             
-            if sum(mcodes(kk,:)== [1 1 1]) == 3
+            if sum(mcodes(kk,:)== [1 1 1]) == 3 || sum(mcodes(kk,:)== [1 2 1]) == 3
               cd('parms_v4')
             else
                 cd('parms_v3');
