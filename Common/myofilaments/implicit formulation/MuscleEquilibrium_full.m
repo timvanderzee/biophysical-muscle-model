@@ -1,43 +1,22 @@
-function [error_x, error_R, Fdot] = MuscleEquilibrium_full(x, dxdt, f, w, k11, k12, k21, k22, Non, Ld, DRX, dRdt, b, k, R, dLcrit, ps2, approx)
+function [error_n, Qdot] = MuscleEquilibrium_full(n, dndt, Q0, Non, DRX, f, w, xi, k11, k12, k21, k22, f_func, g_func)
 
+% safety
+n(n<0) = 0;
 
 % points where integrals is evaluated
 k1 = [k11 k12];
 k2 = [k21 -k22];
 
-% without limit
-% IGef{1} = @(c,k)(c(1,:)*k(1).*exp(c(3,:)*k(2)^2/4-c(2,:)*k(2)));
-% IGef{2} = @(c,k)(c(1,:)*k(1).*exp(c(3,:)*k(2)^2/4-c(2,:)*k(2))).*(c(2,:)-c(3,:)*k(2)/2);
-% IGef{3} = @(c,k)(c(1,:)*k(1).*exp(c(3,:)*k(2)^2/4-c(2,:)*k(2))).*((c(2,:)-c(3,:)*k(2)/2).^2+c(3,:)/2);
+% attachment and detachment at each strain
+beta = f_func(xi, f, w);
+phi = -(g_func(xi, k1(1), -k1(2)) + g_func(xi, k2(1), -k2(2))) .* n';   
 
-% with limit
-IGef{1} = @(c,k)(c(1,:)*k(1).*exp(10*tanh((c(3,:)*k(2)^2/4-c(2,:)*k(2))/10)));
-IGef{2} = @(c,k)(c(1,:)*k(1).*exp(10*tanh((c(3,:)*k(2)^2/4-c(2,:)*k(2))/10))).*(c(2,:)-c(3,:)*k(2)/2);
-IGef{3} = @(c,k)(c(1,:)*k(1).*exp(10*tanh((c(3,:)*k(2)^2/4-c(2,:)*k(2))/10))).*((c(2,:)-c(3,:)*k(2)/2).^2+c(3,:)/2);
-
-if approx
-    % erf approximation
-    erfap = @(x) (exp(x)-exp(-x)) ./ (exp(x)+exp(-x));
-    IG{1} =  @(x,c)1/2*c(1,:).*erfap((x-c(2,:))./sqrt(c(3,:)));
-    IG{2} =  @(x,c)1/2*c(1,:).*erfap((x-c(2,:))./sqrt(c(3,:))) .* c(2,:)-1/2.*sqrt(c(3,:)).*c(1,:)/sqrt(pi).*exp(-(x-c(2,:)).^2./c(3,:));
-    IG{3} =  @(x,c)1/2*c(1,:).*erfap((x-c(2,:))./sqrt(c(3,:))) .* (c(2,:).^2+c(3,:)/2)-1/2*sqrt(c(3,:)).*c(1,:)/sqrt(pi).*exp(-(x-c(2,:)).^2./c(3,:)).*(c(2,:)+min(x,1e4));
-
-else
-    % erf function
-    IG{1} =  @(x,c)1/2*c(1,:).*erf((x-c(2,:))./sqrt(c(3,:)));
-    IG{2} =  @(x,c)1/2*c(1,:).*erf((x-c(2,:))./sqrt(c(3,:))).*c(2,:)-1/2.*sqrt(c(3,:)).*c(1,:)/sqrt(pi).*exp(-(x-c(2,:)).^2./c(3,:));
-    IG{3} =  @(x,c)1/2*c(1,:).*erf((x-c(2,:))./sqrt(c(3,:))).*(c(2,:).^2+c(3,:)/2)-1/2*sqrt(c(3,:)).*c(1,:)/sqrt(pi).*exp(-(x-c(2,:)).^2./c(3,:)).*(c(2,:)+min(x,1e4));
-
-end
-
-% Compute Qdot
-[xdot, Rdot] = CrossBridge_Dynamics_full(x, f, w, k1, k2, IGef, Non, DRX, IG, b, k, R, dLcrit, ps2);
+% change in cross-bridge attachment
+ndot = DRX * (beta * (Non - Q0)) + phi;
 
 % first determine contraction velocity
-Qdot = trapz(xi(:), [xdot(:) xi(:).*xdot(:)]);
-Fdot  = Qdot(2) + Qdot(1);
+Qdot = trapz(xi(:), [ndot(:) xi(:).*ndot(:)]);
     
-error_x = dxdt - xdot;
-error_R = dRdt - Rdot;
+error_n = dndt - ndot(:);
 
 end

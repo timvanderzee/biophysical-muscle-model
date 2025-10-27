@@ -17,55 +17,32 @@ end
 Act = parms.actfunc(Ca, parms);
 
 % States
-Q0  = y(1);
-Q1  = y(2);
-Q2  = y(3);
-Ld  = y(4);
-Non = y(5);
+n   = y(1:length(parms.xi));
+L   = y(end-2);
+Non = y(end-1);
+DRX = y(end-0);
 
 % State derivatives
-dQ0dt  = yp(1);
-dQ1dt  = yp(2);
-dQ2dt  = yp(3);
+dndt  = yp(1:length(parms.xi));
+Ld     = yp(end-2);
+dNondt = yp(end-1);
+dDRXdt = yp(end-0);
 
-dNondt = yp(5);
+R = 0;
+dRdt = 0;
 
-if length(y) > 5
-%     Non = y(5);
-    DRX = y(6);
-%     dNondt = yp(5);
-    dDRXdt = yp(6);
-else
-%     Non = Act;
-    DRX = 1 - Q0;
-%     dNondt = 0;
-    dDRXdt = 0;
-end
+% displacement from start
+xi = parms.xi + (L - parms.lce0);
 
-% % in case we don't do thin filament cooperative activation
-% if (parms.kon == 0) && (parms.koff == 0) && (parms.koop == 0)
-%     Non = Act;
-% end
+% compute moments
+Q = trapz(xi(:), [n xi(:).*n]);
+Q0 = Q(1);
+F = Q0 + Q(2);
 
-% ripped
-if length(y) > 6
-    R   = y(7);
-    dRdt = yp(7);
-else
-    R = 0;
-    dRdt = 0;
-end
-
-% Cross-bridge states
-k   = parms.K;
-F   = Q1 + Q0;
-F   = log(1+exp(F*k))/k;
-Q00 = log(1+exp(Q0*k))/k;
-
-% mean and standard deviation
-p = Q1./Q00; 
-q = Q2./Q00 - p.^2;  
-q = log(1+exp(q*k))/k;
+% Cross-bridge dynamics
+[error_n, Qdot] = MuscleEquilibrium_full(n, dndt, Q0, Non, DRX, parms.f, parms.w, xi, parms.k11, parms.k12, parms.k21, parms.k22, parms.f_func, parms.g_func);
+dQ0dt = Qdot(1);
+F0dot  = dQ0dt + Qdot(2);
 
 % Thin and thick filament
 if (parms.kon == 0) && (parms.koff == 0) && (parms.koop == 0)
@@ -76,23 +53,14 @@ end
 
 [error_thick, ~] = ThickEquilibrium(Q0, dQ0dt, F, DRX, dDRXdt, parms.J1, parms.J2, parms.JF, parms.act * parms.Noverlap, R, dRdt);
 
-% Cross-bridge dynamics
-% [error_Q0, error_Q1, error_Q2, error_R, F0dot] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, parms.f, parms.w, parms.k11, parms.k12, parms.k21, parms.k22, Non, Ld, DRX, dRdt, parms.b, parms.k, R, parms.dLcrit, parms.ps2, parms.approx);
-[error_x, error_R, F0dot] = MuscleEquilibrium_full(x, dQ0dt, dQ1dt, dQ2dt, parms.f, parms.w, parms.k11, parms.k12, parms.k21, parms.k22, Non, Ld, DRX, dRdt, parms.b, parms.k, R, parms.dLcrit, parms.ps2, parms.approx);
-
 % Length dynamics
 [error_length] = LengthEquilibrium(Q0, F, F0dot, Ld, vMtilda, parms.kse0, parms.kse, parms.gamma);
 
 % Combined error
 if length(y) < 6
-%     error_thin = [];
     error_thick = [];
 end
 
-if length(y) < 7
-    error_R = [];
-end
-
-error = [error_Q0; error_Q1; error_Q2; error_length; error_thin; error_thick; error_R];
+error = [error_n; error_length; error_thin; error_thick];
 
 end
