@@ -24,7 +24,7 @@ cd(input_foldername)
 load(['parms_',modelname, '.mat'], 'newparms')
 parms = newparms;
 
-pCa = 6.1;
+pCa = 9;
 Ca = 10.^(-pCa+6);
 
 AMP = .0383;
@@ -53,57 +53,80 @@ aTs = [0; Ts];
 vts = [0 .4545 -.4545 0 .4545 0 0];
 
 % splitting it up makes things much faster
-tall = [];
-Fall = [];
+
 
 %% test models
 % interval needs to have finite duration
 nzi = find(diff(aTs) > 0);
 parms.xi = linspace(-15,15,500);
-
-x0 = [zeros(length(parms.xi),1); parms.x0(4:end-1)'];
-X0 = x0;
-
 parms.f_func = @(xi,f,w)   f/sqrt((2*pi*w^2))*exp(-xi.^2./(2*w^2));
 parms.g_func = @(xi,k1,k2) k1*exp(k2*xi);
 
-
-for p = 1 %:(length(nzi)-1)
+for j = 1:2
+    tall = [];
+    Fall = [];
     
-    xp0 = zeros(size(x0));
-
-    % simulate
-    sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon_full(t,y,yp, parms), [0 2], X0, xp0, []);
-    
-    n = sol.y(1:length(parms.xi),:);
-    L = sol.y(end-2,:);
-    
-    for j = 1:length(sol.x)
-        xi = parms.xi + (L(j) - parms.lce0);
-        Qs = trapz(xi(:), [n(:,j) xi(:).*n(:,j)]);
-        F(j) = sum(Qs);
+    if j == 1
+        x0 = parms.x0';
+    elseif j == 2
+        x0 = [zeros(length(parms.xi),1); parms.x0(4:end-1)'];
     end
     
-    X0 = sol.y(:,end);
+    X0 = x0;
     
-    % get force
-    t = sol.x;
-    F = (sol.y(1,:) + sol.y(2,:));
+    for p = 1:(length(nzi)-1)
+        
+        disp(p)
+        
+        xp0 = zeros(size(x0));
+        
+        % simulate
+        if j == 1
+            sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, xp0, []);
+        else
+            sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon_full(t,y,yp, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, xp0, []);
+        end
+        
+        t = sol.x;
+        X0 = sol.y(:,end);
+         
+        if j == 2
+            n = sol.y(1:length(parms.xi),:);
+            L = sol.y(end-2,:);
+            
+            F = nan(1, length(sol.x));
+            for ii = 1:length(sol.x)
+                xi = parms.xi + (L(ii) - parms.lce0);
+                Qs = trapz(xi(:), [n(:,ii) xi(:).*n(:,ii)]);
+                F(ii) = sum(Qs);
+            end
+            
+        else
+            F = (sol.y(1,:) + sol.y(2,:));
+        end
+        
+        tall = [tall t];
+        Fall = [Fall F];
+        
+        % simulate
+        %     solf = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon_full(t,y,yp, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, xp0, []);
+        
+        
+    end
     
-    tall = [tall t];
-    Fall = [Fall F];
-    
-    % simulate
-%     solf = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon_full(t,y,yp, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, xp0, []);
-    
-    
-end
+    plot(tall, Fall); hold on
 
+
+%%
 % find unique values
 [~, ui] = unique(tall);
 
 % interpolate force
-oFi = interp1(tall(ui), Fall(ui), tis) * parms.Fscale + parms.Fpe_func(parms.Lts, parms);
+oFi(j,:) = interp1(tall(ui), Fall(ui), tis) * parms.Fscale + parms.Fpe_func(parms.Lts, parms);
+
+end
+
+%%
 
 figure(1)
 subplot(2,1,1)
