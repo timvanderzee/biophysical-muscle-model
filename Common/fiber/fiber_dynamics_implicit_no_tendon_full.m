@@ -39,6 +39,9 @@ Q = trapz(xi(:), [n xi(:).*n]);
 Q0 = Q(1);
 F = Q0 + Q(2);
 
+k   = parms.K;
+Q00 = log(1+exp(Q0*k))/k;
+
 % Cross-bridge dynamics
 [error_n, Qdot] = MuscleEquilibrium_full(n, dndt, Q0, Non, DRX, parms.f, parms.w, xi, parms.k11, parms.k12, parms.k21, parms.k22, parms.f_func, parms.g_func);
 dQ0dt = Qdot(1);
@@ -54,7 +57,7 @@ end
 [error_thick, ~] = ThickEquilibrium(Q0, dQ0dt, F, DRX, dDRXdt, parms.J1, parms.J2, parms.JF, parms.act * parms.Noverlap, R, dRdt);
 
 % Length dynamics
-[error_length] = LengthEquilibrium(Q0, F, F0dot, Ld, vMtilda, parms.kse0, parms.kse, parms.gamma);
+[error_length] = LengthEquilibrium(Q00, F, F0dot, Ld, vMtilda, parms.kse0, parms.kse, parms.gamma);
 
 % Combined error
 if length(y) < 6

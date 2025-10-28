@@ -24,7 +24,7 @@ cd(input_foldername)
 load(['parms_',modelname, '.mat'], 'newparms')
 parms = newparms;
 
-pCa = 9;
+pCa = 6;
 Ca = 10.^(-pCa+6);
 
 AMP = .0383;
@@ -96,6 +96,7 @@ for j = 1:2
             
             F = nan(1, length(sol.x));
             for ii = 1:length(sol.x)
+                [~, F] = 
                 xi = parms.xi + (L(ii) - parms.lce0);
                 Qs = trapz(xi(:), [n(:,ii) xi(:).*n(:,ii)]);
                 F(ii) = sum(Qs);

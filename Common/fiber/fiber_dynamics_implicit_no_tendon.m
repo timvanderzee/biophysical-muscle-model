@@ -80,7 +80,7 @@ end
 [error_Q0, error_Q1, error_Q2, error_R, F0dot] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, parms.f, parms.w, parms.k11, parms.k12, parms.k21, parms.k22, Non, Ld, DRX, dRdt, parms.b, parms.k, R, parms.dLcrit, parms.ps2, parms.approx);
 
 % Length dynamics
-[error_length] = LengthEquilibrium(Q0, F, F0dot, Ld, vMtilda, parms.kse0, parms.kse, parms.gamma);
+[error_length] = LengthEquilibrium(Q00, F, F0dot, Ld, vMtilda, parms.kse0, parms.kse, parms.gamma);
 
 % Combined error
 if length(y) < 6

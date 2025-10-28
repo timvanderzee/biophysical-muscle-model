@@ -9,8 +9,8 @@ acolors = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
 % version = {'_v3';
 
 %% chose figure number: specify conditions
-fig = 6;
-iF = 6;
+fig = 4;
+iF = 2;
 
 % chosen ISIs, AMPs and pCas
 if fig == 4
@@ -20,8 +20,8 @@ if fig == 4
     AMPs = [0      0; % dashed
         .0383 .0383]; % solid
     
-    pCas = [4.5 6.2;
-            4.5 6.2];
+    pCas = [4.5 6.3;
+            4.5 6.3];
     
     titles = {'Maximal activation', 'Submaximal activation'};
     
@@ -115,8 +115,8 @@ for j = 1:size(ISIs,1)
             cd([output_mainfolder{2}])
 %             cd(['parms', version{kk}])
             
-            if sum(mcodes(kk,:)== [1 1 1]) == 3 || sum(mcodes(kk,:)== [1 2 1]) == 3
-              cd('parms_v4')
+            if sum(mcodes(kk,:)== [1 1 1]) == 3
+              cd('parms_v1d')
             else
                 cd('parms_v3');
             end
