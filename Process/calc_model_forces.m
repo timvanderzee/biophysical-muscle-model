@@ -1,6 +1,6 @@
 clear all; close all; clc
-save_results = 0;
-visualize = 1;
+save_results = 1;
+visualize = 0;
 output_version = '_v1d';
 
 discretized_model = 1;
@@ -11,14 +11,10 @@ parms_version = '_v2';
 % mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
 mcodes = [1 1 1];
 
-iFs = 6; % [3,5,6,7,8,11];
+iFs = 6; % [2,3,5,6,7,8,11];
 AMPs = [0    0.0012    0.0038    0.0121    0.0216    0.0288    0.0383    0.0532    0.0682];
 ISIs = [ 0.0010    0.0100    0.0500    0.1000    0.2000    0.3160    0.5000    1.0000    3.1600   10.0000];
 pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
-
-AMPs = .0682;
-ISIs = 3.16;
-pCas = 4.5;
 
 Ca = 10.^(-pCas+6);
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
