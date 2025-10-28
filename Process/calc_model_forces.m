@@ -83,7 +83,7 @@ for iii = 1:size(mcodes,1)
                     cd(output_foldername);
                     filename = [fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
                     
-                    if exist(filename, 'file')
+                    if ~exist(filename, 'file')
                         disp(filename);
                         tiso = dTt*3+dTc*2+ISI + 2;
                         
