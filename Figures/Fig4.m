@@ -1,6 +1,6 @@
 clear all; close all; clc
 [username, githubfolder] = get_paths();
-savefig = 0;
+savefig = 1;
 
 figure(1)
 color = get(gca,'colororder');
@@ -9,8 +9,11 @@ acolors = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
 % version = {'_v3';
 
 %% chose figure number: specify conditions
-fig = 4;
+fig = 5;
 iF = 2;
+
+pCas = [4.5 6.3;
+        4.5 6.3];
 
 % chosen ISIs, AMPs and pCas
 if fig == 4
@@ -19,9 +22,7 @@ if fig == 4
     
     AMPs = [0      0; % dashed
         .0383 .0383]; % solid
-    
-    pCas = [4.5 6.3;
-            4.5 6.3];
+   
     
     titles = {'Maximal activation', 'Submaximal activation'};
     
@@ -33,23 +34,8 @@ elseif fig == 5 || fig == 6
     AMPs = [.0383 .0383;
             .0383 .0383];
     
-    pCas = [4.5 6.2;
-            4.5 6.2];
-    
     titles = {'Maximal activation', 'Submaximal activation'};
     
-% elseif fig == 6
-%     
-%     ISIs = [.001 .316;
-%             .100 .001]; % solid
-%     
-%     AMPs = [0   .0383;
-%             .0383       .0383];
-%     
-%     pCas = [6.2 6.2;
-%             6.2 6.2];
-%     
-%     titles = {'Effect of amplitude', 'Effect of recovery'};
 end
 
 ISIs = flip(ISIs,1);
@@ -60,22 +46,15 @@ pCas = flip(pCas,1);
 if fig == 4 || fig == 5
     mcodes = [2 1 1; 1 1 3; 1 1 1];
     colors = acolors;
+    
+    versions = {'_v3', '_v3', '_v4'};
 
 else
     mcodes = [1 1 1; 1 2 1];
     colors = acolors(3:end,:);
+    
+    versions = {'_v4', '_v4'};
 end
-
-
-% for kk = 1:size(mcodes,1)
-%     mcode = mcodes(kk,:);
-%     
-%     [output_mainfolder, filenames{kk}, opt_types{kk}, ~] = get_folder_and_model(mcode);
-% 
-%     cd([githubfolder, '\biophysical-muscle-model\Parameters'])
-%     load(['parms_',filenames{kk},'.mat'], 'pparms')
-%     Parms{kk} = pparms(iF);
-% end
 
 % load data 
 [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(1,:));
@@ -113,14 +92,8 @@ for j = 1:size(ISIs,1)
             tiso = dTt*3+dTc*2+ISI + 2;
 
             cd([output_mainfolder{2}])
-%             cd(['parms', version{kk}])
+            cd(['parms', versions{kk}])
             
-            if sum(mcodes(kk,:)== [1 1 1]) == 3
-              cd('parms_v1d')
-            else
-                cd('parms_v3');
-            end
-%             end
             
 %             [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(kk,:));
             cd([filename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10)])
@@ -195,10 +168,12 @@ end
 figure(1)
 subplot(4,size(ISIs,2),[1+size(ISIs,2) 1+size(ISIs,2)*3])       
 
-if fig == 4 || fig == 5
-legend('Data','Hill','XB','XB coop','location','Southwest', 'Fontsize', 8)
+if fig == 4
+    legend('Data','Hill','XB','XB coop','location','Southwest', 'Fontsize', 8)
+elseif fig == 5
+    legend('Data','Hill','XB','XB coop','location','South', 'Fontsize', 8)
 else
-legend('Data','XB coop','XB coop + FD','location','Southwest', 'Fontsize', 8)
+    legend('Data','XB coop','XB coop + FD','location','South', 'Fontsize', 8)
 end
 legend box off
 
@@ -210,14 +185,25 @@ text(-.4, 6, 'B', 'fontsize', 12, 'fontweight', 'bold')
 
 %% size
 figure(1)
-set(gcf, 'units', 'normalized', 'position', [0.2805    0.3958    0.45    0.45])
+
+set(gcf,'units','centimeters','position',[10 10 19 10])
+% set(gcf,'units','centimeters','position',[5 2.5 0.2 1.7], 'fontsize', 6)
+
+% pause(0.5)
 
 %% optionally export to PNG
 cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
        
+if strcmp(versions{2}(end), 'd')
+    figname = ['FigS',num2str(fig-3),'.png'];
+else
+    figname = ['Fig',num2str(fig),'.png'];    
+end
+
+
 if savefig
 figure(1)
-exportgraphics(gcf,['Fig',num2str(fig),'.png'])
+exportgraphics(gcf,figname)
 end
 
 

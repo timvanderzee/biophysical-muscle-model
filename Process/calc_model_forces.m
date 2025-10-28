@@ -1,6 +1,6 @@
 clear all; close all; clc
-save_results = 1;
-visualize = 0;
+save_results = 0;
+visualize = 1;
 output_version = '_v1d';
 
 discretized_model = 1;
@@ -11,7 +11,7 @@ parms_version = '_v2';
 % mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
 mcodes = [1 1 1];
 
-iFs = [3,5,6,7,8,11];
+iFs = 5; % [3,5,6,7,8,11];
 AMPs = [0    0.0012    0.0038    0.0121    0.0216    0.0288    0.0383    0.0532    0.0682];
 ISIs = [ 0.0010    0.0100    0.0500    0.1000    0.2000    0.3160    0.5000    1.0000    3.1600   10.0000];
 pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
@@ -33,7 +33,7 @@ for iii = 1:size(mcodes,1)
         cd(input_foldername)
         load(['parms_',modelname, parms_version, '.mat'], 'newparms')
         parms = newparms;
-        parms.xi = linspace(-25,25,1000);
+        parms.xi = linspace(-15,15,500);
         parms.f_func = @(xi,f,w)   f/sqrt((2*pi*w^2))*exp(-xi.^2./(2*w^2));
         parms.g_func = @(xi,k1,k2) k1*exp(k2*xi);
 
@@ -79,7 +79,7 @@ for iii = 1:size(mcodes,1)
                     cd(output_foldername);
                     filename = [fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
                     
-                    if ~exist(filename, 'file')
+                    if exist(filename, 'file')
                         disp(filename);
                         tiso = dTt*3+dTc*2+ISI + 2;
                         
@@ -118,14 +118,19 @@ for iii = 1:size(mcodes,1)
                             % interval needs to have finite duration
                             nzi = find(diff(aTs) > 0);
                             
+%                             odeopt = odeset('maxstep', 1e-2);
+                            odeopt = [];
+                            
                             for p = 1:(length(nzi)-1)
                                 
                                 % simulate
                                 if discretized_model
-                                    sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon_full(t,y,yp, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, xp0, []);
+                                    sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon_full(t,y,yp, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, xp0, odeopt);
                                 else
                                     sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, xp0, []);
                                 end
+                                
+%                                 [~,xdot] = deval(sol, sol.x);
                                 
                                 X0 = sol.y(:,end);
                                 
@@ -133,16 +138,9 @@ for iii = 1:size(mcodes,1)
                                 t = sol.x;
                                 
                                 if discretized_model
-                                    n = sol.y(1:length(parms.xi),:);
                                     L = sol.y(end-2,:);
-
-                                    F = nan(1, length(sol.x));
-                                    for u = 1:length(sol.x)
-                                        xi = parms.xi + (L(u) - parms.lce0);
-                                        Qs = trapz(xi(:), [n(:,u) xi(:).*n(:,u)]);
-                                        F(u) = sum(Qs);
-                                    end
-                                    Lall = [Lall L];
+                                    dlse = interp1(parms.ti, parms.Lts, t) - L;
+                                    F = parms.Fse_func(dlse, parms);
                                     
                                 else
                                     F = (sol.y(1,:) + sol.y(2,:));
@@ -158,9 +156,6 @@ for iii = 1:size(mcodes,1)
                             
                             % find unique values
                             [~, ui] = unique(tall);
-                            
-                            
-                            Li = interp1(tall(ui), Lall(ui), tis);
                             
                             % interpolate force
                             oFi = interp1(tall(ui), Fall(ui), tis) * parms.Fscale + parms.Fpe_func(parms.Lts, parms);
@@ -201,3 +196,7 @@ for iii = 1:size(mcodes,1)
         end
     end
 end
+
+%%
+
+% for 

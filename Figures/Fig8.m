@@ -10,7 +10,10 @@ tid = [3 1 7];
 showbar = 0;
 showline = 1;
 % figure(1)
-filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_alternative_SRS'};
+% filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_alternative_SRS'};
+filenames = {'biophysical_full_regular_SRS'};
+versions = {'parms_v1d', 'parms_v4', 'parms_v1d', 'parms_v4'};
+
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS'};
 % visualize_model_SRS_simple(filenames, th, id)
 
@@ -33,7 +36,7 @@ set(gca, 'XScale', 'log', 'Xlim', [5e-4 2e1])
 
 for kk = 1:length(filenames)
     
-    cd('C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Model output\SRS')
+    cd(['C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Model output\SRS\', versions{kk}])
     load(filenames{kk},'Stest', 'Scond', 'AMPs', 'pCas', 'ISIs', 'F0')
     
     % average
@@ -63,13 +66,13 @@ for kk = 1:length(filenames)
     end
     
     subplot(131);
-    plot(mean(F0s_m(:,tid(2),tid(3),:), 4, 'omitnan'), mean(SRSrel_m(1:end,tid(2),tid(3),:),4, 'omitnan'),'-x', 'color', color(kk,:), 'linewidth',2); hold on
+    plot(mean(F0s_m(:,tid(2),tid(3),:), 4, 'omitnan'), mean(SRSrel_m(1:end,tid(2),tid(3),:),4, 'omitnan'),'-', 'color', color(kk,:), 'linewidth',2, 'marker', 'o', 'markerfacecolor', color(kk,:), 'markeredgecolor', [1 1 1], 'markersize', 4); hold on
    
     subplot(132);
-    plot(AMPs, squeeze(mean(SRSrel_m(tid(1),tid(2),1:end,:),4, 'omitnan')),'-x','color',color(kk,:), 'linewidth', 2); hold on
+    plot(AMPs, squeeze(mean(SRSrel_m(tid(1),tid(2),1:end,:),4, 'omitnan')),'.-','color',color(kk,:), 'linewidth', 2, 'marker', 'o', 'markerfacecolor', color(kk,:), 'markeredgecolor', [1 1 1], 'markersize', 4); hold on
     
     subplot(133);
-    plot(ISIs, squeeze(mean(SRSrel_m(tid(1),1:end,tid(3),:),4, 'omitnan')),'-x', 'color',color(kk,:),'linewidth',2); hold on
+    plot(ISIs, squeeze(mean(SRSrel_m(tid(1),1:end,tid(3),:),4, 'omitnan')),'.-', 'color',color(kk,:),'linewidth',2, 'marker', 'o', 'markerfacecolor', color(kk,:), 'markeredgecolor', [1 1 1], 'markersize', 4); hold on
     
     set(gca, 'XScale', 'log', 'Xlim', [5e-4 2e1])
 
@@ -240,9 +243,10 @@ subplot(131)
 xl = [.42 .5; .001 .005; 1.5e-3 4e-3];
 yl = [1.35; 0.6; 1.35];
 
-r = [5 5 100];
+r = [5 6 100];
 dy = .07;
 
+if length(filenames) > 1
 for i = 1:3
     subplot(1,3,i)
     
@@ -275,11 +279,13 @@ plot(.9, 0.5, 'rx','linewidth',2)
 
 errorbar(.8, .4, .05, 'o', 'color', [.5 .5 .5], 'markersize', ms, 'markerfacecolor', [.5 .5 .5])
 errorbar(.9, .4, .05, 'o', 'color', [.5 .5 .5], 'markersize', ms, 'markerfacecolor', [1 1 1])
+end
 
+subplot(131)
 xlim([0 1.01])
 
 subplot(132)
-xlim([0 .05])
+xlim([0 .06])
 
 subplot(133)
 xlim([1e-3 1e1])

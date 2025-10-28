@@ -1,4 +1,6 @@
 clear all; close all; clc
+savefig = 1;
+
 [username, githubfolder] = get_paths();
 th = [0 .07 .7 1.5];
 tid = [3 1 7];
@@ -137,7 +139,10 @@ set(gcf,'units','centimeters','position',[10 10 19 7])
 set(g,'units','centimeters','position',[5 2.5 0.2 1.7], 'fontsize', 6)
 
 %%
-cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
+
        
-% figure(1)
-% exportgraphics(gcf,['Fig9.png'])
+if savefig
+cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
+figure(1)
+exportgraphics(gcf,['Fig9.png'])
+end

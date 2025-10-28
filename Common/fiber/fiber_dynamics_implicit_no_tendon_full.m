@@ -3,8 +3,10 @@ function[error] = fiber_dynamics_implicit_no_tendon_full(t,y,yp, parms)
 % Get velocity and calcium
 if numel(parms.vts) == 1
     vMtilda = parms.vts;
+    lMtilda = parms.Lts;
 else
     vMtilda = interp1(parms.ti, parms.vts, t);
+    lMtilda = interp1(parms.ti, parms.Lts, t);
 end
 
 if numel(parms.Cas) == 1
@@ -31,16 +33,16 @@ dDRXdt = yp(end-0);
 R = 0;
 dRdt = 0;
 
+% calculate force
+dlse = lMtilda - L;
+F = parms.Fse_func(dlse, parms);
+
 % displacement from start
 xi = parms.xi + (L - parms.lce0);
 
-% compute moments
-Q = trapz(xi(:), [n xi(:).*n]);
-Q0 = Q(1);
-F = Q0 + Q(2);
-
-k   = parms.K;
-Q00 = log(1+exp(Q0*k))/k;
+% compute stiffness
+n(n<0) = 0;
+Q0 = trapz(xi(:), n);
 
 % Cross-bridge dynamics
 [error_n, Qdot] = MuscleEquilibrium_full(n, dndt, Q0, Non, DRX, parms.f, parms.w, xi, parms.k11, parms.k12, parms.k21, parms.k22, parms.f_func, parms.g_func);
@@ -57,7 +59,7 @@ end
 [error_thick, ~] = ThickEquilibrium(Q0, dQ0dt, F, DRX, dDRXdt, parms.J1, parms.J2, parms.JF, parms.act * parms.Noverlap, R, dRdt);
 
 % Length dynamics
-[error_length] = LengthEquilibrium(Q00, F, F0dot, Ld, vMtilda, parms.kse0, parms.kse, parms.gamma);
+[error_length] = LengthEquilibrium(Q0, F, F0dot, Ld, vMtilda, parms.kse0, parms.kse, parms.gamma);
 
 % Combined error
 if length(y) < 6

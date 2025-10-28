@@ -62,14 +62,14 @@ end
 
 
 %% make figure
-ps = [4 4 4;
-    5 5 5;
-    7 7 7];
+ps = [7 7 7;
+      2 2 2;
+      5 5 5];
 
 close all
 clc
 
-yrange = [0 .15];
+% yrange = [-.05 .15];
 
 color = get(gca,'colororder');
 pcolors = flip(parula(7));
@@ -98,9 +98,9 @@ for p = 1:3
      
         if kk == 1
             if (p-1)*3 == 0
-                yrange = [0 .05];
+                yrange = [-.02 .05];
             else
-                yrange = [0 .15];
+                yrange = [-.02 .2];
             end
             
             plot(ones(1,2) * mean(F0s(pCaid(3),ISIid,AMPid,:, kk), 4, 'omitnan'), yrange, 'k--'); hold on
@@ -206,77 +206,79 @@ for j = 1:9
 end
 
 %% titles
-figure(1)
+subtitles = {'Overall', 'Pre-stretch', 'Test stretch'};
 
+figure(1)
 subplot(331)
 title('Effect of activation', 'fontsize', 8)
-subtitle('Isometric recovery', 'fontsize', 8)
+subtitle(subtitles{1}, 'fontsize', 8)
 
 subplot(332)
-subtitle('Isometric recovery', 'fontsize', 8)
+subtitle(subtitles{1}, 'fontsize', 8)
 title('Effect of amplitude', 'fontsize', 8)
 
 subplot(333)
-subtitle('Isometric recovery', 'fontsize', 8)
+subtitle(subtitles{1}, 'fontsize', 8)
 title('Effect of recovery', 'fontsize', 8)
 
 subplot(334)
 % subtitle('Effect of activation', 'fontsize', 8)
-subtitle('Test stretch', 'fontsize', 8)
+subtitle(subtitles{2}, 'fontsize', 8)
 
 subplot(335)
 % subtitle('Effect of amplitude', 'fontsize', 8)
-subtitle('Test stretch', 'fontsize', 8)
+subtitle(subtitles{2}, 'fontsize', 8)
 
 subplot(336)
 % subtitle('Effect of recovery', 'fontsize', 8)
-subtitle('Test stretch', 'fontsize', 8)
+subtitle(subtitles{2}, 'fontsize', 8)
 
 subplot(337)
 % subtitle('Effect of activation', 'fontsize', 8)
-subtitle('Overall', 'fontsize', 8)
+subtitle(subtitles{3}, 'fontsize', 8)
 
 subplot(338)
 % subtitle('Effect of amplitude', 'fontsize', 8)
-subtitle('Overall', 'fontsize', 8)
+subtitle(subtitles{3}, 'fontsize', 8)
 
 subplot(339)
 % subtitle('Effect of recovery', 'fontsize', 8)
-subtitle('Overall', 'fontsize', 8)
+subtitle(subtitles{3}, 'fontsize', 8)
 
 %% make manual legend
 % if ishandle(2), close(2); end; figure(2)
 modelnames = {'Hill model','XB model','XB coop','XB coop + FD'};
 figure(1)
+ys = .19;
 
 subplot(331)
 for i = 1:4
-fake_data = -i * .02  + .14 * [.95 1 1.05];
-errorbar(.1, mean(fake_data, 2), std(fake_data,1,2),sym{i}, 'color', color(i,:),'markerfacecolor', color(i,:),'markersize', ms(i)*.5, 'Capsize',3); hold on
-errorbar(.8, mean(fake_data, 2), std(fake_data,1,2),sym{i}, 'color', color(i,:), 'markerfacecolor', [1 1 1],'markersize', ms(i)*.5, 'Capsize',3); hold on
+    fake_data = -i * .02  + ys * [.95 1 1.05];
+    errorbar(.1, mean(fake_data, 2), std(fake_data,1,2),sym{i}, 'color', color(i,:),'markerfacecolor', color(i,:),'markersize', ms(i)*.5, 'Capsize',3); hold on
+    errorbar(.8, mean(fake_data, 2), std(fake_data,1,2),sym{i}, 'color', color(i,:), 'markerfacecolor', [1 1 1],'markersize', ms(i)*.5, 'Capsize',3); hold on
 
-text(.45, .14 - i * .02, modelnames{i}, 'fontsize', 7, 'horizontalalignment', 'center')
+    text(.45, ys - i * .02, modelnames{i}, 'fontsize', 7, 'horizontalalignment', 'center')
 
 end
 
 %%
-text(.1, .14, 'HD', 'fontsize', 7, 'horizontalalignment', 'center')
-text(.8, .14, 'HD', 'fontsize', 7, 'horizontalalignment', 'center')
+text(.1, ys, 'HD', 'fontsize', 7, 'horizontalalignment', 'center')
+text(.8, ys, 'HD', 'fontsize', 7, 'horizontalalignment', 'center')
 
-plot(.8, .14, 'rx', 'linewidth', 2)
+plot(.8, ys, 'rx', 'linewidth', 2)
 
 %%
 figure(1)
-set(gcf,'units','centimeters','position',[10 10 14 14])
+set(gcf,'units','centimeters','position',[10 10 19 11])
 
 
 %% A, B labels
 subplot(331)
-text(-.1, .18, 'A', 'fontsize', 12,'fontweight', 'bold')
+text(-.1, yrange(2)*1.15, 'A', 'fontsize', 12,'fontweight', 'bold')
 subplot(334)
-text(-.1, .18, 'B', 'fontsize', 12,'fontweight', 'bold')
+text(-.1, yrange(2)*1.15, 'B', 'fontsize', 12,'fontweight', 'bold')
 subplot(337)
-text(-.1, .18, 'C', 'fontsize', 12,'fontweight', 'bold')
+text(-.1, yrange(2)*1.15, 'C', 'fontsize', 12,'fontweight', 'bold')
 
 %% optionally export to PNG
 

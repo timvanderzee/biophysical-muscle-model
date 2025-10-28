@@ -1,5 +1,5 @@
 clear all; close all; clc
-savefig = 1;
+savefig = 0;
 
 [username, githubfolder] = get_paths();
 
@@ -133,14 +133,17 @@ R2 = 1 - oSSE(:,id) ./ oSST(id);
 % n = numel(mSRSrel_m);
 n = N(1,id);
 
-k = [5 8 8 10]';
+k = [5 8 9 11]';
 
 % AIC = 2*k + n.*log(oSSE(:,id)./oSST(id))
 AIC = 2*k + n.*log(oSSE(:,id)./n)
 
 dAIC = AIC - AIC(1,:)
 
+moSSE = oSSE ./ N
+
 %% visualize
+
 close all
 figure(2)
    
@@ -158,7 +161,7 @@ for j = 1:3
     subplot(1,3,j)
     
     for i = 1:4
-        bar(i, oSSE(i,js(j))'./N(i,js(j))', bw, 'FaceColor', color(i,:)); hold on
+        bar(i, moSSE(i,js(j))', bw, 'FaceColor', color(i,:), 'Edgecolor', color(i,:)); hold on
     end
     
 end
@@ -167,7 +170,13 @@ for j = 1:3
     subplot(1,3,j)
 
     for i = 1:4
-        bar(i+.35, oSSE(i,js(j))'./N(i,js(j))', bw, 'Edgecolor', color(i,:), 'FaceColor', [1 1 1]); hold on
+        if i > 1
+            fcolor = [1 1 1];
+        else
+            fcolor = color(i,:);
+        end
+        
+        bar(i+bw, moSSE(i,js(j))', bw, 'Edgecolor', color(i,:), 'FaceColor', fcolor); hold on
     end
     
      set(gca,'fontsize',6)
@@ -187,15 +196,35 @@ for j = 1:3
 end
 
 subplot(131)
-legend('Hill model','XB model', 'XB coop', 'XB coop + FD', 'location', 'best', 'fontsize', 8)
-legend boxoff
+% legend('Hill model','XB model', 'XB coop', 'XB coop + FD', 'location', 'best', 'fontsize', 8)
+% legend boxoff
 
-%%
+%
+models = {'Hill', 'XB', 'XB coop', 'XB coop + FD'};
+
+figure(2)
+for i = 1:4
+    h1(i) = rectangle('Position', [2 .12-i/60 1 .01], 'facecolor', color(i,:), 'edgecolor', color(i,:))
+    
+    text(3.2,  .12-i/60 + .006, models{i}, 'fontsize', 6);
+
+    
+    if i > 1
+        h2(i) = rectangle('Position', [2 .12-i/60 1 .005], 'facecolor', [1 1 1], 'edgecolor', color(i,:))
+   
+        text(1.9,  .12-i/60 + .009, 'Original', 'fontsize', 6, 'horizontalalignment', 'right');
+        text(1.9,  .12-i/60 + .003, 'Approximated', 'fontsize', 6, 'horizontalalignment', 'right');
+    end
+end
+
 figure(2)
 set(gcf,'units','centimeters','position',[10 10 19 5])
 
 %%
+if savefig
 cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
        
-% figure(1)
-% exportgraphics(gcf,['Fig10.png'])
+figure(2)
+exportgraphics(gcf,['Fig10.png'])
+end
+
