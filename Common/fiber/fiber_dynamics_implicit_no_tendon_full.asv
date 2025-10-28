@@ -36,8 +36,6 @@ dRdt = 0;
 % calculate force
 dlse = lMtilda - L;
 F = parms.Fse_func(dlse, parms);
-
-% avoid small numbers
 k   = parms.K;
 F   = log(1+exp(F*k))/k;
 

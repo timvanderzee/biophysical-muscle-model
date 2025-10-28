@@ -99,7 +99,7 @@ clc
 
 for ii = 1:size(RMSD,3)
     disp(['pCa = ', num2str(pCas(ii))])
-    [i,j] = find(RMSD(:,:,ii,iF)>.03);
+    [i,j] = find(RMSD(:,:,ii,iF)>.02);
 
 %     cd([output_mainfolder{2}, '\', version, '\', modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(ii)*10)])
 
