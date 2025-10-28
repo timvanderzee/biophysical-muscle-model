@@ -118,7 +118,7 @@ for iii = 1:size(mcodes,1)
                             % interval needs to have finite duration
                             nzi = find(diff(aTs) > 0);
                             
-                            odeopt = odeset('maxstep', 1e-4);
+                            odeopt = odeset('maxstep', 1e-3);
 %                             odeopt = [];
                             
                             for p = 1:(length(nzi)-1)
