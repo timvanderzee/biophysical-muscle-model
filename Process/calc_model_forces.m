@@ -1,16 +1,16 @@
 clear all; close all; clc
 save_results = 1;
 redo = 0;
-visualize = 1;
+visualize = 0;
 output_version = '_v2d';
 
 discretized_model = 1;
-parms_version = '_v2'; 
+parms_version = ''; 
 
 [username, githubfolder] = get_paths();
 
 % mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
-mcodes = [1 1 1];
+mcodes = [1 1 3];
 
 iFs = 5; % [2,3,5,6,7,8,11];
 AMPs = [0    0.0012    0.0038    0.0121    0.0216    0.0288    0.0383    0.0532    0.0682];
