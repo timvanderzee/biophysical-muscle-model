@@ -10,9 +10,9 @@ tid = [3 1 7];
 showbar = 0;
 showline = 1;
 % figure(1)
-% filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_alternative_SRS'};
-filenames = {'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
-versions = {'parms_v1d', 'parms_v4', 'parms_v1d', 'parms_v4'};
+filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_alternative_SRS'};
+% filenames = {'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
+versions = {'parms_v4', 'parms_v2d', 'parms_v2d', 'parms_v4'};
 
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS'};
 % visualize_model_SRS_simple(filenames, th, id)
@@ -207,7 +207,7 @@ sACTi = 3;
 sISI = .001;
 sAMP = .0383;
 
-for kk = 2 %:length(filenames)
+for kk = 1:length(filenames)
     
     cd(['C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Model output\SRS\', versions{kk}])
     load(filenames{kk},'Stest', 'Scond', 'AMPs', 'pCas', 'ISIs', 'F0')

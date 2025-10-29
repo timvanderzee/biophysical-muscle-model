@@ -20,12 +20,12 @@ Act = parms.actfunc(Ca, parms);
 
 % States
 n   = y(1:length(parms.xi));
-L   = y(end-2);
-Non = y(end-1);
-DRX = y(end-0);
+L   = y(end-3);
+Non = y(end-2);
+DRX = y(end-1);
+R   = y(end-0);
 
-R = 0;
-dRdt = 0;
+% dRdt = 0;
 
 % displacement from start
 xi = parms.xi + (L - parms.lce0);
@@ -50,8 +50,16 @@ k2 = [parms.k21 -parms.k22];
 beta = parms.f_func(xi, parms.f, parms.w);
 phi = -(parms.g_func(xi, k1(1), -k1(2)) + parms.g_func(xi, k2(1), -k2(2))) .* n';   
 
+% forcible detachment
+gamma = parms.f_func(xi, parms.b, parms.w) * R;
+phiR = -parms.k_func(parms) .* n' + gamma;
+dRdt = -phiR;
+
+% total phi
+phiT = phi + phiR;
+
 % change in cross-bridge attachment
-ndot = DRX * (beta * (Non - Q0)) + phi;
+ndot = DRX * (beta * (Non - Q0)) + phiT;
 
 % first determine contraction velocity
 Qdot = trapz(xi(:), [ndot(:) xi(:).*ndot(:)]);
@@ -76,6 +84,6 @@ kse = parms.kse * (F + parms.kse0);
 
 Ld  = (vMtilda .* parms.gamma .* kse - F0dot) ./ (Q0 + kse);
 
-yp = [ndot(:); Ld; dNondt; dDRXdt];
+yp = [ndot(:); Ld; dNondt; dDRXdt; dRdt];
 
 end
