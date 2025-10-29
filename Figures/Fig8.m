@@ -11,7 +11,7 @@ showbar = 0;
 showline = 1;
 % figure(1)
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_alternative_SRS'};
-filenames = {'biophysical_full_regular_SRS'};
+filenames = {'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
 versions = {'parms_v1d', 'parms_v4', 'parms_v1d', 'parms_v4'};
 
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS'};
@@ -207,8 +207,9 @@ sACTi = 3;
 sISI = .001;
 sAMP = .0383;
 
-for kk = 1:length(filenames)
+for kk = 2 %:length(filenames)
     
+    cd(['C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Model output\SRS\', versions{kk}])
     load(filenames{kk},'Stest', 'Scond', 'AMPs', 'pCas', 'ISIs', 'F0')
     
     % average
@@ -246,7 +247,9 @@ yl = [1.35; 0.6; 1.35];
 r = [5 6 100];
 dy = .07;
 
-if length(filenames) > 1
+modelnames = {'Hill', 'XB', 'XB coop', 'XB coop + FD'};
+
+% if length(filenames) > 2
 for i = 1:3
     subplot(1,3,i)
     
@@ -259,17 +262,19 @@ for i = 1:3
     text(xl(i,1), yl(i)+dy, 'Model', 'fontsize',8)
     text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)+dy,'R^2', 'fontsize',8,'horizontalalignment','center')
     
-    text(xl(i,2) + diff(xl(i,:)) * .1, yl(i), 'Hill', 'fontsize',6)
-    text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i), num2str(round(R2(1,i),2),3), 'fontsize',6,'horizontalalignment','center')
-    
-    text(xl(i,2) + diff(xl(i,:)) * .1, yl(i)-dy, 'XB', 'fontsize',6)
-    text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-dy, num2str(round(R2(2,i),2),3), 'fontsize',6,'horizontalalignment','center')
-    
-    text(xl(i,2) + diff(xl(i,:)) * .1, yl(i)-2*dy, 'XB coop', 'fontsize',6)
-    text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-2*dy, num2str(round(R2(3,i),2),3), 'fontsize',6,'horizontalalignment','center')
-    
-    text(xl(i,2) + diff(xl(i,:)) * .1, yl(i)-3*dy, 'XB coop + FD', 'fontsize',6)
-    text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-3*dy, num2str(round(R2(4,i),2),3), 'fontsize',6,'horizontalalignment','center')
+    for j = 1:length(filenames)
+        text(xl(i,2) + diff(xl(i,:)) * .1, yl(i)-dy*(j-1), modelnames{j}, 'fontsize',6)
+        text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-dy*(j-1), num2str(round(R2(j,i),2),3), 'fontsize',6,'horizontalalignment','center')
+    end
+
+%     text(xl(i,2) + diff(xl(i,:)) * .1, yl(i)-dy, 'XB', 'fontsize',6)
+%     text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-dy, num2str(round(R2(2,i),2),3), 'fontsize',6,'horizontalalignment','center')
+%     
+%     text(xl(i,2) + diff(xl(i,:)) * .1, yl(i)-2*dy, 'XB coop', 'fontsize',6)
+%     text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-2*dy, num2str(round(R2(3,i),2),3), 'fontsize',6,'horizontalalignment','center')
+%     
+%     text(xl(i,2) + diff(xl(i,:)) * .1, yl(i)-3*dy, 'XB coop + FD', 'fontsize',6)
+%     text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-3*dy, num2str(round(R2(4,i),2),3), 'fontsize',6,'horizontalalignment','center')
 end
 
 subplot(131)
@@ -279,7 +284,7 @@ plot(.9, 0.5, 'rx','linewidth',2)
 
 errorbar(.8, .4, .05, 'o', 'color', [.5 .5 .5], 'markersize', ms, 'markerfacecolor', [.5 .5 .5])
 errorbar(.9, .4, .05, 'o', 'color', [.5 .5 .5], 'markersize', ms, 'markerfacecolor', [1 1 1])
-end
+% end
 
 subplot(131)
 xlim([0 1.01])
