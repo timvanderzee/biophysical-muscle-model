@@ -47,13 +47,13 @@ k1 = [parms.k11 parms.k12];
 k2 = [parms.k21 -parms.k22];
 
 % attachment and detachment at each strain
-beta = parms.f_func(xi, parms.f, parms.w);
+beta = parms.f_func(xi, parms.f, parms.w, 0);
 phi = -(parms.g_func(xi, k1(1), -k1(2)) + parms.g_func(xi, k2(1), -k2(2))) .* n';   
 
 % forcible detachment
-gamma = parms.f_func(xi, parms.b, parms.w) * R;
-phiR = -parms.k_func(parms) .* n' + gamma;
-dRdt = -phiR;
+gamma = parms.f_func(xi, parms.b, parms.w, parms.ps2) * R;
+phiR = -parms.k*(xi>parms.dLcrit) .* n' + gamma;
+dRdt = -trapz(xi, phiR);
 
 % total phi
 phiT = phi + phiR;

@@ -14,20 +14,14 @@ fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18De
 
 visualize = 0;
 
-iF = 3;
+iF = 2;
 mcode = [1 2 1];
 
 [output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
 
-parms_version = ''; 
 input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
 cd(input_foldername)
-load(['parms_',modelname, parms_version, '.mat'], 'newparms')
-
-        
-% input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
-% cd(input_foldername)
-% load(['parms_',modelname, '.mat'], 'newparms')
+load(['parms_',modelname, '.mat'], 'newparms')
 parms = newparms;
 
 pCa = 4.5;
@@ -67,16 +61,15 @@ nzi = find(diff(aTs) > 0);
 parms.xi = linspace(-15,15,1000);
 % parms.xi = linspace(-25,25,1000);
 
-% parms.f_func = @(xi,f,w)   f/sqrt((2*pi*w^2))*exp(-xi.^2./(2*w^2));
+parms.f_func = @(xi,f,w)   f/sqrt((2*pi*w^2))*exp(-xi.^2./(2*w^2));
 parms.f_func = @(xi,f,w,mu)   f/sqrt((2*pi*w^2))*exp(-(xi-mu).^2./(2*w^2));
 parms.g_func = @(xi,k1,k2) k1*exp(k2*xi);
 
-parms.approx = 0;
-parms.ps2 = parms.dLcrit;
+parms.approx = 1;
 
 odeopt = [];
 
-for j = 2
+for j = 1:2
     tall = [];
     Fall = [];
     Lall = [];
@@ -89,14 +82,13 @@ for j = 2
     
     X0 = x0;
     
-    for p = 1:(length(nzi)-1)
+    for p = 1%1:(length(nzi)-1)
         
 %           odeopt = odeset('maxstep', 1e-3);
-%         if p == 2 && j == 2
-%             odeopt = odeset('maxstep', 1e-4);
+%         if p == 4
+            odeopt = [];
 %         else
-%             odeopt = [];
-%         end
+%             odeopt = odeset('maxstep', 1e-3);
 %         end
         
         disp(p)
@@ -132,7 +124,7 @@ for j = 2
         Lall = [Lall L];
         
         dlse = interp1(parms.ti, parms.Lts, t) - L;
-%         F = parms.Fse_func(dlse, parms);
+        F = parms.Fse_func(dlse, parms);
 %         [~, id] = unique(tall);
 %         
 
@@ -144,15 +136,14 @@ for j = 2
             Q0 = sol.y(1,:);
             Q1 = sol.y(2,:);
         end
-%         
-%         figure(100)
-%         subplot(121)
-%         plot(t, Q0,'-'); hold on
-%         plot(t, Q1, '--')
-%         
-%         subplot(122)
-%         plot(t, F, '-'); hold on
-%         plot(t, (Q1+Q0), '--')
+        
+        figure(100)
+        subplot(121)
+        plot(t, Q0,'-'); hold on
+        plot(t, Q1, '--')
+        
+        subplot(122)
+        plot(t, Q1+Q0, ':')
 
         
         tall = [tall t];
