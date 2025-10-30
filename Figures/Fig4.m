@@ -6,33 +6,34 @@ figure(1)
 color = get(gca,'colororder');
 pcolors = flip(parula(7));
 acolors = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
-% version = {'_v3';
+
+discretized_model = 0;
 
 %% chose figure number: specify conditions
-fig = 5;
-iF = 2;
+fig = 6;
+iF = 6;
 
-pCas = [4.5 6.3;
-        4.5 6.3];
+pCas = [4.5 6.2;
+    4.5 6.2];
 
 % chosen ISIs, AMPs and pCas
 if fig == 4
     ISIs = [.001 .001; % dashed
-            .100 .100]; % solid
+        .100 .100]; % solid
     
     AMPs = [0      0; % dashed
         .0383 .0383]; % solid
-   
+    
     
     titles = {'Maximal activation', 'Submaximal activation'};
     
 elseif fig == 5 || fig == 6
     
     ISIs = [.316 .316;
-            .001 .001];
+        .001 .001];
     
     AMPs = [.0383 .0383;
-            .0383 .0383];
+        .0383 .0383];
     
     titles = {'Maximal activation', 'Submaximal activation'};
     
@@ -47,16 +48,27 @@ if fig == 4 || fig == 5
     mcodes = [2 1 1; 1 1 3; 1 1 1];
     colors = acolors;
     
-    versions = {'_v3', '_v3', '_v4'};
-
+    %     versions = {'_v3', '_v3', '_v4'};
+    
+    if discretized_model
+        versions = {'_v3', '_v2d', '_v2d'};
+    else
+        versions = {'_v3', '_v3', '_v4'};
+    end
+    
 else
     mcodes = [1 1 1; 1 2 1];
     colors = acolors(3:end,:);
     
-    versions = {'_v4', '_v4'};
+    
+    if discretized_model
+        versions = {'_v2d', '_v2d'};
+    else
+        versions = {'_v4', '_v4'};
+    end
 end
 
-% load data 
+% load data
 [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(1,:));
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 cd([output_mainfolder{2},'\data'])
@@ -83,27 +95,33 @@ for j = 1:size(ISIs,1)
         dTc = AMPs(j,i) / .4545; % conditioning stretch
         ISI = ISIs(j,i);
         AMP = AMPs(j,i);
-
+        
         tids = sort([Tsrel(i,:) .15]);
         
         for kk = 1:size(mcodes,1)
             mcode = mcodes(kk,:);
-            [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(kk,:));
+            [output_mainfolder, modelfilename, ~, ~] = get_folder_and_model(mcodes(kk,:));
             tiso = dTt*3+dTc*2+ISI + 2;
-
-            cd([output_mainfolder{2}])
-            cd(['parms', versions{kk}])
+            
+            %             cd([output_mainfolder{2}])
+            %             cd(['parms', versions{kk}])
             
             
-%             [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(kk,:));
-            cd([filename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10)])
-
-            disp([fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'])
-            load([fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'], ...
-                'tis','Cas','vis','Lis','oFi','parms', 'ts')
+            %             [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(kk,:));
+            %             cd([output_mainfolder{2}][filename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10)])
+            filename = [output_mainfolder{2}, '\parms', versions{kk},'\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
+            disp(filename)
+            
+            if ~exist(filename, 'file')
+                disp('using approximated')
+                filename = [output_mainfolder{2}, '\parms_v4\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
+                
+            end
+            
+            load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts')
             
             t = tis + 3*dTt - tiso;
-
+            
             figure(1)
             subplot(4,size(ISIs,2),[i+size(ISIs,2) i+size(ISIs,2)*3])
             plot(t(t<.15), oFi(t<.15)*100, 'linestyle', ls{j}, 'linewidth',2, 'color', brighten(colors(kk,:), (j-1)/2))
@@ -112,29 +130,29 @@ for j = 1:size(ISIs,1)
             id = t < .15 & t > (-ISI - 2 * dTc - .1);
             oFii = interp1(t(id), oFi(id), texp(:,i));
             
-%             set(gca, 'Fontsize', 6)
+            %             set(gca, 'Fontsize', 6)
             
-%             RMSDs = sqrt((oFii - Fexp(:,i)).^2) * 100;
+            %             RMSDs = sqrt((oFii - Fexp(:,i)).^2) * 100;
             xlabel('Time (s)', 'Fontsize', 8)
             
-%             figure(10)
-%             subplot(1,size(ISIs,2),i)
-%             plot(texp(:,i), RMSDs, 'linestyle', ls{j}, 'linewidth', 2, 'color', brighten(colors(kk,:), (j-1)/2));
-%             hold on
-%             box off
-%             
-%             RMSD = sqrt(sum((oFii - Fexp(:,i)).^2));
-%   
-%             for ii = 1:(length(tids)-2)
-%                 plot([tids(ii) tids(ii)], [0 20], ':', 'color', [.5 .5 .5]); hold on
-%             end
-%             
-%             axis([-.3 .15 0 20])
-%             xlabel('Time (s)')
-%             
-%             if i == 1
-%                 ylabel('RMSD (%F_0)')
-%             end
+            %             figure(10)
+            %             subplot(1,size(ISIs,2),i)
+            %             plot(texp(:,i), RMSDs, 'linestyle', ls{j}, 'linewidth', 2, 'color', brighten(colors(kk,:), (j-1)/2));
+            %             hold on
+            %             box off
+            %
+            %             RMSD = sqrt(sum((oFii - Fexp(:,i)).^2));
+            %
+            %             for ii = 1:(length(tids)-2)
+            %                 plot([tids(ii) tids(ii)], [0 20], ':', 'color', [.5 .5 .5]); hold on
+            %             end
+            %
+            %             axis([-.3 .15 0 20])
+            %             xlabel('Time (s)')
+            %
+            %             if i == 1
+            %                 ylabel('RMSD (%F_0)')
+            %             end
         end
         
         % add vertical lines
@@ -155,7 +173,7 @@ for j = 1:size(ISIs,1)
             end
         end
         
-        subplot(4,size(ISIs,2),[i+size(ISIs,2) i+size(ISIs,2)*3])        
+        subplot(4,size(ISIs,2),[i+size(ISIs,2) i+size(ISIs,2)*3])
         for ii = 1:(length(tids)-2)
             plot([tids(ii) tids(ii)], [0 300], ':', 'color', [.5 .5 .5]); hold on
         end
@@ -166,7 +184,7 @@ end
 
 %%
 figure(1)
-subplot(4,size(ISIs,2),[1+size(ISIs,2) 1+size(ISIs,2)*3])       
+subplot(4,size(ISIs,2),[1+size(ISIs,2) 1+size(ISIs,2)*3])
 
 if fig == 4
     legend('Data','Hill','XB','XB coop','location','Southwest', 'Fontsize', 8)
@@ -193,17 +211,17 @@ set(gcf,'units','centimeters','position',[10 10 19 10])
 
 %% optionally export to PNG
 cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
-       
-if strcmp(versions{2}(end), 'd')
-    figname = ['FigS',num2str(fig-3),'.png'];
+
+if discretized_model
+    figname = ['Fig',num2str(fig),'.png'];
 else
-    figname = ['Fig',num2str(fig),'.png'];    
+    figname = ['FigS',num2str(fig-3),'.png'];
 end
 
 
 if savefig
-figure(1)
-exportgraphics(gcf,figname)
+    figure(1)
+    exportgraphics(gcf,figname)
 end
 
 

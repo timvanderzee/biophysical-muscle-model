@@ -1,4 +1,4 @@
-clear all; close all; clc
+clear all; close all; 
 save_results = 1;
 
 [username, githubfolder] = get_paths();
@@ -19,12 +19,16 @@ mcode = [1 2 1];
 
 [output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
 
-parms_version = ''; 
+parms_version = '_v2';
+% parms_version = '';
+
 input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
 cd(input_foldername)
-load(['parms_',modelname, parms_version, '.mat'], 'newparms')
+load(['parms_',modelname, parms_version, '.mat'])
 
-        
+newparms.kF
+
+%%
 % input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
 % cd(input_foldername)
 % load(['parms_',modelname, '.mat'], 'newparms')
@@ -72,11 +76,15 @@ parms.f_func = @(xi,f,w,mu)   f/sqrt((2*pi*w^2))*exp(-(xi-mu).^2./(2*w^2));
 parms.g_func = @(xi,k1,k2) k1*exp(k2*xi);
 
 parms.approx = 0;
-parms.ps2 = parms.dLcrit;
+parms.kF = 1e3;
+parms.JF = parms.kF / parms.J1;
+parms.ps2 = 0;
+parms.b = 5000;
+parms.k = 500;
 
 odeopt = [];
 
-for j = 2
+for j = 1:2
     tall = [];
     Fall = [];
     Lall = [];
@@ -109,7 +117,8 @@ for j = 2
         else
 %              sol = ode15s(@(t,y,yp) fiber_dynamics_explicit_no_tendon(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, []);
 %             parms.k = 500;
-            sol = ode15s(@(t,y,yp) fiber_dynamics_explicit_no_tendon_full(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, odeopt);
+%             sol = ode15s(@(t,y,yp) fiber_dynamics_explicit_no_tendon_full(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, odeopt);
+            sol = ode113(@(t,y,yp) fiber_dynamics_explicit_no_tendon_full(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, odeopt);
         end
         
         t = sol.x;
@@ -143,6 +152,35 @@ for j = 2
             
             Q0 = sol.y(1,:);
             Q1 = sol.y(2,:);
+            Q2 = sol.y(3,:);
+            mu = Q1./Q0; % mean
+            q = sqrt(Q2./Q0 - mu.^2);  
+
+            % n
+             for ii = 1:length(sol.x)
+                 n(:,ii) = Q0(ii) ./ (sqrt(2*pi).*q(ii)) .* exp(-((parms.xi-mu(ii)).^2) ./ (2*q(ii).^2));  % Eq. 52, modified
+             end
+        end
+        
+        if p == 2
+            
+            tids = [2.04 2.05 2.06];
+            
+            for jj = 1:3
+                id = find(t > tids(jj), 1);
+
+                if j == 2
+                    xi = parms.xi + (L(id) - parms.lce0);
+                else
+                    xi = parms.xi;
+                end
+
+                figure(100)
+                subplot(1,3,jj)
+                plot(xi, n(:,id)); hold on
+                xlim([-5 5])
+            end
+            
         end
 %         
 %         figure(100)

@@ -11,8 +11,8 @@ pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
 
 Ca = 10.^(-pCas+6);
 
-versions = {'parms_v3', 'parms_v2d'};
-mcode = [1 1 3];
+versions = {'parms_v2d','parms_v4'};
+mcode = [1 2 1];
 
 RMSD = nan(length(ISIs), length(AMPs), length(pCas), iFs(end));
 [output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
@@ -26,32 +26,22 @@ for iF = iFs
             
             for n = 1:length(ISIs)
                 ISI = ISIs(n);
-                
-                for iii = 1:2
-                    version = versions{iii};
-                    
-                    filename = [output_mainfolder{2}, '\', version, '\', modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10), '\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
+        
+                filename1 = [output_mainfolder{2}, '\', versions{1}, '\', modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10), '\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
+                filename2 = [output_mainfolder{2}, '\', versions{2}, '\', modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10), '\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
 
-                    if exist(filename, 'file')
-                        disp(filename)      
-                        try
-                            load(filename, 'tis','oFi')
-                            data(iii).oFi = oFi;
-                        catch
-                            disp(['Unable to read: ', filename])
-                        end
-                        
-                    else
-                        if iii == 2
-                            data(iii).oFi = nan(size(oFi));
-                        else
-                            keyboard
-                        end
+                if exist(filename1, 'file') && exist(filename2, 'file')
+                    disp(filename1)
+
+                    try
+                        data1 = load(filename1, 'tis','oFi');
+                        data2 = load(filename2, 'tis','oFi');
+                        RMSD(n,m,i,iF) = sqrt(mean((data1.oFi(data1.tis>2)-data2.oFi(data1.tis>2)).^2, 'omitnan'));   
+                         
+                    catch
+                        disp(['Unable to read: ', filename1])
                     end
-                        
-                end
-                
-                RMSD(n,m,i,iF) = sqrt(mean((data(1).oFi(tis>2)-data(2).oFi(tis>2)).^2, 'omitnan'));                
+                end            
             end
         end
     end
@@ -113,7 +103,7 @@ for ii = 1:size(RMSD,3)
         filename = [output_mainfolder{2}, '\', version, '\', modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(ii)*10), '\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
 
         if exist(filename, 'file')
-            delete(filename)
+%             delete(filename)
         end
         
         disp([filename, ' exist: ', num2str(exist(filename, 'file'))])
