@@ -1,13 +1,13 @@
 clear all; close all; clc
 [username, githubfolder] = get_paths();
-savefig = 1;
+savefig = 0;
 
 figure(1)
 color = get(gca,'colororder');
 pcolors = flip(parula(7));
 acolors = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
 
-discretized_model = 0;
+discretized_model = 1;
 
 %% chose figure number: specify conditions
 fig = 6;

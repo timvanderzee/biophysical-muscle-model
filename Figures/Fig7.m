@@ -14,13 +14,16 @@ RMSDs = nan(length(th)-1,7,8,11, 7, 4);
 F0s = nan(length(th)-1, 7,8,11, 4);
 RMSDc = nan(length(th)-1,7,8,11, 7, 4);
 
+versions = {'parms_v4', 'parms_v2d', 'parms_v2d', 'parms_v2d'};
 
 for p = 1:7
     
     
     for ii = 1:size(mcodes,1)
+        
         [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(ii,:));
         
+            cd(['C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Model output\RMSD\', versions{ii}])
         load([filename, '_RMSD.mat'], 'RMSD', 'AMPs', 'ISIs')
         
         sAMPs = AMPs;
@@ -34,6 +37,7 @@ for p = 1:7
         sISI = .001;
         sAMP = .0383;
         
+            cd(['C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Model output\SRS\', versions{ii}])
         load([filename, '_SRS.mat'],'F0', 'AMPs', 'ISIs')
         
 %         sACTis,ISIs==sISI, AMPs==sAMP

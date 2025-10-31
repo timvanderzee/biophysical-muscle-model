@@ -1,34 +1,24 @@
 clear all; close all; clc
-save_results = 1;
 
 [username, githubfolder] = get_paths();
 
-mcodes = [1 2 1; 1 2 1];
+mcodes = [1 2 1; 1 2 1; 1 2 1; 1 2 1];
+discretized_model = [0 0 1 1];
 
-iFs = 2 %[2,3,5,6,7,8,11];
-AMPs = [0    0.0012    0.0038    0.0121    0.0216    0.0288    0.0383    0.0532    0.0682];
-ISIs = [ 0.0010    0.0100    0.0500    0.1000    0.2000    0.3160    0.5000    1.0000    3.1600   10.0000];
-pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
-Ca = 10.^(-pCas+6);
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
-visualize = 0;
-
-discretized_model = 1;
-
-% iF = 7;
+iFs = 2;
 pCa = 4.5;
 Ca = 10.^(-pCa+6);
-AMP = .0383;
-ISI = 1;
+AMP = 0;
+ISI = .001;
 parms_version = '_v2';
 
 figure(1)
 for iF = iFs
     nexttile
     for i = 1:size(mcodes,1)
-        
-        
+
         % load parameters
         mcode = mcodes(i,:);
         [output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
@@ -37,7 +27,6 @@ for iF = iFs
         cd(input_foldername)
         load(['parms_',modelname, parms_version, '.mat'], 'newparms')
         
-        
         parms = newparms;
         
         parms.xi = linspace(-15,15,1000);
@@ -45,15 +34,16 @@ for iF = iFs
         parms.g_func = @(xi,k1,k2) k1*exp(k2*xi);
         parms.approx = 1;
         
-        if i == 1
+        if i == 1 || i == 3
             parms.k = 1000;
             parms.b = 1e4;
+            parms.ps2 = .8;
+            parms.dLcrit = 1.2;
         end
-        
-        
+            
         if contains(modelname, 'Hill')
             x0 = 0;
-        elseif discretized_model
+        elseif discretized_model(i)
             
             n0 = zeros(size(parms.xi));
             x0 = [n0'; parms.x0(4:end)'];
@@ -62,14 +52,9 @@ for iF = iFs
             x0 = parms.x0';
         end
         
-        
         xp0 = zeros(size(x0));
-        
         X0 = x0;
-        
-        
-        %     parms.kpe = 0;
-        
+       
         dTt = .0383/.4545; % test stretch (= constant)
         dTc = AMP / .4545; % conditioning stretch
         
@@ -79,7 +64,7 @@ for iF = iFs
         tiso = dTt*3+dTc*2+ISI + 5;
         dt = .001; % gives 10 points in SRS zone
         N = round(tiso / dt);
-        
+
         [tis, Cas, Lis, vis, ts, Ts] = create_input(tiso, dTt, dTc, ISI, Ca, N);
         
         parms.ti = tis;
@@ -87,8 +72,8 @@ for iF = iFs
         parms.Cas = mean(Cas);
         parms.Lts = Lis * parms.gamma;
         
+        
         % run simulation
-        %                 tic
         if contains(modelname, 'Hill')
             % simulate
             sol = ode15i(@(t,y,yp) hill_type_implicit_v2(t,y,yp, parms), [0 max(tis)], X0, xp0, odeopt);
@@ -108,6 +93,7 @@ for iF = iFs
             % splitting it up makes things much faster
             tall = [];
             Fall = [];
+            Lall = [];
             
             % interval needs to have finite duration
             nzi = find(diff(aTs) > 0);
@@ -116,12 +102,12 @@ for iF = iFs
                 disp(p)
                 
                 % simulate
-                if discretized_model
+                if discretized_model(i)
                     sol = ode15s(@(t,y,yp) fiber_dynamics_explicit_no_tendon_full(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, odeopt);
                     t = sol.x;
                     
                     L = sol.y(end-3,:);
-                    %
+                    
                     F = nan(1, length(sol.x));
                     for iiii = 1:length(sol.x)
                         n = sol.y(1:end-4,iiii);
@@ -134,22 +120,19 @@ for iF = iFs
                     %                 sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, xp0, []);
                     sol = ode15s(@(t,y) fiber_dynamics_explicit_no_tendon(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, odeopt);
                     
-                    X0 = sol.y(:,end);
-                    %                 XP0 = xdot(:,end);
-                    
                     % get force
                     t = sol.x;
                     F = (sol.y(1,:) + sol.y(2,:));
+                    L = interp1(parms.ti, parms.Lts, t) - parms.Lse_func(F, parms);
                     
                 end
                 
-                
-                
+                  X0 = sol.y(:,end);
+
                 tall = [tall t];
                 Fall = [Fall F];
+                Lall = [Lall L];
                 
-                %                         figure(100)
-                %                         plot(t, F); hold on
             end
             
             % find unique values
@@ -160,20 +143,13 @@ for iF = iFs
         end
         
         
-        %     figure(1)
-        %     subplot(2,1,1)
-        %     plot(tis, parms.Lts, 'linewidth', 2); hold on
-        %     box off
-        %     xlabel('Time (s)')
-        %     ylabel('Length (-)')
-        
-        
+        figure(1)
         plot(tis, oFi, 'linewidth', 2); hold on
         box off
         xlabel('Time (s)')
         ylabel('Force (-)')
         
-        xlim([4.5 max(tall)])
+%         xlim([4.5 max(tall)])
     end
 end
 

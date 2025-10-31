@@ -1,5 +1,5 @@
 clear all; close all; clc
-savefig = 1;
+savefig = 0;
 
 [username, githubfolder] = get_paths();
 th = [0 .07 .7 1.5];
@@ -41,13 +41,14 @@ aeISIs = repmat(eISIs(:), 1, 8);
 % model  
 modelnames = {'Hill_regular','biophysical_no_regular', 'biophysical_full_regular', 'biophysical_full_alternative'};
 titles = {'Hill model', 'XB model', 'XB coop', 'XB coop + FD'};
+versions = {'parms_v4', 'parms_v2d', 'parms_v2d', 'parms_v2d'};
 
 % modelnames =  {'biophysical_full_alternative'};
 
 for ii = 1:length(modelnames)
     modelname = modelnames{ii};
     
-    cd([githubfolder, '\biophysical-muscle-model\Model output\SRS\']);
+    cd([githubfolder, '\biophysical-muscle-model\Model output\SRS\', versions{ii}]);
 load([modelname,'_SRS.mat'],'Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
 
 amAMPs = repmat(AMPs, length(ISIs), 1);

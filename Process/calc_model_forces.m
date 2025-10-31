@@ -11,13 +11,13 @@ parms_version = '_v2';
 
 mcodes = [1 2 1];
 
-iFs = 2; 
+iFs = 11; 
 AMPs = [0    0.0012    0.0038    0.0121    0.0216    0.0288    0.0383    0.0532    0.0682];
 ISIs = [ 0.0010    0.0100    0.0500    0.1000    0.2000    0.3160    0.5000    1.0000    3.1600   10.0000];
 pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
 
-ISIs = [.316  .001];
-AMPs = [.0383 .0383];
+ISIs = 10;
+AMPs = .0682;
 pCas = 6.3;
 
 Ca = 10.^(-pCas+6);
@@ -36,8 +36,9 @@ for iii = 1:size(mcodes,1)
         input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
         cd(input_foldername)
         load(['parms_',modelname, parms_version, '.mat'], 'newparms')
+        
         parms = newparms;
-        parms.xi = linspace(-20,20,1000);
+%         parms.xi = linspace(-20,20,1000);
         parms.xi = linspace(-15,15,1000);
         parms.f_func = @(xi,f,w,mu)   f/sqrt((2*pi*w^2))*exp(-(xi-mu).^2./(2*w^2));
         parms.g_func = @(xi,k1,k2) k1*exp(k2*xi);
@@ -46,6 +47,7 @@ for iii = 1:size(mcodes,1)
 %         parms.k = 500;
 %         parms.b = 1e4;
 %         parms.ps2 = 1;
+%         parms.dLcrit = 1.5;
 
         if contains(modelname, 'Hill')
             x0 = 0;
@@ -136,7 +138,7 @@ for iii = 1:size(mcodes,1)
                             nzi = find(diff(aTs) > 0);
                             
                             odeopt = odeset('maxstep', 1e-3);
-                            odeopt = [];
+%                             odeopt = [];
                             
                             for p = 1:(length(nzi)-1)
                                 disp(p)

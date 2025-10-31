@@ -38,10 +38,18 @@ eISIs = [1 10 100 316 1000 3160 10000]/1000;
 th = [0 .07 .15 .3 .5 .7 1.5];
 sACTis = [1 2 4 6];
 filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_alternative_SRS'};
+versions = {'parms_v4', 'parms_v2d', 'parms_v2d', 'parms_v2d'};
 
+for jj = 1:2
+    if jj == 1
+versions = {'parms_v4', 'parms_v4', 'parms_v4', 'parms_v4'};
+    else
+versions = {'parms_v4', 'parms_v2d', 'parms_v2d', 'parms_v2d'};
+    end
+    
 for kk = 1:length(filenames)
     
-    cd('C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Model output\SRS')
+    cd(['C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Model output\SRS\', versions{kk}])
     load(filenames{kk},'Stest', 'Scond', 'AMPs', 'pCas', 'ISIs', 'F0')
     
     % average
@@ -138,10 +146,13 @@ k = [5 8 9 11]';
 % AIC = 2*k + n.*log(oSSE(:,id)./oSST(id))
 AIC = 2*k + n.*log(oSSE(:,id)./n)
 
-dAIC = AIC - AIC(1,:)
+dAIC(:,jj) = AIC - AIC(1,:)
 
-moSSE = oSSE ./ N
+moSSE(:,:,jj) = oSSE ./ N
 
+end
+
+return
 %% visualize
 
 close all
@@ -157,11 +168,12 @@ titles =  {'History-dependent trials', 'History-independent trials', 'All trials
 
 js = [3 2 1];
 
+
 for j = 1:3
     subplot(1,3,j)
     
     for i = 1:4
-        bar(i, moSSE(i,js(j))', bw, 'FaceColor', color(i,:), 'Edgecolor', color(i,:)); hold on
+        bar(i, moSSE(i,js(j),2)', bw, 'FaceColor', color(i,:), 'Edgecolor', color(i,:)); hold on
     end
     
 end
@@ -176,7 +188,7 @@ for j = 1:3
             fcolor = color(i,:);
         end
         
-        bar(i+bw, moSSE(i,js(j))', bw, 'Edgecolor', color(i,:), 'FaceColor', fcolor); hold on
+        bar(i+bw, moSSE(i,js(j),1)', bw, 'Edgecolor', color(i,:), 'FaceColor', fcolor); hold on
     end
     
      set(gca,'fontsize',6)
@@ -219,6 +231,7 @@ end
 
 figure(2)
 set(gcf,'units','centimeters','position',[10 10 19 5])
+
 
 %%
 if savefig
