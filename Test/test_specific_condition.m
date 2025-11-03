@@ -2,15 +2,15 @@ clear all; close all; clc
 
 [username, githubfolder] = get_paths();
 
-mcodes = [1 2 1; 1 2 1; 1 2 1; 1 2 1];
-discretized_model = [0 0 1 1];
+mcodes = [1 2 1; 1 2 1; 1 2 1];
+discretized_model = [0 0 1];
 
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
 iFs = 2;
 pCa = 4.5;
 Ca = 10.^(-pCa+6);
-AMP = 0;
+AMP = .0383;
 ISI = .001;
 parms_version = '_v2';
 
@@ -34,11 +34,17 @@ for iF = iFs
         parms.g_func = @(xi,k1,k2) k1*exp(k2*xi);
         parms.approx = 1;
         
-        if i == 1 || i == 3
-            parms.k = 1000;
-            parms.b = 1e4;
-            parms.ps2 = .8;
-            parms.dLcrit = 1.2;
+%         if i == 1 || i == 3
+            parms.k = 1e3;
+            parms.b = 5e3;
+            parms.dLcrit = 0.7;
+            parms.ps2 = parms.dLcrit-parms.w;
+%         end
+
+        if i == 2
+            parms.approx = 1;
+        else
+            parms.approx = 0;
         end
             
         if contains(modelname, 'Hill')
