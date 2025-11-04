@@ -3,12 +3,14 @@ clear all; close all; clc
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
 % model to be fitted
-mcode = [1 1 1];
+mcode = [1 2 1];
 
 % settings
 N = 500;
-save_results = 0;
-iFs = 3; %[2,3,5,6,7,8,11];
+save_results = 1;
+visualize = 0;
+    
+iFs = 11 %[2,3,5,6,7,8,11];
 n = [3 1]; % ISI number
 m = [7 1]; % AMP number
 tiso = 3; % isometric time (s)
@@ -54,7 +56,7 @@ for iF = iFs
     cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
     load([fibers{iF},'_cor_new.mat'],'data')
    
-    Ks = find(Fm(:,iF) > .07); % only consider active trials
+    Ks = find(Fm(:,iF) > .05); % only consider active trials
     Data = prep_data_v2(data,n, m,Ks,tiso);
     [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), N);
     
@@ -63,24 +65,26 @@ for iF = iFs
     % interpolate force
     Fis = interp1(Data.t, Data.F, tis);
     
-    if ishandle(1), close(1); end
-    figure(1)
-    subplot(411)
-    plot(Data.t, Data.C,'k.', tis, Cas, 'b');
-    
-    subplot(412)
-    plot(Data.t, Data.v,'k.', tis, vis, 'b');
-    
-    subplot(413)
-    plot(Data.t, Data.L,'k.', tis, Lis,'b');
-    
-    subplot(414)
-    plot(Data.t, Data.F,'k.');
-    
-    for j = 1:4
-        subplot(4,1,j)
-        box off
-        hold on
+    if visualize
+        if ishandle(1), close(1); end
+        figure(1)
+        subplot(411)
+        plot(Data.t, Data.C,'k.', tis, Cas, 'b');
+
+        subplot(412)
+        plot(Data.t, Data.v,'k.', tis, vis, 'b');
+
+        subplot(413)
+        plot(Data.t, Data.L,'k.', tis, Lis,'b');
+
+        subplot(414)
+        plot(Data.t, Data.F,'k.');
+
+        for j = 1:4
+            subplot(4,1,j)
+            box off
+            hold on
+        end
     end
     
     %% get parameters
@@ -170,8 +174,10 @@ for iF = iFs
     
     oFi = IG.Fi * parms.Fscale + parms.Fpe_func(parms.Lts, parms);
     
-    subplot(414); hold on
-    plot(tis, oFi,'b'); hold on
+    if visualize
+        subplot(414); hold on
+        plot(tis, oFi,'b'); hold on
+    end
     
     %% intervals of interest
     id1 = nan(length(Ks), length(parms.ti), length(m));
@@ -190,9 +196,11 @@ for iF = iFs
     idF = find(sum(sum(id1,3, 'omitnan'),1) & isfinite(Fis));
     idC = find(sum(sum(id2,3, 'omitnan'),1));
 
-    subplot(414); hold on
-    plot(tis(idF), oFi(idF),'m*', 'markersize', 1); hold on
-    plot(tis(idC), oFi(idC),'g.'); hold on
+    if visualize
+        subplot(414); hold on
+        plot(tis(idF), oFi(idF),'m*', 'markersize', 1); hold on
+        plot(tis(idC), oFi(idC),'g.'); hold on
+    end
     
     %% select data for fitting
     Xdata.t = tis;
@@ -214,7 +222,7 @@ for iF = iFs
     parms.kF = parms.J1 * parms.JF;
     fparms = parms;
     
-    figure(100)
+%     figure(100)
     [newparms, out] = fit_model_parameters_v2(optparms, w, Xdata, fparms, IG, bnds);
     set(gcf,'units','normalized','position',[.2 .2 .4 .6])
     
@@ -238,7 +246,6 @@ for iF = iFs
     %% test with fitted paramers 
     oparms.approx = 0;
     newparms.approx = 0;
-    
     
     oLiss = Lis * oparms.gamma;
     nLiss = Lis * newparms.gamma;
@@ -264,8 +271,8 @@ for iF = iFs
         
         xp0 = zeros(size(x0));
         
-        osol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, oparms), [0 max(tis)], x0, xp0, odeopt);
-        nsol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, newparms), [0 max(tis)], x0, xp0, odeopt);
+        osol = ode15s(@(t,y) fiber_dynamics_explicit_no_tendon(t,y, oparms), [0 max(tis)], x0, odeopt);
+        nsol = ode15s(@(t,y) fiber_dynamics_explicit_no_tendon(t,y, newparms), [0 max(tis)], x0, odeopt);
         nF = (nsol.y(1,:) + nsol.y(2,:)) * parms.Fscale;
         oF = (osol.y(1,:) + osol.y(2,:)) * oparms.Fscale;
         
@@ -294,32 +301,31 @@ for iF = iFs
     end
     
     %% compare forces    
-    if ishandle(2), close(2); end
-    
-    figure(2)
-    plot(tis(Xdata.idF), Fis(idF),'k.'); hold on
-    plot(out.t, out.F, 'linewidth', 2)
-    plot(tis, nFi,'--', 'linewidth', 2); 
-    plot(tis, oFi,'--', 'linewidth', 2);
-    
-    box off
-    legend('Data', 'Fitted', 'New', 'Old', 'location', 'best')
-    legend boxoff
+    if visualize
+        if ishandle(2), close(2); end
+
+        figure(2)
+        plot(tis(Xdata.idF), Fis(idF),'k.'); hold on
+        plot(out.t, out.F, 'linewidth', 2)
+        plot(tis, nFi,'--', 'linewidth', 2); 
+        plot(tis, oFi,'--', 'linewidth', 2);
+
+        box off
+        legend('Data', 'Fitted', 'New', 'Old', 'location', 'best')
+        legend boxoff
+    end
     
     %% parameter values
-    figure(3)
-    nexttile
-%     bar(categorical(optparms), out.s)
-    
-
-    
     for i = 1:length(optparms)
         lb(i) = bnds.(optparms{i})(1);
         ub(i) = bnds.(optparms{i})(2);
         nv(i) = (oldparms.newparms.(optparms{i}) - lb(i)) / (ub(i)-lb(i));
     end
     
-     bar(categorical(optparms), [out.s; nv])
+    figure(3)
+    nexttile
+   
+    bar(categorical(optparms), [out.s; nv])
     
     %% SRS state    
 %     figure(4)
@@ -331,16 +337,18 @@ for iF = iFs
     nFii = interp1(tis, nFi, Data.t);
     oFii = interp1(tis, oFi, Data.t);
        
-    if ishandle(5), close(5); end
-    figure(5)
-    subplot(131);
-    plot(Data.L, Data.F,'.'); hold on
-    
-    subplot(132);
-    plot(Data.L, oFii,'.'); hold on
-    
-    subplot(133)
-    plot(Data.L, nFii,'.'); hold on
+    if visualize
+        if ishandle(5), close(5); end
+        figure(5)
+        subplot(131);
+        plot(Data.L, Data.F,'.'); hold on
+
+        subplot(132);
+        plot(Data.L, oFii,'.'); hold on
+
+        subplot(133)
+        plot(Data.L, nFii,'.'); hold on
+    end
     
     % pre-allocate
     ns = nan(length(Ks), 2);
@@ -367,27 +375,31 @@ for iF = iFs
         
         F0(i) = mean(Data.F(id0(i,:)));
         
-        subplot(131)
-        plot(Data.L(id0(i,:)), Data.F(id0(i,:)), 'g.')
-        plot(Data.L(id1(i,:)), Data.F(id1(i,:)), 'r.')
-        plot(Data.L(id2(i,:)), Data.F(id2(i,:)), 'y.')
-        
-        subplot(132)
-        plot(Data.L(id1(i,:)), oFii(id1(i,:)), 'r.')
-        plot(Data.L(id2(i,:)), oFii(id2(i,:)), 'y.')
-        
-        subplot(133)
-        plot(Data.L(id1(i,:)), nFii(id1(i,:)), 'r.')
-        plot(Data.L(id2(i,:)), nFii(id2(i,:)), 'y.')
+        if visualize
+            subplot(131)
+            plot(Data.L(id0(i,:)), Data.F(id0(i,:)), 'g.')
+            plot(Data.L(id1(i,:)), Data.F(id1(i,:)), 'r.')
+            plot(Data.L(id2(i,:)), Data.F(id2(i,:)), 'y.')
+
+            subplot(132)
+            plot(Data.L(id1(i,:)), oFii(id1(i,:)), 'r.')
+            plot(Data.L(id2(i,:)), oFii(id2(i,:)), 'y.')
+
+            subplot(133)
+            plot(Data.L(id1(i,:)), nFii(id1(i,:)), 'r.')
+            plot(Data.L(id2(i,:)), nFii(id2(i,:)), 'y.')
+        end
     end
     
-    titles = {'Data','Old parameters', 'New parameters'};
-    for i = 1:3
-        subplot(1,3,i)
-        box off
-        xlabel('Length (L_0)')
-        ylabel('Force (F_0)')
-        title(titles{i})
+    if visualize
+        titles = {'Data','Old parameters', 'New parameters'};
+        for i = 1:3
+            subplot(1,3,i)
+            box off
+            xlabel('Length (L_0)')
+            ylabel('Force (F_0)')
+            title(titles{i})
+        end
     end
     
     %% summary plot
@@ -414,7 +426,7 @@ for iF = iFs
         end
 
         cd(foldername)
-        save(['parms_', filename, '_v2.mat'], 'newparms', 'optparms', 'out', 'bnds')
+        save(['parms_', filename, '_v3.mat'], 'newparms', 'optparms', 'out', 'bnds')
     end
     
 end

@@ -291,7 +291,7 @@ opti.solver('ipopt',options);
 % opti.solver('ipopt',p_opts,s_opts);
 
 % visualize
-opti.callback(@(i) plot(toc, [Fts; opti.debug.value(Frel)]))
+% opti.callback(@(i) plot(toc, [Fts; opti.debug.value(Frel)]))
 
 try
     sol = opti.solve();
