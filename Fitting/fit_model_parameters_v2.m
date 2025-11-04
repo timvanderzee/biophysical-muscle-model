@@ -69,7 +69,7 @@ if parms.f > 0 % biophysical models
     % define extra variables
     p  = opti.variable(1,N); % mean strain of the distribution
     q  = opti.variable(1,N); % standard deviation strain of the distribution
-    F  = opti.variable(1,N);
+%     F  = opti.variable(1,N);
 %     F0dot  = opti.variable(1,N);
     
     % (slack) controls (defined as above)
@@ -79,18 +79,19 @@ if parms.f > 0 % biophysical models
     
     % extra constraints
 %     opti.subject_to(dQ0dt + dQ1dt - F0dot - Ld .* Q0 == 0);
-    opti.subject_to(Q0 + Q1 - F == 0);
+%     opti.subject_to(Q0 + Q1 - F == 0);
     opti.subject_to(Q1 - Q0 .* p == 0);
     opti.subject_to(Q2 - Q0 .* (p.^2 + q) == 0);
     
     % (potentially) simple bounds
     opti.subject_to(q > 0);
     opti.subject_to(Q0 > 0);
+    opti.subject_to(Q1 > -Q0);
     opti.subject_to(Q2 > 0);
-    opti.subject_to(F > 0);
+%     opti.subject_to(F > 0);
     
     % set initial guess
-    opti.set_initial(F, IG.Fi);
+%     opti.set_initial(F, IG.Fi);
     opti.set_initial(Q0, IG.Q00i);
     opti.set_initial(Q1, IG.Q1i);
     opti.set_initial(Q2, IG.Q2i);
@@ -189,6 +190,7 @@ if parms.f > 0 % biophysical models
 %     error_R = dRdt - Rdot;
     
     %% length dynamics
+    F = Q0 + Q1;
     error_length    = LengthEquilibrium(Q0, F, F0dot, Ld, vts, kse0, kse, parms.gamma);
     
 

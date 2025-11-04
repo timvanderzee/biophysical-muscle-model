@@ -8,7 +8,7 @@ mcode = [1 1 1];
 % settings
 N = 500;
 save_results = 0;
-iFs = 2; %[2,3,5,6,7,8,11];
+iFs = 3; %[2,3,5,6,7,8,11];
 n = [3 1]; % ISI number
 m = [7 1]; % AMP number
 tiso = 3; % isometric time (s)
@@ -21,7 +21,7 @@ bnds.k21 = [1 200];
 bnds.kF = [1 1e5];
 bnds.J1 = [1e-3 200];
 bnds.J2 = [1 1e3];
-bnds.kon = [1 200];
+bnds.kon = [5 200];
 bnds.kse = [1e-3 1];
 bnds.kse0 = [1e-4 1];
 bnds.koop = [1 200];
@@ -148,13 +148,16 @@ for iF = iFs
         parms.act_max = (1 - parms.Fpe0) / parms.Fscale;
 
     elseif sum(mcode == [1 2 1]) == 3 
-%         parms.J1 = 6.17;
-%         parms.koop = 5.7;
-%         parms.JF = 1e3;
+        parms.J1 = 6.17;
+        parms.koop = 5.7;
+        parms.JF = 1e3;
+        parms.J2 = 200;
         
         parms.k = 1000;
         parms.b = 3000;
-        parms.dLcrit = 1;
+        parms.dLcrit = 2;
+        
+        parms.ps2 = 0;
     end
     
     %% get initial guess
@@ -232,7 +235,11 @@ for iF = iFs
     oldparms = load(['parms_', filename, '_v2.mat'], 'newparms', 'optparms', 'out', 'bnds');
     oparms = oldparms.newparms;
     
-    %% test with fitted paramers   
+    %% test with fitted paramers 
+    oparms.approx = 0;
+    newparms.approx = 0;
+    
+    
     oLiss = Lis * oparms.gamma;
     nLiss = Lis * newparms.gamma;
     
