@@ -3,11 +3,12 @@ clear all; close all; clc
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
 % model to be fitted
-mcode = [1 2 1];
+mcode = [1 1 1];
 
 % settings
+N = 500;
 save_results = 0;
-iFs = 11; %[2,3,5,6,7,8,11];
+iFs = 2; %[2,3,5,6,7,8,11];
 n = [3 1]; % ISI number
 m = [7 1]; % AMP number
 tiso = 3; % isometric time (s)
@@ -41,7 +42,7 @@ elseif sum(mcode == [1 1 3]) == 3
 elseif sum(mcode == [2 1 1]) == 3
     optparms = {'n','kappa', 'kse', 'kse0', 'vmax'};
 elseif sum(mcode == [1 2 1]) == 3
-    optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop','ps2', 'dLcrit'};
+    optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop', 'dLcrit'};
 end
 
 %% specify data
@@ -55,7 +56,7 @@ for iF = iFs
    
     Ks = find(Fm(:,iF) > .07); % only consider active trials
     Data = prep_data_v2(data,n, m,Ks,tiso);
-    [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), 500);
+    [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), N);
     
     Lis(Lis<0) = 0;
     

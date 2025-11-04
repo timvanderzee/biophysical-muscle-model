@@ -67,7 +67,7 @@ if parms.f > 0 % biophysical models
     p  = opti.variable(1,N); % mean strain of the distribution
     q  = opti.variable(1,N); % standard deviation strain of the distribution
     F  = opti.variable(1,N);
-    F0dot  = opti.variable(1,N);
+%     F0dot  = opti.variable(1,N);
     
     % (slack) controls (defined as above)
     dQ0dt  = opti.variable(1,N);
@@ -75,7 +75,7 @@ if parms.f > 0 % biophysical models
     dQ2dt  = opti.variable(1,N);
     
     % extra constraints
-    opti.subject_to(dQ0dt + dQ1dt - F0dot - Ld .* Q0 == 0);
+%     opti.subject_to(dQ0dt + dQ1dt - F0dot - Ld .* Q0 == 0);
     opti.subject_to(Q0 + Q1 - F == 0);
     opti.subject_to(Q1 - Q0 .* p == 0);
     opti.subject_to(Q2 - Q0 .* (p.^2 + q) == 0);
@@ -97,7 +97,7 @@ if parms.f > 0 % biophysical models
     opti.set_initial(dQ0dt, IG.dQ0dti);
     opti.set_initial(dQ1dt, IG.dQ1dti);
     opti.set_initial(dQ2dt, IG.dQ2dti);
-    opti.set_initial(F0dot, IG.F0doti);
+%     opti.set_initial(F0dot, IG.F0doti);
     
     if parms.J1 > 0    % cooperative models
         Non = opti.variable(1,N);
@@ -172,7 +172,7 @@ if parms.f > 0 % biophysical models
     end
     
     % cross-bridge dynamics
-    [error_Q0, error_Q1, error_Q2, error_R] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, parms.w, k11, k12, k21, k22,  Non, Ld, DRX, dRdt, b, k, R, dLcrit, ps2, parms.approx); % cross-bridge dynamics
+    [error_Q0, error_Q1, error_Q2, error_R, F0dot] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, parms.w, k11, k12, k21, k22, Non, Ld, DRX, dRdt, b, k, R, dLcrit, ps2, parms.approx); 
     error_length    = LengthEquilibrium(Q0, F, F0dot, Ld, vts, kse0, kse, parms.gamma);
     
     % set errors equal to zero
@@ -184,7 +184,10 @@ if parms.f > 0 % biophysical models
     if parms.b > 0
         opti.subject_to(error_R(:) == 0);
     end
-    
+ 
+%     Xhalf = 0.5*(Xk + Xk_plus) + dt/8 * (dXnow - dXnex);
+%     [error_Q0, error_Q1, error_Q2, error_R] = MuscleEquilibrium(Xhalf, Yhalf)
+     
     % derivative constraints
     if parms.J1 > 0
         opti.subject_to((dNondt(1:N-1) + dNondt(2:N))*dt/2 + Non(1:N-1) == Non(2:N));
@@ -232,14 +235,21 @@ opti.minimize(J);
 
 %% Solve problem
 % options for IPOPT
-% options.ipopt.tol = 1*10^(-6);
-% options.ipopt.linear_solver = 'mumps';
-% opti.solver('ipopt',options);
+
+options.ipopt.linear_solver = 'mumps';
+% options.ipopt.hessian_approximation = 'limited-memory';
+options.ipopt.mu_strategy           = 'adaptive';
+options.detect_simple_bounds           = true;
+
+options.ipopt.max_iter           = 500;
+
+opti.solver('ipopt',options);
+
 
 % Solve the OCP
-p_opts = struct('detect_simple_bounds', true);
-s_opts = struct('max_iter', 500);
-opti.solver('ipopt',p_opts,s_opts);
+% p_opts = struct('detect_simple_bounds', true);
+% s_opts = struct('max_iter', 500);
+% opti.solver('ipopt',p_opts,s_opts);
 
 % visualize
 opti.callback(@(i) plot(toc, [Fts; opti.debug.value(Frel)]))
