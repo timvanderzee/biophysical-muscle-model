@@ -1,6 +1,9 @@
-function[parms, out] = fit_model_parameters_v2(opti, optparms, w, data, parms, IG, bnds)
+function[parms, out] = fit_model_parameters_v2(optparms, w, data, parms, IG, bnds)
 
 import casadi.*
+
+% initialise opti structure
+opti = casadi.Opti();
 
 % parameters
 allparms = {'f','k11','k12','k21','k22','JF','koop','J1','J2', 'kon', 'koff', 'kse','kse0', 'kpe', 'Fpe0','b','k','dLcrit', 'gamma', 'kF', 'vmax', 'kappa', 'ps2', 'act_max'};

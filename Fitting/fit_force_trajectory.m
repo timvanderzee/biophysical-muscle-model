@@ -8,7 +8,7 @@ mcode = [1 1 1];
 % settings
 N = 500;
 save_results = 0;
-iFs = 3; %[2,3,5,6,7,8,11];
+iFs = 2; %[2,3,5,6,7,8,11];
 n = [3 1]; % ISI number
 m = [7 1]; % AMP number
 tiso = 3; % isometric time (s)
@@ -200,10 +200,7 @@ for iF = iFs
     Xdata.idF = idF;
     Xdata.idC = idC;
     
-    %% do fitting    
-    % initialise opti structure
-    opti = casadi.Opti();
-    
+    %% do fitting        
     % define weigth vector
     w1 = 100;    % weight for fitting force-velocity
     w2 = 100;   % weight for fitting short-range stiffness
@@ -215,7 +212,7 @@ for iF = iFs
     fparms = parms;
     
     figure(100)
-    [newparms, out] = fit_model_parameters_v2_old(opti, optparms, w, Xdata, fparms, IG, bnds);
+    [newparms, out] = fit_model_parameters_v2(optparms, w, Xdata, fparms, IG, bnds);
     set(gcf,'units','normalized','position',[.2 .2 .4 .6])
     
     if newparms.J1 > 0
