@@ -215,7 +215,7 @@ for iF = iFs
     fparms = parms;
     
     figure(100)
-    [newparms, out] = fit_model_parameters_v2(opti, optparms, w, Xdata, fparms, IG, bnds);
+    [newparms, out] = fit_model_parameters_v2_old(opti, optparms, w, Xdata, fparms, IG, bnds);
     set(gcf,'units','normalized','position',[.2 .2 .4 .6])
     
     if newparms.J1 > 0

@@ -1,0 +1,301 @@
+function[parms, out] = fit_model_parameters_v2_old(opti, optparms, w, data, parms, IG, bnds)
+
+import casadi.*
+
+% parameters
+allparms = {'f','k11','k12','k21','k22','JF','koop','J1','J2', 'kon', 'koff', 'kse','kse0', 'kpe', 'Fpe0','b','k','dLcrit', 'gamma', 'kF', 'vmax', 'kappa', 'ps2', 'act_max'};
+
+% create variables for all parameters
+for i = 1:length(allparms)
+    eval([allparms{i}, ' = ', num2str(parms.(allparms{i})),';'])
+end
+
+% get bounds and normalized values
+lb = nan(1, length(optparms));
+ub = nan(1, length(optparms));
+nv = nan(1, length(optparms));
+
+for i = 1:length(optparms)
+    lb(i) = bnds.(optparms{i})(1);
+    ub(i) = bnds.(optparms{i})(2);
+    nv(i) = (parms.(optparms{i}) - lb(i)) / (ub(i)-lb(i));
+end
+
+if (sum(nv > 1) + sum(nv < 0)) > 0
+    disp('Warning: initial guess out of bounds')
+    keyboard
+end
+
+% create opti variable for normalized parameters that are fitted
+s = opti.variable(1, length(optparms));
+
+% normalized values should be between 0 and 1
+opti.subject_to(0 < s < 1);
+
+% initial guess = current values
+opti.set_initial(s, nv);
+
+% recalculate non-normalized parameters from normalized parameters
+for i = 1:length(optparms)
+    eval([optparms{i},' = s(', num2str(i), ')* ', num2str(ub(i)-lb(i)), '+', num2str(lb(i)), ';'])
+end
+
+JF = kF / J1;
+
+%% extract input and target
+Cas = data.Cas;
+vts = data.v;
+Fts = data.F;
+toc = data.t;
+Lts = data.L;
+idF = data.idF;
+idC = [1:300 data.idC];
+
+N = length(toc);
+dt = mean(diff(toc));
+
+%% define opti variables, specify constraints and initial guesses
+
+if parms.f > 0 % biophysical models
+    % define opti states (defined as above)
+    Q0  = opti.variable(1,N);
+    Q1  = opti.variable(1,N);
+    Q2  = opti.variable(1,N);
+    Ld  = opti.variable(1,N);
+    
+    % define extra variables
+    p  = opti.variable(1,N); % mean strain of the distribution
+    q  = opti.variable(1,N); % standard deviation strain of the distribution
+    F  = opti.variable(1,N);
+    F0dot  = opti.variable(1,N);
+    
+    % (slack) controls (defined as above)
+    dQ0dt  = opti.variable(1,N);
+    dQ1dt  = opti.variable(1,N);
+    dQ2dt  = opti.variable(1,N);
+    
+    % extra constraints
+    opti.subject_to(dQ0dt + dQ1dt - F0dot - Ld .* Q0 == 0);
+    opti.subject_to(Q0 + Q1 - F == 0);
+    opti.subject_to(Q1 - Q0 .* p == 0);
+    opti.subject_to(Q2 - Q0 .* (p.^2 + q) == 0);
+    
+    % (potentially) simple bounds
+    opti.subject_to(q > 0);
+    opti.subject_to(Q0 > 0);
+    opti.subject_to(Q2 > 0);
+    opti.subject_to(F > 0);
+    
+    % set initial guess
+    opti.set_initial(F, IG.Fi);
+    opti.set_initial(Q0, IG.Q00i);
+    opti.set_initial(Q1, IG.Q1i);
+    opti.set_initial(Q2, IG.Q2i);
+    opti.set_initial(p, IG.pi);
+    opti.set_initial(q, IG.qi);
+    opti.set_initial(Ld, IG.Ldi);
+    opti.set_initial(dQ0dt, IG.dQ0dti);
+    opti.set_initial(dQ1dt, IG.dQ1dti);
+    opti.set_initial(dQ2dt, IG.dQ2dti);
+    opti.set_initial(F0dot, IG.F0doti);
+    
+    if parms.J1 > 0    % cooperative models
+        Non = opti.variable(1,N);
+        DRX = opti.variable(1,N);
+        
+        dNondt = opti.variable(1,N);
+        dDRXdt = opti.variable(1,N);
+        
+        % (potentially) simple bounds
+        opti.subject_to(Non > 0);
+        opti.subject_to(DRX > 0);
+        
+        opti.set_initial(dNondt, IG.dNondti);
+        opti.set_initial(dDRXdt, IG.dDRXdti);
+        opti.set_initial(Non, IG.Noni);
+        opti.set_initial(DRX, IG.DRXi);
+    end
+    
+    if parms.b > 0 % FD model
+        R = opti.variable(1,N);
+        dRdt = opti.variable(1,N);
+        
+        opti.set_initial(R, IG.Ri);
+        opti.set_initial(dRdt, IG.dRdti);
+        
+        opti.subject_to(R >= 0);
+    else
+        R = zeros(1, N);
+        dRdt = zeros(1,N);
+    end
+    
+else % Hill-type model
+    
+    % CE force, length and velocity
+    F  = opti.variable(1,N);
+    L  = opti.variable(1,N);
+    v  = opti.variable(1,N);
+    
+    opti.set_initial(F, IG.Fi);
+    opti.set_initial(v, IG.vi);
+    opti.set_initial(L, IG.Li);
+    
+    % activation from Ca
+    Act = parms.act_max * Cas.^n ./ (kappa^n + Cas.^n);
+    Act = log(1+exp(Act*parms.K))/parms.K; % avoid small numbers
+    
+    % activation-normalized force
+    Frel = F ./ Act;
+    
+    % force-velocity relation
+    vi = vmax/(2*parms.e(2))*(-exp(parms.e(4)/parms.e(1)-Frel/parms.e(1))+exp(Frel/parms.e(1)-parms.e(4)/parms.e(1))-2*parms.e(3));
+    
+    % interverted tendon stress-strain
+    dLt = log(F./kse0 + 1) / kse;
+    Li = Lts - dLt; % CE = FIBER - SE
+    
+end
+
+%% dynamics constraints
+if parms.f > 0 % biophysical models
+
+    % specify dynamics using error
+    if parms.J1 > 0 % cooperative
+        error_thin      = ThinEquilibrium(Cas, Q0, Non, dNondt, kon, koff, koop, parms.Noverlap); % thin filament dynamics
+        error_thick     = ThickEquilibrium(Q0, dQ0dt, F, DRX, dDRXdt, J1, J2, JF, parms.Noverlap, R, dRdt); % thick filament dynamics
+        
+        opti.subject_to(error_thin(:) == 0);
+        opti.subject_to(error_thick(:) == 0);
+    else
+        Non = Cas.^n ./ (kappa^n + Cas.^n); % sigmoid
+        DRX = 1 - Q0;
+    end
+    
+    % cross-bridge dynamics
+    [error_Q0, error_Q1, error_Q2,  Fdot, Rdot] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, parms.w, k11, k12, k21, k22,  Non, Ld, DRX, b, k, R, dLcrit, ps2, parms.approx); % cross-bridge dynamics
+    
+    error_R = dRdt - Rdot;
+    error_length    = LengthEquilibrium(Q0, F, F0dot, Ld, vts, kse0, kse, parms.gamma);
+    
+    % set errors equal to zero
+    opti.subject_to(error_Q0(:) == 0);
+    opti.subject_to(error_Q1(:) == 0);
+    opti.subject_to(error_Q2(:) == 0);
+    opti.subject_to(error_length(:) == 0);
+    
+    if parms.b > 0
+        opti.subject_to(error_R(:) == 0);
+    end
+    
+    % derivative constraints
+    if parms.J1 > 0
+        opti.subject_to((dNondt(1:N-1) + dNondt(2:N))*dt/2 + Non(1:N-1) == Non(2:N));
+        opti.subject_to((dDRXdt(1:N-1) + dDRXdt(2:N))*dt/2 + DRX(1:N-1) == DRX(2:N));
+    end
+    
+    opti.subject_to((dQ0dt(1:N-1) + dQ0dt(2:N))*dt/2 + Q0(1:N-1) == Q0(2:N));
+    opti.subject_to((dQ1dt(1:N-1) + dQ1dt(2:N))*dt/2 + Q1(1:N-1) == Q1(2:N));
+    opti.subject_to((dQ2dt(1:N-1) + dQ2dt(2:N))*dt/2 + Q2(1:N-1) == Q2(2:N));
+    
+    if parms.b > 0
+        opti.subject_to((dRdt(1:N-1) + dRdt(2:N))*dt/2 + R(1:N-1) == R(2:N));
+    end
+
+else % Hill-type
+    
+    % error terms
+    opti.subject_to(vi - v == 0);
+    opti.subject_to(Li - L == 0);
+    opti.subject_to((v(1:N-1) + v(2:N))*dt/2 + L(1:N-1) == L(2:N));
+end
+
+%% cost
+Frel = F * parms.Fscale + kpe * Lts + Fpe0;
+
+% not needed for Hill-type, because already enforced by dynamics
+if parms.f > 0 % biophysical models
+opti.subject_to(Frel(1) == 1);
+end
+
+Fcost = (Frel(idF) - Fts(idF)).^2;
+
+% cost function
+J = 0;
+J = J + w(1) * sum(Fcost); % force-velocity fitting
+
+if parms.f > 0
+    J = J + w(3) * (sum(dQ0dt(idC).^2) + sum(dQ1dt(idC).^2) + sum(dQ2dt(idC).^2)); % regularization term
+else
+    J = J + w(3) * (sum(vi(idC).^2)); % regularization term
+end
+
+% optimize
+opti.minimize(J);
+
+%% Solve problem
+% options for IPOPT
+% options.ipopt.tol = 1*10^(-6);
+% options.ipopt.linear_solver = 'mumps';
+% opti.solver('ipopt',options);
+
+% Solve the OCP
+p_opts = struct('detect_simple_bounds', true);
+s_opts = struct('max_iter', 500);
+opti.solver('ipopt',p_opts,s_opts);
+
+% visualize
+opti.callback(@(i) plot(toc, [Fts; opti.debug.value(Frel)]))
+
+try
+    sol = opti.solve();
+    
+    out.F     = sol.value(Frel);
+    out.J     = sol.value(J);
+    out.Fcost = sol.value(Fcost);
+    out.s = sol.value(s);
+    
+    if parms.f > 0
+        % Extract the result
+        out.Q0    = sol.value(Q0);
+        out.Q1    = sol.value(Q1);
+        out.Q2    = sol.value(Q2);
+        out.dQ0dt = sol.value(dQ0dt);
+        out.dQ1dt = sol.value(dQ1dt);
+        out.dQ2dt = sol.value(dQ2dt);
+    end
+    
+    % extract the parameters
+    for i = 1:length(optparms)
+        parms.(optparms{i}) = eval(['sol.value(',optparms{i},');']);
+    end
+    
+catch
+    sol = opti.debug();
+    
+    out.F     = opti.debug.value(Frel);
+    out.J     = opti.debug.value(J);
+    out.Fcost = opti.debug.value(Fcost);
+    
+    if parms.f > 0
+        % Extract the result
+        out.Q0    = opti.debug.value(Q0);
+        out.Q1    = opti.debug.value(Q1);
+        out.Q2    = opti.debug.value(Q2);
+        out.dQ0dt = opti.debug.value(dQ0dt);
+        out.dQ1dt = opti.debug.value(dQ1dt);
+        out.dQ2dt = opti.debug.value(dQ2dt);
+    end
+    
+    % extract the parameters
+    for i = 1:length(optparms)
+        parms.(optparms{i}) = eval(['opti.debug.value(',optparms{i},');']);
+    end
+end
+
+if parms.f > 0
+    out.Fdot  = out.dQ0dt + out.dQ1dt;
+end
+
+out.t     = 0:dt:(N-1)*dt;
+
+end
