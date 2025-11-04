@@ -70,9 +70,9 @@ if parms.f > 0 % biophysical models
 %     F0dot  = opti.variable(1,N);
     
     % (slack) controls (defined as above)
-    dQ0dt  = opti.variable(1,N);
-    dQ1dt  = opti.variable(1,N);
-    dQ2dt  = opti.variable(1,N);
+%     dQ0dt  = opti.variable(1,N);
+%     dQ1dt  = opti.variable(1,N);
+%     dQ2dt  = opti.variable(1,N);
     
     % extra constraints
 %     opti.subject_to(dQ0dt + dQ1dt - F0dot - Ld .* Q0 == 0);
@@ -94,9 +94,9 @@ if parms.f > 0 % biophysical models
     opti.set_initial(p, IG.pi);
     opti.set_initial(q, IG.qi);
     opti.set_initial(Ld, IG.Ldi);
-    opti.set_initial(dQ0dt, IG.dQ0dti);
-    opti.set_initial(dQ1dt, IG.dQ1dti);
-    opti.set_initial(dQ2dt, IG.dQ2dti);
+%     opti.set_initial(dQ0dt, IG.dQ0dti);
+%     opti.set_initial(dQ1dt, IG.dQ1dti);
+%     opti.set_initial(dQ2dt, IG.dQ2dti);
 %     opti.set_initial(F0dot, IG.F0doti);
     
     if parms.J1 > 0    % cooperative models
@@ -118,15 +118,15 @@ if parms.f > 0 % biophysical models
     
     if parms.b > 0 % FD model
         R = opti.variable(1,N);
-%         dRdt = opti.variable(1,N);
+        dRdt = opti.variable(1,N);
         
         opti.set_initial(R, IG.Ri);
-%         opti.set_initial(dRdt, IG.dRdti);
+        opti.set_initial(dRdt, IG.dRdti);
         
         opti.subject_to(R >= 0);
     else
         R = zeros(1, N);
-%         dRdt = zeros(1,N);
+        dRdt = zeros(1,N);
     end
     
 else % Hill-type model
@@ -166,23 +166,27 @@ if parms.f > 0 % biophysical models
     end
     
     %% cross-bridge dynamics
-    [error_Q0, error_Q1, error_Q2, F0dot, dRdt] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, parms.w, k11, k12, k21, k22, Non, Ld, DRX, b, k, R, dLcrit, ps2, parms.approx); 
-    opti.subject_to(error_Q0(:) == 0);
-    opti.subject_to(error_Q1(:) == 0);
-    opti.subject_to(error_Q2(:) == 0);
+%     [error_Q0, error_Q1, error_Q2, error_R, F0dot] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, parms.w, k11, k12, k21, k22, Non, Ld, DRX, dRdt, b, k, R, dLcrit, ps2, parms.approx); 
+% opti.subject_to(error_Q0(:) == 0);
+% opti.subject_to(error_Q1(:) == 0);
+% opti.subject_to(error_Q2(:) == 0);
 
-%     % get functions
-%     [IG, IGef] = get_IG_IGEf(parms.approx);
-% 
-%     % Compute Qdot
-%     [Q0dot, Q10dot, Q20dot, dRdt] = CrossBridge_Dynamics(Q0, p, q, f, parms.w, [k11 k12], [k21 -k22], IGef, Non, DRX, IG, b, k, R, dLcrit, ps2);
-% 
-%     % velocity - independent derivative
-%     F0dot  = Q0dot + Q10dot;
-% 
-%     dQ0dt = Q0dot;
-%     dQ1dt = Q10dot + 1 * Ld .* Q0;
-%     dQ2dt = Q20dot + 2 * Ld .* Q1;
+% points where integrals is evaluated
+%     k1 = [k11 k12];
+%     k2 = [k21 -k22];
+
+    % get functions
+    [IG, IGef] = get_IG_IGEf(parms.approx);
+
+    % Compute Qdot
+    [Q0dot, Q10dot, Q20dot, dRdt] = CrossBridge_Dynamics(Q0, p, q, f, parms.w, [k11 k12], [k21 -k22], IGef, Non, DRX, IG, b, k, R, dLcrit, ps2);
+
+    % velocity - independent derivative
+    F0dot  = Q10dot + Q20dot;
+
+    dQ0dt = Q0dot;
+    dQ1dt = Q10dot + 1 * Ld .* Q0;
+    dQ2dt = Q20dot + 2 * Ld .* Q1;
 %     error_R = dRdt - Rdot;
     
     %% length dynamics

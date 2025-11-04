@@ -222,19 +222,6 @@ for iF = iFs
         newparms.JF = newparms.kF / newparms.J1;
     end
 
-    %% load 
-        [output_mainfolder, filename, opt_type, ~] = get_folder_and_model(mcode);
-
-    foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
-    if ~isfolder(foldername)
-        mkdir(foldername)
-    end
-
-    cd(foldername)
-
-    oldparms = load(['parms_', filename, '_v2.mat'], 'newparms', 'optparms', 'out', 'bnds');
-    oparms = oldparms.newparms;
-    
     %% test with fitted paramers   
     oLiss = Lis * oparms.gamma;
     nLiss = Lis * newparms.gamma;
@@ -305,17 +292,12 @@ for iF = iFs
     %% parameter values
     figure(3)
     nexttile
-%     bar(categorical(optparms), out.s)
+    bar(categorical(optparms), out.s)
     
-
-    
+    oldparms = 
     for i = 1:length(optparms)
-        lb(i) = bnds.(optparms{i})(1);
-        ub(i) = bnds.(optparms{i})(2);
-        nv(i) = (oldparms.newparms.(optparms{i}) - lb(i)) / (ub(i)-lb(i));
+        eval([optparms{i},' = s(', num2str(i), ')* ', num2str(ub(i)-lb(i)), '+', num2str(lb(i)), ';'])
     end
-    
-     bar(categorical(optparms), [out.s; nv])
     
     %% SRS state    
 %     figure(4)
