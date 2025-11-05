@@ -1,24 +1,20 @@
 clear all; close all; clc
 save_results = 1;
 redo = 1;
-visualize = 1;
-output_version = '_v2d';
+visualize = 0;
+output_version = '_v5';
 
-discretized_model = 1;
-parms_version = '_v2'; 
+discretized_model = 0;
+parms_version = '_v3'; 
 
 [username, githubfolder] = get_paths();
 
-mcodes = [1 2 1];
+mcodes = [1 1 1];
 
-iFs = 11; 
+iFs = 2; 
 AMPs = [0    0.0012    0.0038    0.0121    0.0216    0.0288    0.0383    0.0532    0.0682];
 ISIs = [ 0.0010    0.0100    0.0500    0.1000    0.2000    0.3160    0.5000    1.0000    3.1600   10.0000];
 pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
-
-ISIs = 10;
-AMPs = .0682;
-pCas = 6.3;
 
 Ca = 10.^(-pCas+6);
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
@@ -137,11 +133,11 @@ for iii = 1:size(mcodes,1)
                             % interval needs to have finite duration
                             nzi = find(diff(aTs) > 0);
                             
-                            odeopt = odeset('maxstep', 1e-3);
-%                             odeopt = [];
+%                             odeopt = odeset('maxstep', 1e-3);
+                            odeopt = [];
                             
                             for p = 1:(length(nzi)-1)
-                                disp(p)
+%                                 disp(p)
                                 
                                 % simulate
                                 if discretized_model
@@ -191,8 +187,8 @@ for iii = 1:size(mcodes,1)
                         end
                         %                 toc
                         %%
-                        figure(1)
-                        plot(tall, Fall)
+%                         figure(1)
+%                         plot(tall, Fall)
                         %%
                         % steady state
                         xs = sol.y(:,end);

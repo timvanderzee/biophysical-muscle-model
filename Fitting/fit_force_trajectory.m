@@ -7,10 +7,10 @@ mcode = [1 2 1];
 
 % settings
 N = 500;
-save_results = 1;
+save_results = 0;
 visualize = 0;
     
-iFs = 11 %[2,3,5,6,7,8,11];
+iFs = 11; %[2,3,5,6,7,8,11];
 n = [3 1]; % ISI number
 m = [7 1]; % AMP number
 tiso = 3; % isometric time (s)
@@ -20,7 +20,7 @@ bnds.f = [20 500];
 bnds.k11 = [1e-5 200];
 bnds.k22 = [0 1];
 bnds.k21 = [1 200];
-bnds.kF = [1 1e5];
+bnds.kF = [1 1e4];
 bnds.J1 = [1e-3 200];
 bnds.J2 = [1 1e3];
 bnds.kon = [5 200];
@@ -33,7 +33,7 @@ bnds.vmax = [1 200];
 bnds.ps2 = [-1 2];
 bnds.k = [1 5000];
 bnds.b = [1 5000];
-bnds.dLcrit = [1 3];
+bnds.dLcrit = [1 10];
 
 % parameters to be fitted
 if sum(mcode == [1 1 1]) == 3
@@ -107,9 +107,9 @@ for iF = iFs
 %     cd(output_dir)
 %     load([filename,'_F', num2str(iF),'_best.mat'],'parms','exitflag','fopt','C0','Cbounds','model','P0','P')
     
-    foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{6}];
+    foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
     cd(foldername)
-    load(['parms_', filename, '_v2.mat'], 'newparms')
+    load(['parms_', filename, '_v3.mat'], 'newparms')
 
     parms = newparms;
     % convert to parms
@@ -139,10 +139,10 @@ for iF = iFs
     parms.kpe = oparms.gamma / parms.gamma * oparms.kpe;
     
     if sum(mcode == [1 1 1]) == 3
-        parms.J1 = 6.17;
-        parms.koop = 5.7;
-        parms.JF = 1e3;
-        parms.J2 = 200;
+%         parms.J1 = 6.17;
+%         parms.koop = 5.7;
+%         parms.JF = 1e3;
+%         parms.J2 = 200;
         
     elseif sum(mcode == [2 1 1]) == 3 % Hill-type
         parms.f = 0;

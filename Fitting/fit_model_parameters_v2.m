@@ -264,7 +264,7 @@ J = 0;
 J = J + w(1) * sum(Fcost); % force-velocity fitting
 
 if parms.f > 0
-    J = J + w(3) * (sum(dQ0dt(idC).^2) + sum(dQ1dt(idC).^2) + sum(dQ2dt(idC).^2)); % regularization term
+    J = J + w(3) * (sum(dQ0dt(idC).^2) + sum(dQ1dt(idC).^2) + sum(dQ2dt(idC).^2) + 1e-3 * dLcrit.^2); % regularization term
 else
     J = J + w(3) * (sum(vi(idC).^2)); % regularization term
 end
