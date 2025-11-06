@@ -8,12 +8,15 @@ m = [7 1]; % AMP number
 tiso = 3; % isometric time (s)
 N = 500;
 
-versions = {'v3', 'v2'};
+versions = {'v3', 'v3'};
 
 mcodes = [1 1 1; 1 2 1];
 
 % specify data
 load('active_trials.mat', 'Fm')
+
+SRSrel = nan(2, 100, max(iFs));
+SRSreld = nan(100, max(iFs));
 
 for iF = iFs
     
@@ -104,10 +107,22 @@ for iF = iFs
         ylabel('Relative stiffness')
         xlim([0 1.05])
         
+        Fs = linspace(0,1,100);
+        
+        SRSrel(j,:,iF) = interp1(F0, ns(:,1)./ns(:,2), Fs);
+        
     end
+    
+    SRSreld(:,iF) = interp1(F0,ds(:,1)./ds(:,2), Fs);
     
 end
 
 figure(2)
 legend('Data', 'Model 1', 'Model 2', 'location', 'best')
 legend boxoff
+
+%%
+figure(10)
+plot(Fs, mean(SRSrel(1,:,:), 3, 'omitnan')); hold on
+plot(Fs, mean(SRSrel(2,:,:), 3, 'omitnan')); hold on
+plot(Fs, mean(SRSreld(:,:), 2, 'omitnan'), 'k-'); hold on
