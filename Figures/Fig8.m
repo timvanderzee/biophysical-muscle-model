@@ -14,7 +14,7 @@ filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
 % filenames = {'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
 % versions = {'parms_v4', 'parms_v2d', 'parms_v2d', 'parms_v2d'};
-versions = {'parms_v4', 'parms_v4', 'parms_v5', 'parms_v5'};
+versions = {'parms_v3', 'parms_v4', 'parms_v5', 'parms_v5'};
 
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS'};
 % visualize_model_SRS_simple(filenames, th, id)

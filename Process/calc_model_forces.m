@@ -1,5 +1,5 @@
 clear all; close all; clc
-save_results = 0;
+save_results = 1;
 redo = 1;
 visualize = 0;
 output_version = '_v3';

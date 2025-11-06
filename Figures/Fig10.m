@@ -42,9 +42,9 @@ versions = {'parms_v4', 'parms_v2d', 'parms_v2d', 'parms_v2d'};
 
 for jj = 1:2
     if jj == 1
-versions = {'parms_v4', 'parms_v4', 'parms_v4', 'parms_v4'};
+versions = {'parms_v3', 'parms_v4', 'parms_v5', 'parms_v5'};
     else
-versions = {'parms_v4', 'parms_v2d', 'parms_v2d', 'parms_v2d'};
+versions = {'parms_v3', 'parms_v2d', 'parms_v2d', 'parms_v2d'};
     end
     
 for kk = 1:length(filenames)
