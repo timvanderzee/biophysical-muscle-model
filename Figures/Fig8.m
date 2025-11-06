@@ -14,7 +14,7 @@ filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
 % filenames = {'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
 % versions = {'parms_v4', 'parms_v2d', 'parms_v2d', 'parms_v2d'};
-versions = {'parms_v4', 'parms_v4', 'parms_v5', 'parms_v4'};
+versions = {'parms_v4', 'parms_v4', 'parms_v5', 'parms_v5'};
 
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS'};
 % visualize_model_SRS_simple(filenames, th, id)
@@ -48,6 +48,10 @@ for kk = 1:length(filenames)
     for k = iFs
         for i = 1:length(th)-1
             id = F0(:,1,7,k) > th(i) & F0(:,1,7,k) <= th(i+1);
+            
+            if i == 1
+                id = length(F0(:,1,7,k));
+            end
             
             SRSrel_m(i,:,:,k) = mean(Stest(id,:,:,k),1,'omitnan') ./ mean(Scond(id,1,7,k),'all', 'omitnan');
             F0s_m(i,:,:,k) = mean(F0(id,:,:,k), 1,'omitnan');
@@ -221,6 +225,10 @@ for kk = 1:length(filenames)
     for k = iFs
         for i = 1:length(th)-1
             id = F0(:,1,7,k) > th(i) & F0(:,1,7,k) <= th(i+1);
+            
+            if i == 1
+                id = length(F0(:,1,7,k));
+            end
             
             SRSrel_m(i,:,:,k) = mean(Stest(id,:,:,k),1,'omitnan') ./ mean(Scond(id,1,7,k),'all', 'omitnan');
             F0s_m(i,:,:,k) = mean(F0(id,:,:,k), 1,'omitnan');
