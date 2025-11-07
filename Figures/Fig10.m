@@ -38,13 +38,13 @@ eISIs = [1 10 100 316 1000 3160 10000]/1000;
 th = [0 .07 .15 .3 .5 .7 1.5];
 sACTis = [1 2 4 6];
 filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_alternative_SRS'};
-versions = {'parms_v4', 'parms_v2d', 'parms_v2d', 'parms_v2d'};
+% versions = {'parms_v3', 'parms_v2d', 'parms_v3d', 'parms_v3d'};
 
 for jj = 1:2
     if jj == 1
-versions = {'parms_v3', 'parms_v4', 'parms_v5', 'parms_v5'};
+        versions = {'parms_v3', 'parms_v4', 'parms_v5', 'parms_v5'};
     else
-versions = {'parms_v3', 'parms_v2d', 'parms_v2d', 'parms_v2d'};
+        versions = {'parms_v3', 'parms_v2d', 'parms_v3d', 'parms_v3d'};
     end
     
 for kk = 1:length(filenames)
@@ -59,6 +59,10 @@ for kk = 1:length(filenames)
     for k = iFs
         for i = 1:length(th)-1
             id = F0(:,1,7,k) > th(i) & F0(:,1,7,k) <= th(i+1);
+            
+            if i == 1
+                id = length(F0(:,1,7,k));
+            end
             
             SRSrel_m(i,:,:,k) = mean(Stest(id,:,:,k),1,'omitnan') ./ mean(Scond(id,1,7,k),'all', 'omitnan');
             F0s_m(i,:,:,k) = mean(F0(id,:,:,k), 1,'omitnan');

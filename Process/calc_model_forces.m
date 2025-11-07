@@ -10,7 +10,7 @@ visualize = 0;
 discretized_model = 0;
 
 % versions
-output_version = '_v5';
+output_version = '_v3d';
 parms_version = '_v3'; 
 
 % model
