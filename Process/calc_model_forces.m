@@ -1,24 +1,30 @@
 clear all; close all; clc
-save_results = 1;
-redo = 1;
-visualize = 0;
-output_version = '_v3';
 
-discretized_model = 0;
-parms_version = ''; 
-
+% paths
 [username, githubfolder] = get_paths();
 
-mcodes = [2 1 1];
+% binary inputs
+save_results = 0;
+redo = 0;
+visualize = 0;
+discretized_model = 0;
 
-iFs = 11; 
+% versions
+output_version = '_v5';
+parms_version = '_v3'; 
+
+% model
+mcodes = [1 2 1];
+
+% fibers
+fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
+iFs = [2,3,5,6,7,8,11];
+
+% conditions
 AMPs = [0    0.0012    0.0038    0.0121    0.0216    0.0288    0.0383    0.0532    0.0682];
 ISIs = [ 0.0010    0.0100    0.0500    0.1000    0.2000    0.3160    0.5000    1.0000    3.1600   10.0000];
 pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
-pCas = 9;
-
 Ca = 10.^(-pCas+6);
-fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
 for iii = 1:size(mcodes,1)
     
@@ -26,27 +32,19 @@ for iii = 1:size(mcodes,1)
     mcode = mcodes(iii,:);
     [output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
     
-    %% evaluate
     for iF = iFs
         
         % disp(filename)
         input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
         cd(input_foldername)
         load(['parms_',modelname, parms_version, '.mat'], 'newparms')
+        allparms(iF) = update_parms(newparms);
+    end
+    
+    parfor k = 1:length(iFs)
+        iF = iFs(k);
+        parms = allparms(iF);
         
-        parms = newparms;
-%         parms.xi = linspace(-20,20,1000);
-        parms.xi = linspace(-15,15,1000);
-        parms.f_func = @(xi,f,w,mu)   f/sqrt((2*pi*w^2))*exp(-(xi-mu).^2./(2*w^2));
-        parms.g_func = @(xi,k1,k2) k1*exp(k2*xi);
-%         parms.K = 1000;
-        parms.approx = 1;
-        parms.amin = 1e-3;
-%         parms.k = 500;
-%         parms.b = 1e4;
-%         parms.ps2 = 1;
-%         parms.dLcrit = 1.5;
-
         if contains(modelname, 'Hill')
             x0 = 0;
         elseif discretized_model
@@ -105,8 +103,6 @@ for iii = 1:size(mcodes,1)
                         parms.Cas = mean(Cas);
                         parms.Lts = Lis * parms.gamma;
                         
-          
-   
                         % run simulation
                         if contains(modelname, 'Hill')
                             % simulate
@@ -203,7 +199,8 @@ for iii = 1:size(mcodes,1)
                         
                         if save_results
                             cd(output_foldername);
-                            save(filename, 'tis','Cas','vis','Lis','oFi','parms','ts')
+%                             save(filename, 'tis','Cas','vis','Lis','oFi','parms','ts')
+                            save_model_forces(filename, tis,Cas,vis,Lis,oFi,parms,ts)
                         end
                         
                         if visualize
@@ -233,6 +230,3 @@ for iii = 1:size(mcodes,1)
     end
 end
 
-%%
-
-% for 
