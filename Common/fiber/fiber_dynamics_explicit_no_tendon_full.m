@@ -30,6 +30,13 @@ R   = y(end-0);
 % displacement from start
 xi = parms.xi + (L - parms.lce0);
 
+% overwrite if not using MoC
+if isfield(parms, 'method_of_characteristics')
+    if ~parms.method_of_characteristics
+        xi = parms.xi;
+    end
+end
+
 % compute stiffness
 n(n<0) = 0;
 Q0 = trapz(xi(:), n);

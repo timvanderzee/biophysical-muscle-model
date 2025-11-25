@@ -13,4 +13,9 @@ parms.amin = 1e-3;
 %         parms.ps2 = 1;
 %         parms.dLcrit = 1.5;
 
+parms.myofilaments.thick_filament_length = 1530/2;
+parms.myofilaments.thin_filament_length = 1120;
+parms.myofilaments.bare_zone_length = 80;
+
+
 end

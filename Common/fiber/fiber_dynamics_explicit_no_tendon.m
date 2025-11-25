@@ -36,11 +36,23 @@ p = Q1./Q00;
 q = Q2./Q00 - p.^2;  
 q = log(1+exp(q*k))/k;
 
+if isfield(parms, 'FL_overlap')
+    if parms.FL_overlap
+        h = (.5 * parms.s / parms.gamma); % powerstroke size
+        L_hs = L * h * 1e9 + 1.3e3; % [nm]
+        Ntot = return_f_overlap(L_hs, parms);
+    else
+        Ntot = 1;
+    end
+else
+    Ntot = 1;
+end
+
 % Thin and thick filament
 if (parms.kon == 0) && (parms.koff == 0) && (parms.koop == 0)
-    dNondt = ((Act - Non) / .005);
+    dNondt = Ntot * ((Act - Non) / .005);
 else 
-    [Jon, Joff] = ThinFilament_Dynamics(Act, Q0, Non, parms.kon, parms.koff, parms.koop, 1);
+    [Jon, Joff] = ThinFilament_Dynamics(Act, Q0, Non, parms.kon, parms.koff, parms.koop, Ntot);
     dNondt = Jon - Joff;
 end
 

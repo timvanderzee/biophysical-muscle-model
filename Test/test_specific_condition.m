@@ -3,7 +3,8 @@ clear all; close all; clc
 [username, githubfolder] = get_paths();
 
 mcodes = [1 2 1; 1 2 1];
-discretized_model = [0 1];
+discretized_model = [0 0];
+FLs = [0 1];
 
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
@@ -17,7 +18,7 @@ parms_version = '_v3';
 figure(1)
 for iF = iFs
     nexttile
-    for i = 1:size(mcodes,1)
+    for i = 1:length(discretized_model)
 
         % load parameters
         mcode = mcodes(i,:);
@@ -27,31 +28,8 @@ for iF = iFs
         cd(input_foldername)
         load(['parms_',modelname, parms_version, '.mat'], 'newparms')
         parms = update_parms(newparms);
+        parms.FL_overlap = FLs(i);
         
-%         parms.k = 0;
-%         if i == 2
-%             parms.dLcrit = parms.dLcrit - 4*parms.w;
-%         end
-%         parms = newparms;
-%         
-%         parms.xi = linspace(-15,15,1000);
-%         parms.f_func = @(xi,f,w,mu)   f/sqrt((2*pi*w^2))*exp(-(xi-mu).^2./(2*w^2));
-%         parms.g_func = @(xi,k1,k2) k1*exp(k2*xi);
-%         parms.approx = 1;
-        
-%         if i == 1 || i == 3
-%             parms.k = 1e3;
-%             parms.b = 5e3;
-%             parms.dLcrit = 0.7;
-%             parms.ps2 = parms.dLcrit-parms.w;
-%         end
-
-%         if i == 2
-%             parms.approx = 1;
-%         else
-%             parms.approx = 0;
-%         end
-            
         if contains(modelname, 'Hill')
             x0 = 0;
         elseif discretized_model(i)
@@ -126,6 +104,8 @@ for iF = iFs
                         F(iiii) = trapz(xi, xi .* n') + trapz(xi, n');
                     end
                     
+   
+                    
                 else
                     
                     %                 sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, xp0, []);
@@ -138,7 +118,8 @@ for iF = iFs
                     
                 end
                 
-                  X0 = sol.y(:,end);
+%                 Fmax(p) = max(F);
+                X0 = sol.y(:,end);
 
                 tall = [tall t];
                 Fall = [Fall F];
