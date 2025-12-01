@@ -103,9 +103,7 @@ for iF = iFs
                         xi = parms.xi + L(iiii);
                         F(iiii) = trapz(xi, xi .* n') + trapz(xi, n');
                     end
-                    
-   
-                    
+                      
                 else
                     
                     %                 sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, xp0, []);

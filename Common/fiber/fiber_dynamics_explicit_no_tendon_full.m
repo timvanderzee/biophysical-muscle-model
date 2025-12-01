@@ -1,4 +1,4 @@
-function[yp] = fiber_dynamics_explicit_no_tendon_full(t,y, parms)
+function[yp, F, Q0] = fiber_dynamics_explicit_no_tendon_full(t,y, parms)
 
 % Get velocity and calcium
 if numel(parms.vts) == 1
@@ -40,14 +40,23 @@ end
 % compute stiffness
 n(n<0) = 0;
 Q0 = trapz(xi(:), n);
-Q1 = trapz(xi(:), n.*xi(:));
-F = Q0 + Q1;
+
+% if isfield(parms, 'method_of_characteristics')
+%     if parms.method_of_characteristics
+        Q1 = trapz(xi(:), n.*xi(:));
+        F = Q0 + Q1;
+%     end
+
+% % overwrite if not using MoC
+% if isfield(parms, 'method_of_characteristics')
+%     if ~parms.method_of_characteristics
+%         F = parms.F;
+%     end
+% end
 
 % avoid small numbers
 k   = parms.K;
 F   = log(1+exp(F*k))/k;
-% Q00   = log(1+exp(Q0*k))/k;
-% Q00 = Q0;
 
 % points where integrals is evaluated
 k1 = [parms.k11 parms.k12];
