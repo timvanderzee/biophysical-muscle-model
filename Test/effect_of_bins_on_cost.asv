@@ -274,8 +274,8 @@ Fapi = interp1(t1, Fap, tlin);
 if ishandle(2), close(2); end; figure(2)
 
 % subplot(221)
-plot(tlin,Fi(:,6,1,1)); hold on
-plot(tlin,Fi(:,6,1,2),'--')
+plot(tlin,Fi(:,7,1,1)); hold on
+plot(tlin,Fi(:,7,1,2),'--')
 
 % plot(tlin, Fapi,':')
 
