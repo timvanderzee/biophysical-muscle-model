@@ -3,14 +3,15 @@ clear all; close all; clc
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
 % model to be fitted
-mcode = [1 2 1];
+mcode = [1 1 1];
 
 % settings
 N = 500;
-save_results = 1;
-visualize = 0;
+% N = 1500;
+save_results = 0;
+visualize = 1;
     
-iFs = [2,3,5,6,7,8,11];
+iFs = 7 %; [2,3,5,6,7,8,11];
 n = [3 1]; % ISI number
 m = [7 1]; % AMP number
 tiso = 3; % isometric time (s)
@@ -26,6 +27,7 @@ bnds.J2 = [1 1e3];
 bnds.kon = [5 200];
 bnds.kse = [1e-3 1];
 bnds.kse0 = [1e-4 1];
+% bnds.kse0 = [1e-1 1];
 bnds.koop = [1 200];
 bnds.n = [.1 10];
 bnds.kappa = [.1 10];
@@ -131,6 +133,7 @@ for iF = iFs
     
     % store old parameters
     oparms = parms;
+
     
     % update powerstroke
     h = 10e-9; % powerstroke size
@@ -219,8 +222,10 @@ for iF = iFs
     w = [w1 w2 w3];
     
     % specify biophysical parameters to be fitted
-    parms.kF = parms.J1 * parms.JF;
+%     parms.kF = parms.J1 * parms.JF;
     fparms = parms;
+%     fparms.kF = min(fparms.kF, .9* max(bnds.kF));
+%     fparms.kse0 = .15;
     
 %     figure(100)
     [newparms, out] = fit_model_parameters_v2(optparms, w, Xdata, fparms, IG, bnds);

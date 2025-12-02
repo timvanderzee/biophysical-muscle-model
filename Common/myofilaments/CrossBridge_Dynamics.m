@@ -14,7 +14,7 @@ phi = [phi0; phi1; phi2];
 ps2 = 0;
 
 % forcible detachment
-% if b > 0
+if b > 0
     gamma = b .*  [1 ps2 w^2 + ps2.^2];
 %     gamma = b .*  [1 p w^2 + p.^2];
 %     gamma = b .*  [1 ps2 w^2 + 0^2];
@@ -28,12 +28,12 @@ ps2 = 0;
     
     Rdot = -phiR0;
 
-% else
-%     Rdot = 0;
-%     phiR0 = 0;
-%     phiR1 = 0;
-%     phiR2 = 0;
-% end
+else
+    Rdot = 0;
+    phiR0 = 0;
+    phiR1 = 0;
+    phiR2 = 0;
+end
 
 phiR = [phiR0; phiR1; phiR2];
 

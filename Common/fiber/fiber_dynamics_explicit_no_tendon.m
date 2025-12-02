@@ -1,4 +1,4 @@
-function[dx] = fiber_dynamics_explicit_no_tendon(t,y, parms)
+function[dx, F, Q0] = fiber_dynamics_explicit_no_tendon(t,y, parms)
 
 % Get velocity and calcium
 if numel(parms.vts) == 1

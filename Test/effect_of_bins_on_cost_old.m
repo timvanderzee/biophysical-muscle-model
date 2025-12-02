@@ -39,7 +39,7 @@ N = round(tiso / dt);
 
 [tis, Cas, Lis, vis, ts, Ts] = create_input(tiso, dTt, dTc, ISI, Ca, N);
 
-%% evaluate single function call
+%% simulate
 bw = mean(diff(linspace(-15,15,500)));
 
 clc
@@ -141,7 +141,7 @@ for j = 1:2
     title(titles{j})
 end
 
-%% simulate entire protocol
+%% simulate experiment
 bw = mean(diff(linspace(-15,15,500)));
 
 % interval needs to have finite duration
@@ -157,16 +157,16 @@ Ns = logspace(1,3,8);
 tsim = nan(length(Ns),2,2);
 Ntot = nan(length(Ns),2,2);
 Fi = nan(length(tlin), length(Ns));
-% Nit = nan(length(nzi)-1, length(Ns), 2);
+Nit = nan(length(nzi)-1, length(Ns), 2);
 
-dt = 1e-4;
+dt = 1e-3;
 tvec = 0:dt:max(tlin);
 N = length(tvec);
 vts = interp1(tis, vis, tvec);
 
-for f = 1:2 % methods
-    for j = 1:2
-        for id = 1:length(Ns)
+for f = 1 % methods
+    for j = 1
+        for id = length(Ns)
             if j == 1
                 parms.xi = linspace(-15,15, round(Ns(id)));
             else
@@ -175,31 +175,30 @@ for f = 1:2 % methods
             
             n0 = zeros(size(parms.xi));
             X0 = [n0'; parms.x0(4:end)'];
-
+            
+            tic
+            
             t2 = 0;
-            F = 0;
+            F2 = 0;
             y = X0;
             
             disp(id)
-           
-            tic
-            for ii = 2:N
-                
-                parms.F = F(ii-1);
-                parms.vts = vts(ii);
-                
-                if f == 1
-                    parms.method_of_characteristics = 0;
-                else
-                    parms.method_of_characteristics = 1;
-                end
-                
-                [yp, F(ii), Q0] = fiber_dynamics_explicit_no_tendon_full(t2(ii-1),y(:,ii-1), parms);
-                
-                y(:,ii) = y(:,ii-1) + yp * dt;
-                t2(ii) = t2(ii-1) + dt;
-                  
-                if parms.f == 1 % shift XB distribution
+            
+            if f == 1
+                % method of characteristics
+                parms.method_of_characteristics = 0;
+                for ii = 2:N
+                    
+                    parms.F = F2(ii-1);
+                    parms.vts = vts(ii);
+                    
+%                     disp(t2(ii-1))
+
+                    
+                    [yp, F, Q0] = fiber_dynamics_explicit_no_tendon_full(t2(ii-1),y(:,ii-1), parms);
+                    
+                    y(:,ii) = y(:,ii-1) + yp * dt;
+                    
                     % for n, also need to shift
                     dx = yp(end-3) * dt;
                     xi = parms.xi - dx;
@@ -210,31 +209,65 @@ for f = 1:2 % methods
                     nshift(nshift<0) = 0;
                     
                     y(1:length(parms.xi),ii) = nshift;
-   
+                    
+                    t2(ii) = t2(ii-1) + dt;
+                    
                     Qs = trapz(xi(:), [nshift(:) xi(:).*nshift(:)]);
-                    F(ii) = sum(Qs);
-                end
-            end
-        
-            tsim(id,j,f) = toc;
+                    F2(ii) = sum(Qs);
+%                     F2(ii) = F + dx * Q0;
 
+                end
+                
+                Ntot(id,j,f) = N;
+                
+            else
+                
+                % method of characteristics
+                parms.method_of_characteristics = 1;
+                
+                Y = [];
+                t1 = [];
+   
+                Nit = nan(1,(length(nzi)-1));
+                for p = 1:(length(nzi)-1)
+%                     disp(p)
+                    
+                    parms.vts = vs(nzi(p));
+                    
+                    sol = ode45(@(t,y,yp) fiber_dynamics_explicit_no_tendon_full(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, []);
+                    
+                    Y = [Y sol.y(:,1:end-1)];
+                    t1 = [t1 sol.x(1:end-1)];
+                    
+                    X0 = sol.y(:,end);
+                    
+                    Nit(p) = sol.stats.nfevals;
+                    
+                end
+                
+                Ntot(id,j,f) = sum(Nit);
+            end
+            
+            tsim(id,j,f) = toc;
+            
             % compute force
             if f == 1
-                Fi(:,id,j,f) = interp1(t2, F, tlin);
-
+                Fi(:,id,j,f) = interp1(t2, F2, tlin);
+                
             else
+                
+                L = Y(end-3,:);
+                F1 = nan(1, size(Y,2));
+                n = Y(1:end-4,:);
 
-                L = y(end-3,:);
-                F1 = nan(1, size(y,2));
-                n = y(1:end-4,:);
-
-                for i = 1:size(y,2)
+                for i = 1:size(Y,2)
                     xi = parms.xi + L(i);
                     F1(i) = trapz(xi, xi .* n(:,i)') + trapz(xi, n(:,i)');
                 end
 
-                Fi(:,id,j,f) = interp1(t2, F, tlin);
+                Fi(:,id,j,f) = interp1(t1, F1, tlin);
             end
+            
         end
     end
 end
@@ -249,18 +282,18 @@ t1 = [];
 tic
 
 for p = 1:(length(nzi)-1)
-    
+
     parms.vts = vs(nzi(p));
-    
+
     sol = ode45(@(t,y,yp) fiber_dynamics_explicit_no_tendon(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, []);
-    
+
     Y = [Y sol.y(:,1:end-1)];
     t1 = [t1 sol.x(1:end-1)];
-    
+
     X0 = sol.y(:,end);
-    
+
     Nit(p) = sol.stats.nfevals;
-    
+
 end
 
 Napi = sum(Nit);
@@ -271,13 +304,13 @@ Fap = Y(1,:) + Y(2,:);
 Fapi = interp1(t1, Fap, tlin);
 
 %% forces
-if ishandle(2), close(2); end; figure(2)
+figure(2)
 
 % subplot(221)
-plot(tlin,Fi(:,7,1,1)); hold on
-plot(tlin,Fi(:,7,1,2),'--')
+plot(tlin,Fi(:,end,1,1)); hold on
+% plot(tlin,Fi(:,5,2,2),'--')
 
-% plot(tlin, Fapi,':')
+plot(tlin, Fapi,':')
 
 % subplot(222)
 % semilogy(tlin, abs(Fi - Fi(:,end)));
@@ -292,20 +325,20 @@ color = get(gca,'colororder');
 
 for j = 1:2
     for f = 1:2
-        
+      
         subplot(3,2,j)
         semilogx(Ns, tsim(:,j,f) ./ Ntot(:,j,f),'ko', 'markerfacecolor', color(f,:)); hold on
         box off
         xlabel('# bins')
         ylabel('Cost (s)')
-        
+
         title(titles{j})
         subtitle('Cost')
-        
+
         xlim([Ns(1) Ns(end-1)])
         
         ylim([0 1.2e-4])
-        %
+%         
         if f == 2
             yline(tapi/Napi, 'k--', 'linewidth', 1)
         end
@@ -316,7 +349,7 @@ for j = 1:2
         subtitle('Error')
         xlabel('# bins')
         ylabel('Error (-)')
-        
+
         xlim([Ns(1) Ns(end-1)])
         ylim([1e-10 1e0])
         
@@ -339,8 +372,8 @@ for j = 1:2
         
         ylim([1e-10 1e0])
         xlim([0 1.2e-4])
-        %         xlim([Ns(1) Ns(end-1)])
-        
+%         xlim([Ns(1) Ns(end-1)])
+
     end
 end
 
