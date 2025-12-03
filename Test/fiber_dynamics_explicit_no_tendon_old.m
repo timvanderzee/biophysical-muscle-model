@@ -1,16 +1,10 @@
-function[dx, F, Q0] = fiber_dynamics_explicit_no_tendon(t,y, parms)
+function[dx, F, Q0] = fiber_dynamics_explicit_no_tendon_old(t,y, parms)
 
 % Get velocity and calcium
 if numel(parms.vts) == 1
     vMtilda = parms.vts;
 else
     vMtilda = interp1(parms.ti, parms.vts, t);
-end
-
-if numel(parms.Lts) == 1
-    Lts = parms.Lts;
-else
-    Lts = interp1(parms.ti, parms.Lts, t);
 end
 
 if numel(parms.Cas) == 1
@@ -26,20 +20,22 @@ Act = parms.actfunc(Ca, parms);
 Q0  = y(1);
 Q1  = y(2);
 Q2  = y(3);
-L  = y(4);
+L   = y(4);
 Non = y(5);
 DRX = y(6);
 R = y(7);
+Lt = y(8);
 
 % Cross-bridge states
 k   = parms.K;
 F   = Q1 + Q0;
-F   = log(1+exp(F*k))/k;
-Q0 = log(1+exp(Q0*k))/k;
+% F   = log(1+exp(F*k))/k;
+Q00 = log(1+exp(Q0*k))/k;
+Q0 = Q00;
 
 % mean and standard deviation
-p = Q1./Q0; 
-q = Q2./Q0 - p.^2;  
+p = Q1./Q00; 
+q = Q2./Q00 - p.^2;  
 q = log(1+exp(q*k))/k;
 
 if isfield(parms, 'FL_overlap')
@@ -99,26 +95,8 @@ k2 = [parms.k21 -parms.k22];
 % velocity - independent derivative
 F0dot  = Q1dot + Q0dot;
 
-kpe = 0;
-Fpe = 0;
-
-if isfield(parms, 'PE_isw_SE') % PE in series with SE
-    if parms.PE_isw_SE && L > 0
-        kpe = parms.kpe;
-        Fpe = parms.Fpe_func(L, parms);
-    end
-end
-
-Ftot = F + Fpe;
-% kse = parms.kse * (Ftot + parms.kse0);
-
-% dlse = parms.Lse_func(Ftot, parms);
-% kse = parms.kse_func(Ftot, parms);
-kse = kse1 * (F + parms.kse0);
-% dlse = Lts - L;
-% kse = parms.kse_func(dlse, parms);
-
-Ld  = (vMtilda .* parms.gamma .* kse - F0dot) ./ (Q0 + kse + kpe);
+kse = parms.kse * (F  .* (F>0) + parms.kse0);
+Ld  = (vMtilda .* parms.gamma .* kse - F0dot) ./ (Q0 + kse);
 
 dQ0dt = Q0dot;
 dQ1dt = (Q1dot + 1 * Ld .* Q0);
@@ -130,6 +108,6 @@ dQ2dt = (Q2dot + 2 * Ld .* Q1);
 % attachment must be greater. thus, we need to add Rdot to Q0dot
 dDRXdt = J1 - J2 - (Q0dot + Rdot);
 
-dx = [dQ0dt; dQ1dt; dQ2dt; Ld; dNondt; dDRXdt; Rdot];
+dx = [dQ0dt; dQ1dt; dQ2dt; Ld; dNondt; dDRXdt; Rdot; vMtilda];
 
 end

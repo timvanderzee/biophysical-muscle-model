@@ -48,32 +48,49 @@ if parms.f > 0
     
     %%
     odeopt = odeset('maxstep', 1e-2);
-%     parms.kpe = 0;
+    parms.kpe = 0;
+    parms.Fpe0;
 %     parms.kse = .01;
 %     parms.kse0 = .001;
     
     dlse0 = log(F0./parms.kse0 + 1) / parms.kse;
     lce0 = -dlse0;
     x0(end-3) = lce0;
-    x0(end-3) = 0;
+%     x0(end-3) = 0;
     
 %     sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(toc)], sol0.y(:,end), xp0, odeopt);
-    sol = ode15s(@(t,y) fiber_dynamics_explicit_no_tendon(t,y, parms), [0 max(toc)], x0, odeopt);
+    sol = ode15s(@(t,y) fiber_dynamics_explicit_no_tendon_old(t,y, parms), [0 max(toc)], x0, odeopt);
 %     [~,xdot] = deval(sol, sol.x);
     
     % test forces
 %     sol = sol0;
    
     L = sol.y(end-3,:);
+%     Fce = sol.y(1,:) + sol.y(2,:);
+% 
+%     F1 = Fce + parms.Fpe_func(L, parms);
+% 
+%     dlse = interp1(toc, Lts, sol.x) - L;
+%     F2 = parms.Fse_func(dlse, parms);
+%     
+%%
+    figure(1)
+    plot(sol.x, L);
+    
+    %%
+    close all
     Fce = sol.y(1,:) + sol.y(2,:);
 
     F1 = Fce + parms.Fpe_func(L, parms);
-
+    
     dlse = interp1(toc, Lts, sol.x) - L;
+     
     F2 = parms.Fse_func(dlse, parms);
     
-    figure(1)
+    figure(2)
     plot(sol.x, [F1; F2])
+
+%%
     
     % Q0 = sol.y(1,:);
     % F = sol.y(1,:) + sol.y(2,:);

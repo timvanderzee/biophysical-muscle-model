@@ -8,7 +8,7 @@ version = '_v3';
 % version = '';
 
 % settings
-N = 500;
+N = 5000;
 % N = 1500;
 save_results = 0;
 visualize = 1;
