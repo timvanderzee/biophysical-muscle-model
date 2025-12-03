@@ -47,6 +47,10 @@ if parms.f > 0
     N = length(toc);
     
     %%
+    close all
+    
+    parms.K = 1e2;
+    
     odeopt = odeset('maxstep', 1e-2);
 %     parms.kpe = 0;
 %     parms.kse = .01;
@@ -56,6 +60,8 @@ if parms.f > 0
     lce0 = -dlse0;
     x0(end-3) = lce0;
     x0(end-3) = 0;
+    
+    
     
 %     sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(toc)], sol0.y(:,end), xp0, odeopt);
     sol = ode15s(@(t,y) fiber_dynamics_explicit_no_tendon(t,y, parms), [0 max(toc)], x0, odeopt);

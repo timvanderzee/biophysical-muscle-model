@@ -65,6 +65,7 @@ if parms.f > 0 % biophysical models
     Q1  = opti.variable(1,N);
     Q2  = opti.variable(1,N);
     Ld  = opti.variable(1,N);
+    L   = opti.variable(1,N);
     
     % define extra variables
     p  = opti.variable(1,N); % mean strain of the distribution
@@ -95,6 +96,10 @@ if parms.f > 0 % biophysical models
     opti.set_initial(Q0, IG.Q00i);
     opti.set_initial(Q1, IG.Q1i);
     opti.set_initial(Q2, IG.Q2i);
+      
+    opti.set_initial(L, IG.Li);
+      
+    
     opti.set_initial(p, IG.pi);
     opti.set_initial(q, IG.qi);
     opti.set_initial(Ld, IG.Ldi);
@@ -103,20 +108,26 @@ if parms.f > 0 % biophysical models
     opti.set_initial(dQ2dt, IG.dQ2dti);
 %     opti.set_initial(F0dot, IG.F0doti);
     
-    if parms.J1 > 0    % cooperative models
+    if parms.koop > 0
         Non = opti.variable(1,N);
+        opti.subject_to(Non > 0);
+        opti.set_initial(Non, IG.Noni);
+    end
+    
+    if parms.J1 > 0    % cooperative models
+
         DRX = opti.variable(1,N);
         
 %         dNondt = opti.variable(1,N);
 %         dDRXdt = opti.variable(1,N);
         
         % (potentially) simple bounds
-        opti.subject_to(Non > 0);
+
         opti.subject_to(DRX > 0);
         
 %         opti.set_initial(dNondt, IG.dNondti);
 %         opti.set_initial(dDRXdt, IG.dDRXdti);
-        opti.set_initial(Non, IG.Noni);
+
         opti.set_initial(DRX, IG.DRXi);
     end
     
@@ -164,8 +175,11 @@ end
 if parms.f > 0 % biophysical models    
 
     
-    if parms.J1 == 0 % cooperative
+    if parms.koop == 0 % cooperative
         Non = Cas.^n ./ (kappa^n + Cas.^n); % sigmoid
+    end
+    
+    if parms.J1 == 0
         DRX = 1 - Q0;
     end
     
@@ -190,20 +204,29 @@ if parms.f > 0 % biophysical models
 %     error_R = dRdt - Rdot;
     
     %% length dynamics
-    F = Q0 + Q1;
-    error_length    = LengthEquilibrium(Q0, F, F0dot, Ld, vts, kse0, kse, parms.gamma);
+%     F = Q0 + Q1;
     
+    dlse = Lts - L;
+    Kse = kse0*parms.kse*exp(kse*dlse);
 
+    error_length  = Ld .* (Q0 + kse + kpe) - (vMtilda .* gamma .* Kse - F0dot);
+
+%     Ld  .* (Q0 + kse) - (vMtilda .* gamma .* kse - F0dot);
+    
+%     error_length    = LengthEquilibrium(Q0, F, F0dot, Ld, vts, kse0, kse, parms.gamma);
+    
     % set errors equal to zero
-
     opti.subject_to(error_length(:) == 0);
     
         %% cooperativity
-    if parms.J1 > 0 % cooperative
+    if parms.koop > 0 % cooperative
 %         error_thin      = ThinEquilibrium(Cas, Q0, Non, dNondt, kon, koff, koop, parms.Noverlap); % thin filament dynamics
         [Jon, Joff] = ThinFilament_Dynamics(Cas, Q0, Non, kon, koff, koop, parms.Noverlap);
     
         dNondt = Jon - Joff;
+    end
+    
+    if parms.J1 > 0
     
         [k1, k2] = ThickFilament_Dynamics(Q0, F, DRX, J1, J2, JF, parms.Noverlap, R);
 
@@ -228,14 +251,19 @@ if parms.f > 0 % biophysical models
 %     [error_Q0, error_Q1, error_Q2, error_R] = MuscleEquilibrium(Xhalf, Yhalf)
      
     % derivative constraints
-    if parms.J1 > 0
+    if parms.koop > 0
         opti.subject_to((dNondt(1:N-1) + dNondt(2:N))*dt/2 + Non(1:N-1) == Non(2:N));
+    end
+    
+    if parms.J1 > 0
         opti.subject_to((dDRXdt(1:N-1) + dDRXdt(2:N))*dt/2 + DRX(1:N-1) == DRX(2:N));
     end
     
     opti.subject_to((dQ0dt(1:N-1) + dQ0dt(2:N))*dt/2 + Q0(1:N-1) == Q0(2:N));
     opti.subject_to((dQ1dt(1:N-1) + dQ1dt(2:N))*dt/2 + Q1(1:N-1) == Q1(2:N));
     opti.subject_to((dQ2dt(1:N-1) + dQ2dt(2:N))*dt/2 + Q2(1:N-1) == Q2(2:N));
+    
+    opti.subject_to((Ld(1:N-1) + Ld(2:N))*dt/2 + L(1:N-1) == L(2:N));
     
     if parms.b > 0
         opti.subject_to((dRdt(1:N-1) + dRdt(2:N))*dt/2 + R(1:N-1) == R(2:N));
@@ -250,7 +278,20 @@ else % Hill-type
 end
 
 %% cost
-Frel = F * parms.Fscale + kpe * Lts + Fpe0;
+if parms.PE_isw_SE
+%     % interverted tendon stress-strain
+%     dLt = log(F./kse0 + 1) / kse;
+%     Lpe = Lts - dLt; 
+%     
+%     % don't allow negative values
+%     k = 100;
+%     Lpe = log(1+exp(Lpe*k))/k;
+    Lpe = L;
+else
+    Lpe = Lts;
+end
+
+Frel = F * parms.Fscale + kpe * Lpe + Fpe0;
 
 % not needed for Hill-type, because already enforced by dynamics
 if parms.f > 0 % biophysical models

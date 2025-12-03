@@ -1,0 +1,10 @@
+function[Fpe] = get_Fpe(x, L, parms)
+
+Lce = x(end-3,:);
+
+if isfield(parms. 'PE_isw_SE')
+    if parms.PE_isw_SE
+        
+        Lpe = L - 
+
+Fpe = parms.Fpe_func(nLiss, newparms);

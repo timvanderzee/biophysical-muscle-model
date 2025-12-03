@@ -16,7 +16,7 @@ for i = 1:length(iFs)
     cd(foldername)
     load(['parms_', filename, '_v3.mat'], 'newparms', 'optparms', 'out', 'bnds')
 
-    newparms.kse0 = max(newparms.kse0, .1);
+%     newparms.kse0 = max(newparms.kse0, .1);
     
     Fs = linspace(0,2,100);
     Ls = newparms.Lse_func(Fs, newparms);
