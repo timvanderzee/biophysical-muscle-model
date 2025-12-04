@@ -8,12 +8,12 @@ version = '_v3';
 % version = '';
 
 % settings
-N = 5000;
+N = 500;
 % N = 1500;
 save_results = 0;
 visualize = 1;
     
-iFs = 3 %; [2,3,5,6,7,8,11];
+iFs = 6 %; [2,3,5,6,7,8,11];
 n = [3 1]; % ISI number
 m = [7 1]; % AMP number
 tiso = 3; % isometric time (s)
@@ -29,7 +29,7 @@ bnds.J2 = [1 1e3];
 bnds.kon = [5 200];
 bnds.kse = [1e-3 1];
 % bnds.kse0 = [1e-4 1];
-bnds.kse0 = [1e-1 1];
+bnds.kse0 = [1e-2 1];
 bnds.koop = [1 200];
 bnds.n = [.1 10];
 bnds.kappa = [.1 10];
@@ -39,12 +39,13 @@ bnds.k = [1 5000];
 bnds.b = [1 5000];
 bnds.dLcrit = [1 10];
 
-bnds.kpe = [1e-3 1e-1];
-bnds.Fpe0 = [1e-4 1e-1];
+bnds.kpe = [1e-4 1e-1];
+bnds.Fpe0 = [1e-5 1e-1];
 
 % parameters to be fitted
 if sum(mcode == [1 1 1]) == 3
-    optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop'};
+    optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop', 'kpe', 'Fpe0'};
+%     optparms = {'kpe', 'Fpe0'};
 %     optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF'};
 elseif sum(mcode == [1 1 2]) == 3
     optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'koop', 'kpe', 'Fpe0'};
@@ -139,6 +140,9 @@ for iF = iFs
     parms.K = 100;
     parms.vF_func = @(vcerel,parms)parms.e(1)*log((parms.e(2)*vcerel./parms.vmax+parms.e(3))+sqrt((parms.e(2)*vcerel./parms.vmax+parms.e(3)).^2+1))+parms.e(4);
     
+    parms.Fpe_func = @(Lce, parms) parms.kpe * log(1+exp(Lce*parms.K))/parms.K + parms.Fpe0;
+    parms.kpe_func = @(Lce, parms) parms.kpe .* (1 - 1./(exp(parms.K*Lce)+1));
+
     if ~isfield(parms, 'gamma')
         parms.gamma = .5*parms.s / parms.h; % length scaling
     end
@@ -192,7 +196,7 @@ for iF = iFs
     
     IG = get_initial_guess(tis, Cas, vis, parms.Lts, parms);
     
-    oFi = (IG.Fi + parms.Fpe_func(parms.Lts, parms)) * parms.Fscale;
+    oFi = (IG.Fcei + parms.Fpe_func(IG.Li, parms)) * parms.Fscale;
     
     if visualize
         subplot(414); hold on
@@ -251,7 +255,73 @@ for iF = iFs
     if newparms.J1 > 0
         newparms.JF = newparms.kF / newparms.J1;
     end
+    
+    %% does Fse agree with L?
+    
+%     dlse = Xdata.L - out.L;
+%     Fse2 = parms.Fse_func(dlse, newparms);
+%     
+%     close all
+%     plot(out.Fse); hold on
+%     plot(Fse2,'--')
+%     
+% 
+%     %% test errors
+%     out.R = 0;
+%     
+%      [error_Q0, error_Q1, error_Q2, F0dot, dRdt] = MuscleEquilibrium(out.Q0, out.Q1, out.p, out.q, out.dQ0dt, out.dQ1dt, out.dQ2dt, ...
+%          newparms.f, parms.w, newparms.k11, newparms.k12, newparms.k21, newparms.k22, out.Non, out.Ld, out.DRX, newparms.b, newparms.k, out.R, newparms.dLcrit, newparms.ps2, parms.approx); 
+%        
+%      Kpe = newparms.kpe .* (1 - 1./(exp(parms.K*out.L)+1));
+%      Kse = newparms.kse * (out.Fse + newparms.kse0);
+%      
+%      error_length    = LengthEquilibrium(out.Q0(1), out.F0dot(1), out.Ld(1), newparms.vts(1), Kse(1), Kpe(1), newparms.gamma(1));
+%     
+% %      clear error
+%      for i = 1:length(out.t)
+%          y = [out.Q0(i) out.Q2(i) out.L(i) out.Non(i) out.DRX(i) 0];
+%          yp = [out.dQ0dt(i) out.dQ2dt(i) out.Ld(i) out.dNondt(i) out.dDRXdt(i) 0];
+%          
+%          error(:,i) = fiber_dynamics_implicit_length(out.t(i),y,yp, newparms);
+%      end
+%      
+     
+    %% test with fitted paramers 
+    N = 5e3;
+    [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), N);
+     
+    nLiss = Lis * newparms.gamma;
 
+    newparms.ti = tis;
+    newparms.vts = vis;
+    newparms.Cas = Cas;
+    newparms.Lts = nLiss;
+    
+    odeopt = odeset('maxstep', 1e-2);
+    
+    % initial conditions
+    Q0 = 0;
+    p0 = 0;
+    q0 = .1;
+    [Q00, Q20, lce0] = find_steady_state(Q0, p0, q0, parms, 'regular');
+    x0 = [Q00 Q20 lce0 0 0 0];
+
+    nsol = ode15s(@(t,y) fiber_dynamics_explicit_length(t,y, newparms), [0 max(tis)], x0, odeopt);
+    nt = nsol.x;
+
+    % calc force
+    nL = nsol.y(end-3,:);
+    ndlse = interp1(newparms.ti, newparms.Lts, nsol.x) - nL;
+    nF = parms.Fse_func(ndlse, newparms);
+    nFp = parms.Fpe_func(nL, newparms);
+    nFi = interp1(nt, nF, tis);
+    
+    subplot(414); hold on
+    plot(out.t, out.Fse * parms.Fscale)
+    plot(tis, nFi * parms.Fscale);
+    
+    return
+     
     %% load 
     [output_mainfolder, filename, opt_type, ~] = get_folder_and_model(mmcode);
 
@@ -268,16 +338,15 @@ for iF = iFs
     %% test with fitted paramers 
     N = 5e3;
     [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca, N);
-    
-    
+      
     oparms.approx = 0;
     newparms.approx = 0;
     
-%     newparms.K = 1e2;
-%     oparms.K = 1e2;
-    
     oLiss = Lis * oparms.gamma;
     nLiss = Lis * newparms.gamma;
+    
+%     oparms.Fpe_func = @(Lce, parms) parms.kpe * log(1+exp(Lce*parms.K))/parms.K + parms.Fpe0;
+%     oparms.kpe_func = @(Lce, parms) parms.kpe .* (1 - 1./(exp(parms.K*Lce)+1));
     
     oparms.ti = tis;
     oparms.vts = vis;
@@ -289,10 +358,19 @@ for iF = iFs
     newparms.Cas = Cas;
     newparms.Lts = nLiss;
     
-    odeopt = odeset('maxstep', 1e-3);
+    newparms.kpe = 0;
+    newparms.Fpe0 = 0;
     
+    odeopt = odeset('maxstep', 1e-2);
+    
+    % initial conditions
+    Q00 = 0;
+    p0 = 0;
+    q0 = .1;
+%     [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms);
+
     if newparms.f > 0
-        x0 = 1e-3 * ones(7,1);
+%         x0 = 1e-3 * ones(7,1);
         
         if newparms.J1 == 0
             x0(6) = 1;
@@ -300,22 +378,31 @@ for iF = iFs
         
         xp0 = zeros(size(x0));
         
+        [Q00, Q20, lce0, Q10] = find_steady_state(Q00, p0, q0, oparms, 'adjusted');
+        x0 = [Q00 Q10 Q20 lce0 0 0 0];
         osol = ode15s(@(t,y) fiber_dynamics_explicit_no_tendon(t,y, oparms), [0 max(tis)], x0, odeopt);
-        nsol = ode15s(@(t,y) fiber_dynamics_explicit_no_tendon(t,y, newparms), [0 max(tis)], x0, odeopt);
-        nF = (nsol.y(1,:) + nsol.y(2,:)) * parms.Fscale;
-        oF = (osol.y(1,:) + osol.y(2,:)) * oparms.Fscale;
         
-        nt = nsol.x;
+        Q0 = osol.y(1,:);
+        Q1 = osol.y(2,:);
+        oF = (Q0 + Q1) * parms.Fscale + oparms.Fpe_func(interp1(oparms.ti, oparms.Lts, osol.x), oparms);
         ot = osol.x;
+        oFi = interp1(ot, oF, tis);
+       
+
+        [Q00, Q20, lce0, Q10] = find_steady_state(Q00, p0, q0, newparms, 'regular');
+        x0 = [Q00 Q20 lce0 0 0 0];
+        nsol = ode15s(@(t,y) fiber_dynamics_explicit_length(t,y, newparms), [0 max(tis)], x0, odeopt);
+        nt = nsol.x;
         
-        dLt = log(nF./newparms.kse0 + 1) / newparms.kse;
-        Li = nLiss - interp1(nt, dLt, tis); 
+        % calc force
+        nL = nsol.y(end-3,:);
+        ndlse = interp1(newparms.ti, newparms.Lts, nsol.x) - nL;
+        nF = newparms.Fse_func(ndlse, newparms) * parms.Fscale;
         
-        [nFpe, nLpe] = get_Fpe(nsol.x, nsol.y, tis, nLiss, newparms);
-        oFpe = get_Fpe(osol.x, osol.y, tis, oLiss, oparms);
+        nFp = newparms.Fpe_func(nL, newparms);
         
-        nFi = interp1(nt, nF, tis) + nFpe;
-        oFi = interp1(ot, oF, tis) + oFpe;
+        nFi = interp1(nt, nF, tis);
+ 
         
     else
         
@@ -343,12 +430,12 @@ for iF = iFs
 
         figure(2)
         plot(Data.t, Data.F,'k.'); hold on
-        plot(out.t, out.F, 'linewidth', 2)
-        plot(tis, nFi,'--', 'linewidth', 2); 
-        plot(tis, oFi,'--', 'linewidth', 2);
+%         plot(out.t, out.F, 'linewidth', 2)
+        plot(tis, nFi,'-', 'linewidth', 2); 
+        plot(tis, oFi,'-', 'linewidth', 2);
 
         box off
-        legend('Data', 'Fitted', 'New', 'Old', 'location', 'best')
+        legend('Data', 'New', 'Old', 'location', 'best')
         legend boxoff
     end
     

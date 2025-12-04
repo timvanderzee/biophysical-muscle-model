@@ -1,4 +1,4 @@
-function[Q00, Q20, lce0] = find_steady_state(Q0, p0, q0, parms)
+function[Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, type)
 % finds the steady-state length by solving Fce + Fpe = Fse
 % also returns Q00 (obeying log function) and Q20 (from q0, p0 and Q0)
 
@@ -13,7 +13,12 @@ Q10 = Q00 * p0;
 Fce = (Q10 + Q00);
 
 % compute the length that satisfies force constraint
-costfunc = @(L, Fce, parms) (Fce + (parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0) - (parms.kse0*(exp(parms.kse*-L)-1))) .^2;
+if strcmp(type, 'regular')
+    costfunc = @(L, Fce, parms) (Fce + (parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0) - (parms.kse0*(exp(parms.kse*-L)-1))) .^2;
+elseif strcmp(type, 'adjusted')
+    costfunc = @(L, Fce, parms) (Fce - (parms.kse0*(exp(parms.kse*-L)-1))) .^2;
+end
+
 lce0 = fminsearch(@(L) costfunc(L, Fce, parms), 0);
 
 end

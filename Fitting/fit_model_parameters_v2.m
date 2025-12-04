@@ -62,96 +62,99 @@ dt = mean(diff(toc));
 if parms.f > 0 % biophysical models
     % define opti states (defined as above)
     Q0  = opti.variable(1,N);
-    Q1  = opti.variable(1,N);
+%     Q1  = opti.variable(1,N);
     Q2  = opti.variable(1,N);
-    Ld  = opti.variable(1,N);
     L   = opti.variable(1,N);
     
     % define extra variables
     p  = opti.variable(1,N); % mean strain of the distribution
     q  = opti.variable(1,N); % standard deviation strain of the distribution
-%     F  = opti.variable(1,N);
-%     F0dot  = opti.variable(1,N);
+    Fse = opti.variable(1,N);
+    Fce = opti.variable(1,N);
     
     % (slack) controls (defined as above)
     dQ0dt  = opti.variable(1,N);
-    dQ1dt  = opti.variable(1,N);
+%     dQ1dt  = opti.variable(1,N);
     dQ2dt  = opti.variable(1,N);
+    Ld     = opti.variable(1,N);
+        
+    % forces
+    dlse = Lts - L;
+%     Fse = kse0 * (exp(kse*dlse)-1);
+    
+    opti.subject_to(Fse == kse0 * (exp(kse*dlse)-1));
+    
+    Fpe = kpe * log(1+exp(L*parms.K))/parms.K + Fpe0;
+%     Fce = Fse - Fpe;
+    opti.subject_to(Fce + Fpe == Fse);
+    Q1 = Fce - Q0;
+ 
+    % instantaneous stiffnesses
+    Kpe = kpe .* (1 - 1./(exp(parms.K*L)+1));
+    Kse = kse * (Fse + kse0);
     
     % extra constraints
-%     opti.subject_to(dQ0dt + dQ1dt - F0dot - Ld .* Q0 == 0);
-%     opti.subject_to(Q0 + Q1 - F == 0);
     opti.subject_to(Q1 - Q0 .* p == 0);
     opti.subject_to(Q2 - Q0 .* (p.^2 + q) == 0);
     
     % (potentially) simple bounds
     opti.subject_to(q > 0);
     opti.subject_to(Q0 > 0);
-    opti.subject_to(Q1 > -Q0);
+%     opti.subject_to(L < Lts); % avoid negative dlse
+%     opti.subject_to(Q1 > -Q0);
     opti.subject_to(Q2 > 0);
-%     opti.subject_to(F > 0);
+    opti.subject_to(Fse > 0);
+    opti.subject_to(Fce > 0);
     
-    % set initial guess
-%     opti.set_initial(F, IG.Fi);
+    % initial guess states
     opti.set_initial(Q0, IG.Q00i);
-    opti.set_initial(Q1, IG.Q1i);
+%     opti.set_initial(Q1, IG.Q1i);
     opti.set_initial(Q2, IG.Q2i);
-      
     opti.set_initial(L, IG.Li);
       
-    
+    % initial guess extra variables
     opti.set_initial(p, IG.pi);
     opti.set_initial(q, IG.qi);
-    opti.set_initial(Ld, IG.Ldi);
-    opti.set_initial(dQ0dt, IG.dQ0dti);
-    opti.set_initial(dQ1dt, IG.dQ1dti);
-    opti.set_initial(dQ2dt, IG.dQ2dti);
-%     opti.set_initial(F0dot, IG.F0doti);
+    opti.set_initial(Fse, IG.Fsei);
+    opti.set_initial(Fce, IG.Fcei);
     
+    % initial guess slack controls
+    opti.set_initial(dQ0dt, IG.dQ0dti);
+%     opti.set_initial(dQ1dt, IG.dQ1dti);
+    opti.set_initial(dQ2dt, IG.dQ2dti);
+    opti.set_initial(Ld, IG.Ldi);
+
+    % if thin filament cooperativity
     if parms.koop > 0
         Non = opti.variable(1,N);
         opti.subject_to(Non > 0);
         opti.set_initial(Non, IG.Noni);
     end
     
+    % if thick filament cooperativity
     if parms.J1 > 0    % cooperative models
-
         DRX = opti.variable(1,N);
-        
-%         dNondt = opti.variable(1,N);
-%         dDRXdt = opti.variable(1,N);
-        
-        % (potentially) simple bounds
-
         opti.subject_to(DRX > 0);
-        
-%         opti.set_initial(dNondt, IG.dNondti);
-%         opti.set_initial(dDRXdt, IG.dDRXdti);
-
         opti.set_initial(DRX, IG.DRXi);
     end
     
+    % if forcibly detached
     if parms.b > 0 % FD model
         R = opti.variable(1,N);
-%         dRdt = opti.variable(1,N);
-        
-        opti.set_initial(R, IG.Ri);
-%         opti.set_initial(dRdt, IG.dRdti);
-        
         opti.subject_to(R >= 0);
+        opti.set_initial(R, IG.Ri);
     else
         R = zeros(1, N);
-%         dRdt = zeros(1,N);
     end
     
 else % Hill-type model
     
     % CE force, length and velocity
-    F  = opti.variable(1,N);
+    Fce  = opti.variable(1,N);
     L  = opti.variable(1,N);
     v  = opti.variable(1,N);
     
-    opti.set_initial(F, IG.Fi);
+    opti.set_initial(Fce, IG.Fi);
     opti.set_initial(v, IG.vi);
     opti.set_initial(L, IG.Li);
     
@@ -160,13 +163,13 @@ else % Hill-type model
     Act = log(1+exp(Act*parms.K))/parms.K; % avoid small numbers
     
     % activation-normalized force
-    Frel = F ./ Act;
+    Frel = Fce ./ Act;
     
     % force-velocity relation
     vi = vmax/(2*parms.e(2))*(-exp(parms.e(4)/parms.e(1)-Frel/parms.e(1))+exp(Frel/parms.e(1)-parms.e(4)/parms.e(1))-2*parms.e(3));
     
     % interverted tendon stress-strain
-    dLt = log(F./kse0 + 1) / kse;
+    dLt = log(Fce./kse0 + 1) / kse;
     Li = Lts - dLt; % CE = FIBER - SE
     
 end
@@ -184,89 +187,40 @@ if parms.f > 0 % biophysical models
     end
     
     %% cross-bridge dynamics
-    [error_Q0, error_Q1, error_Q2, F0dot, dRdt] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, parms.w, k11, k12, k21, k22, Non, Ld, DRX, b, k, R, dLcrit, ps2, parms.approx); 
+    dQ1dt = 0;
+    [error_Q0, ~, error_Q2, F0dot, dRdt] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, parms.w, k11, k12, k21, k22, Non, Ld, DRX, b, k, R, dLcrit, ps2, parms.approx); 
     opti.subject_to(error_Q0(:) == 0);
-    opti.subject_to(error_Q1(:) == 0);
+%     opti.subject_to(error_Q1(:) == 0);
     opti.subject_to(error_Q2(:) == 0);
-
-%     % get functions
-%     [IG, IGef] = get_IG_IGEf(parms.approx);
-% 
-%     % Compute Qdot
-%     [Q0dot, Q10dot, Q20dot, dRdt] = CrossBridge_Dynamics(Q0, p, q, f, parms.w, [k11 k12], [k21 -k22], IGef, Non, DRX, IG, b, k, R, dLcrit, ps2);
-% 
-%     % velocity - independent derivative
-%     F0dot  = Q0dot + Q10dot;
-% 
-%     dQ0dt = Q0dot;
-%     dQ1dt = Q10dot + 1 * Ld .* Q0;
-%     dQ2dt = Q20dot + 2 * Ld .* Q1;
-%     error_R = dRdt - Rdot;
+    
+    % needed for slack controls
+    opti.subject_to((dQ0dt(1:N-1) + dQ0dt(2:N))*dt/2 + Q0(1:N-1) == Q0(2:N));
+%     opti.subject_to((dQ1dt(1:N-1) + dQ1dt(2:N))*dt/2 + Q1(1:N-1) == Q1(2:N));
+    opti.subject_to((dQ2dt(1:N-1) + dQ2dt(2:N))*dt/2 + Q2(1:N-1) == Q2(2:N));
     
     %% length dynamics
-%     F = Q0 + Q1;
-    
-    dlse = Lts - L;
-%     Kse = kse0*parms.kse*exp(kse*dlse);
-
-%     error_length  = Ld .* (Q0 + kse + kpe) - (vMtilda .* gamma .* Kse - F0dot);
-
-%     Ld  .* (Q0 + kse) - (vMtilda .* gamma .* kse - F0dot);
-    
-    kse = parms.kse * (Fse .* (Fse > 0) + parms.kse0);
-
-    error_length    = LengthEquilibrium(Q0, F0dot, Ld, vts, kse, kpe, parms.gamma);
-    % set errors equal to zero
+    error_length    = LengthEquilibrium(Q0, F0dot, Ld, vts, Kse, Kpe, parms.gamma);
     opti.subject_to(error_length(:) == 0);
     
-        %% cooperativity
+    % needed for slack controls
+    opti.subject_to((Ld(1:N-1) + Ld(2:N))*dt/2 + L(1:N-1) == L(2:N));
+    
+    %% cooperativity
     if parms.koop > 0 % cooperative
-%         error_thin      = ThinEquilibrium(Cas, Q0, Non, dNondt, kon, koff, koop, parms.Noverlap); % thin filament dynamics
         [Jon, Joff] = ThinFilament_Dynamics(Cas, Q0, Non, kon, koff, koop, parms.Noverlap);
-    
         dNondt = Jon - Joff;
-    end
-    
-    if parms.J1 > 0
-    
-        [k1, k2] = ThickFilament_Dynamics(Q0, F, DRX, J1, J2, JF, parms.Noverlap, R);
-
-        % note: the term "Q0dot + Rdot" is the part of Q0dot due to regular
-        % attachment. explanation: if Rdot is great, it means that Q0 is losing to
-        % R. this implies that for a given Q0dot, the part due to regular
-        % attachment must be greater. thus, we need to add Rdot to Q0dot
-        dDRXdt = k1 - k2 - (dQ0dt + dRdt);
-        
-%         error_thick     = ThickEquilibrium(Q0, dQ0dt, F, DRX, dDRXdt, J1, J2, JF, parms.Noverlap, R, dRdt); % thick filament dynamics
-        
-%         opti.subject_to(error_thin(:) == 0);
-%         opti.subject_to(error_thick(:) == 0);
-    end
-    
-   %% 
-    if parms.b > 0
-%         opti.subject_to(error_R(:) == 0);
-    end
- 
-%     Xhalf = 0.5*(Xk + Xk_plus) + dt/8 * (dXnow - dXnex);
-%     [error_Q0, error_Q1, error_Q2, error_R] = MuscleEquilibrium(Xhalf, Yhalf)
-     
-    % derivative constraints
-    if parms.koop > 0
         opti.subject_to((dNondt(1:N-1) + dNondt(2:N))*dt/2 + Non(1:N-1) == Non(2:N));
     end
     
     if parms.J1 > 0
+        [k1, k2] = ThickFilament_Dynamics(Q0, Fce, DRX, J1, J2, JF, parms.Noverlap, R);
+        dDRXdt = k1 - k2 - (dQ0dt + dRdt);
         opti.subject_to((dDRXdt(1:N-1) + dDRXdt(2:N))*dt/2 + DRX(1:N-1) == DRX(2:N));
     end
     
-    opti.subject_to((dQ0dt(1:N-1) + dQ0dt(2:N))*dt/2 + Q0(1:N-1) == Q0(2:N));
-    opti.subject_to((dQ1dt(1:N-1) + dQ1dt(2:N))*dt/2 + Q1(1:N-1) == Q1(2:N));
-    opti.subject_to((dQ2dt(1:N-1) + dQ2dt(2:N))*dt/2 + Q2(1:N-1) == Q2(2:N));
-    
-    opti.subject_to((Ld(1:N-1) + Ld(2:N))*dt/2 + L(1:N-1) == L(2:N));
-    
+   %% forcibly detached states
     if parms.b > 0
+%         opti.subject_to(error_R(:) == 0);
         opti.subject_to((dRdt(1:N-1) + dRdt(2:N))*dt/2 + R(1:N-1) == R(2:N));
     end
 
@@ -279,24 +233,11 @@ else % Hill-type
 end
 
 %% cost
-if parms.PE_isw_SE
-%     % interverted tendon stress-strain
-%     dLt = log(F./kse0 + 1) / kse;
-%     Lpe = Lts - dLt; 
-%     
-%     % don't allow negative values
-%     k = 100;
-%     Lpe = log(1+exp(Lpe*k))/k;
-    Lpe = L;
-else
-    Lpe = Lts;
-end
-
-Frel = F * parms.Fscale + kpe * Lpe + Fpe0;
+Frel = Fse * parms.Fscale;
 
 % not needed for Hill-type, because already enforced by dynamics
 if parms.f > 0 % biophysical models
-opti.subject_to(Frel(1) == 1);
+    opti.subject_to(Frel(1) == 1);
 end
 
 Fcost = (Frel(idF) - Fts(idF)).^2;
@@ -306,7 +247,7 @@ J = 0;
 J = J + w(1) * sum(Fcost); % force-velocity fitting
 
 if parms.f > 0
-    J = J + w(3) * (sum(dQ0dt(idC).^2) + sum(dQ1dt(idC).^2) + sum(dQ2dt(idC).^2) + 1e-3 * dLcrit.^2); % regularization term
+    J = J + w(3) * (sum(dQ0dt(idC).^2) + sum(dQ2dt(idC).^2) + 1e-3 * dLcrit.^2); % regularization term
 else
     J = J + w(3) * (sum(vi(idC).^2)); % regularization term
 end
@@ -325,7 +266,7 @@ options.detect_simple_bounds           = true;
 options.ipopt.max_iter           = 500;
 
 opti.solver('ipopt',options);
-
+% y = opti.debug.value(error_length,opti.initial())
 
 % Solve the OCP
 % p_opts = struct('detect_simple_bounds', true);
@@ -348,9 +289,24 @@ try
         out.Q0    = sol.value(Q0);
         out.Q1    = sol.value(Q1);
         out.Q2    = sol.value(Q2);
+        out.Non    = sol.value(Non);
+        out.DRX    = sol.value(DRX);
+        
         out.dQ0dt = sol.value(dQ0dt);
         out.dQ1dt = sol.value(dQ1dt);
         out.dQ2dt = sol.value(dQ2dt);
+        
+        out.dDRXdt = sol.value(dDRXdt);
+        out.dNondt = sol.value(dNondt);
+        
+        out.F0dot = sol.value(F0dot);
+        out.p = sol.value(p);
+        out.q = sol.value(q);
+        out.L = sol.value(L);
+        out.Ld = sol.value(Ld);
+        out.Fce = sol.value(Fce);
+        out.Fse = sol.value(Fse);
+        out.Fpe = sol.value(Fpe);
     end
     
     % extract the parameters

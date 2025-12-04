@@ -31,9 +31,8 @@ DRX = y(5);
 R = y(6);
 
 % PE
-kpe = parms.kpe .* (1 - 1./(exp(parms.K*Lce)+1));
-% Fpe = parms.Fpe_func(L, parms);
-Fpe = parms.kpe * log(1+exp(Lce*parms.K))/parms.K + parms.Fpe0;
+kpe = parms.kpe_func(Lce, parms);
+Fpe = parms.Fpe_func(Lce, parms);
 
 % SE
 dLse = Lts - Lce;
@@ -47,6 +46,7 @@ Q1 = Fce - Q0;
 
 % mean and standard deviation
 k   = parms.K;
+% Fce = log(1+exp(Fce*k))/k; % note: goes to inf for large k, may need another function
 Q00 = log(1+exp(Q0*k))/k; % note: goes to inf for large k, may need another function
 % Q0 = Q00;
 p = Q1./Q00; 

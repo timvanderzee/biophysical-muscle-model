@@ -104,7 +104,9 @@ k2 = [parms.k21 -parms.k22];
 % velocity - independent derivative
 F0dot  = Q1dot + Q0dot;
 
-kpe = parms.kpe .* (L > 0);
+kpe = 0;
+
+% kpe = parms.kpe .* (L > 0);
 % Fpe = 0;
 % 
 % if isfield(parms, 'PE_isw_SE') % PE in series with SE
@@ -113,9 +115,9 @@ kpe = parms.kpe .* (L > 0);
 %         Fpe = parms.Fpe_func(L, parms);
 %     end
 % end
-
-Ftot = F + parms.Fpe0 + parms.kpe * L .* (L > 0);
-kse = parms.kse * (Ftot  .* (Ftot>0) + parms.kse0);
+% 
+% Ftot = F;
+kse = parms.kse * (F  .* (F>0) + parms.kse0);
 
 % dlse = parms.Lse_func(Ftot, parms);
 % kse = parms.kse_func(Ftot, parms);

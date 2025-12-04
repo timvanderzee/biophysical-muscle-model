@@ -17,7 +17,7 @@ if parms.f > 0
     p0 = 0;
     q0 = .1;
 
-    [Q00, Q20, lce0] = find_steady_state(Q0, p0, q0, parms);
+    [Q00, Q20, lce0] = find_steady_state(Q0, p0, q0, parms, 'regular');
     x0 = [Q00 Q20 lce0 0 0 0]';
     xp0 = zeros(size(x0));
     
@@ -32,6 +32,9 @@ if parms.f > 0
     sol0 = ode15i(@(t,y,yp) fiber_dynamics_implicit_length(t,y,yp, parms), [0 5], x0, xp0, odeopt);
     dx = fiber_dynamics_explicit_length(sol0.x(end), sol0.y(:,end), parms);
     
+%     parms.Fpe_func = @(L, parms) parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0;
+%     parms.kpe_func = @(Lce, parms) parms.kpe;
+
     % dynamic contraction
     parms.vts = vts;
     parms.Lts = Lts;
@@ -39,6 +42,7 @@ if parms.f > 0
     parms.ti = tis;
     parms.Cas = Cas;
     sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_length(t,y,yp,parms), [0 max(tis)], sol0.y(:,end), dx, odeopt);
+%     sol = ode15s(@(t,y) fiber_dynamics_explicit_length(t,y,parms), [0 max(tis)], sol0.y(:,end), odeopt);
     [~, xdot] = deval(sol, sol.x);
     toc
     
@@ -100,7 +104,9 @@ if parms.f > 0
     IG.Q0i = Q0i;
     IG.Q1i = Q1i;
     IG.Q2i = Q2i;
-    IG.Fi = Fce;
+    IG.Fcei = Fce;
+    IG.Fsei = Fse;
+    IG.Fpei = Fpe;
     IG.Noni = Noni;
     IG.DRXi = DRXi;
     IG.Li = Li;
