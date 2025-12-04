@@ -70,7 +70,8 @@ end
 error_R = dRdt - Rdot;
 
 % Length dynamics
-error_length = dLcedt  .* (Q0 + kse + kpe) - (vMtilda .* parms.gamma .* kse - F0dot);
+% error_length = dLcedt  .* (Q0 + kse + kpe) - (vMtilda .* parms.gamma .* kse - F0dot);
+error_length = LengthEquilibrium(Q0, F0dot, dLcedt, vMtilda, kse, kpe, parms.gamma);
 
 % Combined error
 error = [error_Q0; error_Q2; error_length; error_thin; error_thick; error_R];

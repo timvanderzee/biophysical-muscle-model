@@ -42,6 +42,7 @@ Q1 = Fce - Q0;
 % mean and standard deviation
 k   = parms.K;
 Q00 = log(1+exp(Q0*k))/k; % note: goes to inf for large k, may need another function
+% Q0 = Q00;
 p = Q1./Q00; 
 q = Q2./Q00 - p.^2;  
 q = log(1+exp(q*k))/k;

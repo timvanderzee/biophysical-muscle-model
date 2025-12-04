@@ -37,17 +37,30 @@ parms.Lts = [Lis Lis Lis Lis] * parms.gamma;
 
 parms.x0 = zeros(1,6);
 
+[Q0, Q1, 
 Fse0 = .1;
-dlse0 = log(Fse0./parms.kse0 + 1) / parms.kse;
-lce0 = 0 - dlse0;
-parms.x0(end-3) = lce0;
-Fpe0 = parms.Fpe_func(lce0, parms);
-Fce0 = Fse0 - Fpe0;
-Q00 = .2;
-Q10 = Fce0 - Q00;
-p0 = Q10./Q00;
-Q20 = .2;
-q0 = Q20./Q00 - p0.^2;  
+k   = parms.K;
+Q00 = log(1+exp(0))/k; % note: goes to inf for large k, may need another function
+
+p0 = 1;
+q0 = .1;
+
+Q10 = Q00 * p0;
+Q20 = (q0 + p0^2) * Q00;
+Fce = Q10 + Q00;
+
+% compute the length that satisfies force constraint
+costfunc = @(L, Fce, parms) (Fce + (parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0) - (parms.kse0*(exp(parms.kse*-L)-1))) .^2;
+lce0 = fminsearch(@(L) costfunc(L, Fce, parms), 0);
+
+
+% dlse0 = log(Fse0./parms.kse0 + 1) / parms.kse;
+% lce0 = 0 - dlse0;
+% Fpe0 = parms.Fpe_func(lce0, parms);
+% Fce0 = Fse0 - Fpe0;
+% Q10 = Fce0 - Q00;
+% p0 = Q10./Q00;
+% q0 = Q20./Q00 - p0.^2;  
 
 
 %%
@@ -57,7 +70,7 @@ odeopt = [];
 
 parms.K = 1e2;
 
-for j = 3
+for j = [1 3]
     if j == 1
         parms.x0 = [Q00 Q20 lce0 0 0 0];
         sol = ode45(@(t,y) fiber_dynamics_explicit_length(t,y, parms), [0 max(parms.ti)], parms.x0(:), odeopt);
@@ -65,8 +78,8 @@ for j = 3
         parms.x0 = [Q00 Q10 Q20 lce0 0 0 0];
         sol = ode15s(@(t,y) fiber_dynamics_explicit_no_tendon(t,y, parms), [0 max(parms.ti)], parms.x0(:), odeopt);
     elseif j == 3
-        parms.x0 = [Q00 Q10 Q20 lce0 0 0 0];
-        parms.x0p = zeros(parms.x0);
+        parms.x0 = [Q00 Q20 lce0 0 0 0];
+        parms.x0p = zeros(size(parms.x0));
         sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_length(t,y,yp, parms), [0 max(parms.ti)], parms.x0(:), parms.x0p(:), odeopt);
     end
     
@@ -94,7 +107,7 @@ end
 
 %%
 N = length(sol.x);
-id = N - 7;
+id = N;
 
 dy = fiber_dynamics_explicit_length(sol.x(id), sol.y(:,id), parms)
 

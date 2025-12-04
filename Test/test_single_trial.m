@@ -37,18 +37,11 @@ parms.Lts = [Lis Lis Lis Lis] * parms.gamma;
 
 parms.x0 = zeros(1,6);
 
-Fse0 = .1;
-dlse0 = log(Fse0./parms.kse0 + 1) / parms.kse;
-lce0 = 0 - dlse0;
-parms.x0(end-3) = lce0;
-Fpe0 = parms.Fpe_func(lce0, parms);
-Fce0 = Fse0 - Fpe0;
-Q00 = .2;
-Q10 = Fce0 - Q00;
-p0 = Q10./Q00;
-Q20 = .2;
-q0 = Q20./Q00 - p0.^2;  
+Q0 = 0;
+p0 = 0;
+q0 = .1;
 
+[Q00, Q20, lce0] = find_steady_state(Q0, p0, q0, parms);
 
 %%
 close all
@@ -94,7 +87,7 @@ end
 
 %%
 N = length(sol.x);
-id = N - 7;
+id = N;
 
 dy = fiber_dynamics_explicit_length(sol.x(id), sol.y(:,id), parms)
 
