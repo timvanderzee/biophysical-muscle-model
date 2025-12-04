@@ -57,7 +57,7 @@ odeopt = [];
 
 parms.K = 1e2;
 
-for j = [1 3]
+for j = 3
     if j == 1
         parms.x0 = [Q00 Q20 lce0 0 0 0];
         sol = ode45(@(t,y) fiber_dynamics_explicit_length(t,y, parms), [0 max(parms.ti)], parms.x0(:), odeopt);
@@ -65,8 +65,8 @@ for j = [1 3]
         parms.x0 = [Q00 Q10 Q20 lce0 0 0 0];
         sol = ode15s(@(t,y) fiber_dynamics_explicit_no_tendon(t,y, parms), [0 max(parms.ti)], parms.x0(:), odeopt);
     elseif j == 3
-        parms.x0 = [Q00 Q20 lce0 0 0 0];
-        parms.x0p = zeros(size(parms.x0));
+        parms.x0 = [Q00 Q10 Q20 lce0 0 0 0];
+        parms.x0p = zeros(parms.x0);
         sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_length(t,y,yp, parms), [0 max(parms.ti)], parms.x0(:), parms.x0p(:), odeopt);
     end
     

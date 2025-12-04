@@ -1,4 +1,4 @@
-function[dx, F, Q0] = fiber_dynamics_explicit_no_tendon(t,y, parms)
+function[dx, F, Q0] = fiber_dynamics_explicit_length(t,y, parms)
 
 % Get velocity and calcium
 if numel(parms.vts) == 1
@@ -7,11 +7,11 @@ else
     vMtilda = interp1(parms.ti, parms.vts, t);
 end
 
-% if numel(parms.Lts) == 1
-%     Lts = parms.Lts;
-% else
-%     Lts = interp1(parms.ti, parms.Lts, t);
-% end
+if numel(parms.Lts) == 1
+    Lts = parms.Lts;
+else
+    Lts = interp1(parms.ti, parms.Lts, t);
+end
 
 if numel(parms.Cas) == 1
     Ca = parms.Cas;
@@ -24,20 +24,22 @@ Act = parms.actfunc(Ca, parms);
 
 % States
 Q0  = y(1);
-Q1  = y(2);
-Q2  = y(3);
-L  = y(4);
-Non = y(5);
-DRX = y(6);
-R = y(7);
+Q2  = y(2);
+L  = y(3);
+Non = y(4);
+DRX = y(5);
+R = y(6);
 
-if length(y) > 7
-    Lt = y(8);
-end
+% compute Q1
+dlse = Lts - L;
+Fse = parms.Fse_func(dlse, parms);
+Fpe = parms.Fpe_func(L, parms);
+F = Fse - Fpe;
+Q1 = F - Q0;
 
 % Cross-bridge states
 k   = parms.K;
-F   = Q1 + Q0;
+% F   = Q1 + Q0;
 % F   = log(1+exp(F*k))/k;
 Q00 = log(1+exp(Q0*k))/k;
 % Q0 = Q00;
@@ -114,8 +116,8 @@ kpe = parms.kpe .* (L > 0);
 %     end
 % end
 
-Ftot = F + parms.Fpe0 + parms.kpe * L .* (L > 0);
-kse = parms.kse * (Ftot  .* (Ftot>0) + parms.kse0);
+% Ftot = F + parms.Fpe0 + parms.kpe * L .* (L > 0);
+% kse = parms.kse * (Ftot  .* (Ftot>0) + parms.kse0);
 
 % dlse = parms.Lse_func(Ftot, parms);
 % kse = parms.kse_func(Ftot, parms);

@@ -1,0 +1,78 @@
+function[error] = fiber_dynamics_implicit_length(t,y,yp, parms)
+
+% Get velocity and calcium
+if numel(parms.vts) == 1
+    vMtilda = parms.vts;
+else
+    vMtilda = interp1(parms.ti, parms.vts, t);
+end
+
+if numel(parms.Lts) == 1
+    Lts = parms.Lts;
+else
+    Lts = interp1(parms.ti, parms.Lts, t);
+end
+
+if numel(parms.Cas) == 1
+    Ca = parms.Cas;
+else
+    Ca = interp1(parms.ti, parms.Cas, t);
+end
+
+% activation
+Act = parms.actfunc(Ca, parms);
+
+% States
+Q0  = y(1);
+Q2  = y(2);
+Lce  = y(3);
+Non = y(4);
+DRX = y(5);
+R = y(6);
+
+% compute Q1
+dLse = Lts - Lce;
+kse = parms.kse_func(dLse, parms);
+kpe = parms.kpe .* (Lce > 0);
+Fse = parms.Fse_func(dLse, parms);
+Fpe = parms.Fpe_func(Lce, parms);
+Fce = Fse - Fpe;
+Q1 = Fce - Q0;
+
+% States
+dQ0dt  = yp(1);
+dQ2dt  = yp(2);
+dLcedt  = yp(3);
+dNondt = yp(4);
+dDRXdt = yp(5);
+dRdt = yp(6);
+
+% mean and standard deviation
+k   = parms.K;
+Q00 = log(1+exp(Q0*k))/k; % note: goes to inf for large k, may need another function
+p = Q1./Q00; 
+q = Q2./Q00 - p.^2;  
+q = log(1+exp(q*k))/k;
+
+% Thin and thick filament
+if (parms.kon == 0) && (parms.koff == 0) && (parms.koop == 0)
+    error_thin = dNondt - ((Act - Non) / .005);
+else 
+    [error_thin, ~] = ThinEquilibrium(Act, Q0, Non, dNondt, parms.kon, parms.koff, parms.koop, parms.act * parms.Noverlap);
+end
+
+[error_thick, ~] = ThickEquilibrium(Q0, dQ0dt, Fce, DRX, dDRXdt, parms.J1, parms.J2, parms.JF, parms.act * parms.Noverlap, R, dRdt);
+
+% Cross-bridge dynamics
+[error_Q0, ~, error_Q2, F0dot, Rdot] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, 0, dQ2dt, parms.f, parms.w, parms.k11, parms.k12, parms.k21, parms.k22, Non, dLcedt, DRX, parms.b, parms.k, R, parms.dLcrit, parms.ps2, parms.approx);
+
+% Rippid dynamics
+error_R = dRdt - Rdot;
+
+% Length dynamics
+error_length = dLcedt  .* (Q0 + kse + kpe) - (vMtilda .* parms.gamma .* kse - F0dot);
+
+% Combined error
+error = [error_Q0; error_Q2; error_length; error_thin; error_thick; error_R];
+
+end

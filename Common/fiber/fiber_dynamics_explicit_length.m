@@ -1,4 +1,4 @@
-function[dx, F, Q0] = fiber_dynamics_explicit_no_tendon(t,y, parms)
+function[dx, Fce, Q0] = fiber_dynamics_explicit_length(t,y, parms)
 
 % Get velocity and calcium
 if numel(parms.vts) == 1
@@ -7,11 +7,11 @@ else
     vMtilda = interp1(parms.ti, parms.vts, t);
 end
 
-% if numel(parms.Lts) == 1
-%     Lts = parms.Lts;
-% else
-%     Lts = interp1(parms.ti, parms.Lts, t);
-% end
+if numel(parms.Lts) == 1
+    Lts = parms.Lts;
+else
+    Lts = interp1(parms.ti, parms.Lts, t);
+end
 
 if numel(parms.Cas) == 1
     Ca = parms.Cas;
@@ -24,25 +24,24 @@ Act = parms.actfunc(Ca, parms);
 
 % States
 Q0  = y(1);
-Q1  = y(2);
-Q2  = y(3);
-L  = y(4);
-Non = y(5);
-DRX = y(6);
-R = y(7);
+Q2  = y(2);
+Lce  = y(3);
+Non = y(4);
+DRX = y(5);
+R = y(6);
 
-if length(y) > 7
-    Lt = y(8);
-end
-
-% Cross-bridge states
-k   = parms.K;
-F   = Q1 + Q0;
-% F   = log(1+exp(F*k))/k;
-Q00 = log(1+exp(Q0*k))/k;
-% Q0 = Q00;
+% compute Q1
+dLse = Lts - Lce;
+kse = parms.kse_func(dLse, parms);
+kpe = parms.kpe .* (Lce > 0);
+Fse = parms.Fse_func(dLse, parms);
+Fpe = parms.Fpe_func(Lce, parms);
+Fce = Fse - Fpe;
+Q1 = Fce - Q0;
 
 % mean and standard deviation
+k   = parms.K;
+Q00 = log(1+exp(Q0*k))/k; % note: goes to inf for large k, may need another function
 p = Q1./Q00; 
 q = Q2./Q00 - p.^2;  
 q = log(1+exp(q*k))/k;
@@ -50,7 +49,7 @@ q = log(1+exp(q*k))/k;
 if isfield(parms, 'FL_overlap')
     if parms.FL_overlap
         h = (.5 * parms.s / parms.gamma); % powerstroke size
-        L_hs = L * h * 1e9 + 1.3e3; % [nm]
+        L_hs = Lce * h * 1e9 + 1.3e3; % [nm]
         Ntot = return_f_overlap(L_hs, parms);
     else
         Ntot = 1;
@@ -67,7 +66,7 @@ else
     dNondt = Jon - Joff;
 end
 
-[J1, J2] = ThickFilament_Dynamics(Q0, F, DRX, parms.J1, parms.J2, parms.JF, 1, R);
+[J1, J2] = ThickFilament_Dynamics(Q0, Fce, DRX, parms.J1, parms.J2, parms.JF, 1, R);
 
 % without limit
 % IGef{1} = @(c,k)(c(1,:)*k(1).*exp(c(3,:)*k(2)^2/4-c(2,:)*k(2)));
@@ -104,29 +103,11 @@ k2 = [parms.k21 -parms.k22];
 % velocity - independent derivative
 F0dot  = Q1dot + Q0dot;
 
-kpe = parms.kpe .* (L > 0);
-% Fpe = 0;
-% 
-% if isfield(parms, 'PE_isw_SE') % PE in series with SE
-%     if parms.PE_isw_SE && L > 0
-%         kpe = parms.kpe;
-%         Fpe = parms.Fpe_func(L, parms);
-%     end
-% end
-
-Ftot = F + parms.Fpe0 + parms.kpe * L .* (L > 0);
-kse = parms.kse * (Ftot  .* (Ftot>0) + parms.kse0);
-
-% dlse = parms.Lse_func(Ftot, parms);
-% kse = parms.kse_func(Ftot, parms);
-% kse = parms.kse * (F + parms.kse0);
-% dlse = Lts - L;
-% kse = parms.kse_func(dlse, parms);
-
+% compute velocity
 Ld  = (vMtilda .* parms.gamma .* kse - F0dot) ./ (Q0 + kse + kpe);
 
+% shift the cross-bridge distribution
 dQ0dt = Q0dot;
-dQ1dt = (Q1dot + 1 * Ld .* Q0);
 dQ2dt = (Q2dot + 2 * Ld .* Q1);
 
 % note: the term "Q0dot + Rdot" is the part of Q0dot due to regular
@@ -135,12 +116,6 @@ dQ2dt = (Q2dot + 2 * Ld .* Q1);
 % attachment must be greater. thus, we need to add Rdot to Q0dot
 dDRXdt = J1 - J2 - (Q0dot + Rdot);
 
-if length(y) > 7
-    v = vMtilda;
-else
-    v = [];
-end
-
-dx = [dQ0dt; dQ1dt; dQ2dt; Ld; dNondt; dDRXdt; Rdot; v];
+dx = [dQ0dt; dQ2dt; Ld; dNondt; dDRXdt; Rdot];
 
 end
