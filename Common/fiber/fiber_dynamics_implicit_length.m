@@ -30,12 +30,28 @@ Non = y(4);
 DRX = y(5);
 R = y(6);
 
-% compute Q1
+% % compute Q1
+% dLse = Lts - Lce;
+% % kse = parms.kse_func(dLse, parms);
+% kpe = parms.kpe .* (Lce > 0);
+% Fse = parms.Fse_func(dLse, parms);
+% Fpe = parms.Fpe_func(Lce, parms);
+% Fce = Fse - Fpe;
+% Q1 = Fce - Q0;
+% kse = parms.kse * (Fse .* (Fse > 0) + parms.kse0);
+
+% PE
+kpe = parms.kpe .* (1 - 1./(exp(parms.K*Lce)+1));
+% Fpe = parms.Fpe_func(L, parms);
+Fpe = parms.kpe * log(1+exp(Lce*parms.K))/parms.K + parms.Fpe0;
+
+% SE
 dLse = Lts - Lce;
-kse = parms.kse_func(dLse, parms);
-kpe = parms.kpe .* (Lce > 0);
 Fse = parms.Fse_func(dLse, parms);
-Fpe = parms.Fpe_func(Lce, parms);
+% kse = parms.kse_func(dLse, parms);
+kse = parms.kse * (Fse .* (Fse > 0) + parms.kse0);
+
+% CE
 Fce = Fse - Fpe;
 Q1 = Fce - Q0;
 

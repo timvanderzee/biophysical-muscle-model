@@ -192,7 +192,7 @@ for iF = iFs
     
     IG = get_initial_guess(tis, Cas, vis, parms.Lts, parms);
     
-    oFi = IG.Fi * parms.Fscale + parms.Fpe_func(parms.Lts, parms);
+    oFi = (IG.Fi + parms.Fpe_func(parms.Lts, parms)) * parms.Fscale;
     
     if visualize
         subplot(414); hold on

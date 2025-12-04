@@ -207,15 +207,14 @@ if parms.f > 0 % biophysical models
 %     F = Q0 + Q1;
     
     dlse = Lts - L;
-%     Kse = kse0*parms.kse*exp(kse*dlse);
+    Kse = kse0*parms.kse*exp(kse*dlse);
 
 %     error_length  = Ld .* (Q0 + kse + kpe) - (vMtilda .* gamma .* Kse - F0dot);
 
 %     Ld  .* (Q0 + kse) - (vMtilda .* gamma .* kse - F0dot);
     
-    kse = parms.kse * (Fse .* (Fse > 0) + parms.kse0);
-
-    error_length    = LengthEquilibrium(Q0, F0dot, Ld, vts, kse, kpe, parms.gamma);
+    error_length    = LengthEquilibrium(Q0, F, F0dot, Ld, vts, kse0, kse, parms.gamma);
+    error_lengthi    = LengthEquilibrium(Q0i, F0dot, Ldi, parms.vts, kse, kpe, parms.gamma);
     % set errors equal to zero
     opti.subject_to(error_length(:) == 0);
     
