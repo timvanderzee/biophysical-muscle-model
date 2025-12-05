@@ -38,19 +38,19 @@ Fpe = parms.Fpe_func(Lce, parms);
 % SE
 dLse = Lts - Lce;
 Fse = parms.Fse_func(dLse, parms);
-kse = parms.kse_func(dLse, parms);
-% kse = parms.kse * Fse + parms.kse0;
+% kse = parms.kse_func(dLse, parms);
+kse = parms.kse * Fse + parms.kse0 * parms.kse;
 
 % CE
 Fce = Fse - Fpe;
-Q1 = Fce - Q0;
 
 % mean and standard deviation
-k   = parms.K;
+% k   = parms.K;
 % Fce = log(1+exp(Fce*k))/k; % note: goes to inf for large k, may need another function
 % Q00 = log(1+exp(Q0*k))/k + eps; % note: goes to inf for large k, may need another function
 Q00 = max(Q0, 1e-6);
-% Q0 = Q00;
+Q1 = Fce - Q00;
+% Q1 = max(Q1, -Q0);
 p = Q1./Q00; 
 q = Q2./Q00 - p.^2;  
 % q = log(1+exp(q*k))/k;

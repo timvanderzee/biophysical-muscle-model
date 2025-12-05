@@ -44,8 +44,8 @@ bnds.Fpe0 = [1e-5 1e-1];
 
 % parameters to be fitted
 if sum(mcode == [1 1 1]) == 3
-%     optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop', 'kpe', 'Fpe0'};
-    optparms = {'kpe', 'Fpe0'};
+    optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop', 'kpe', 'Fpe0'};
+%     optparms = {};
 %     optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF'};
 elseif sum(mcode == [1 1 2]) == 3
     optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'koop', 'kpe', 'Fpe0'};
@@ -66,7 +66,8 @@ for iF = iFs
     cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
     load([fibers{iF},'_cor_new.mat'],'data')
    
-    Ks = find(Fm(:,iF) < .05); % only consider active trials
+%     Ks = find(Fm(:,iF) < .05); % only consider active trials
+Ks = 1;
 %     Ks = find(Fm(:,iF) > 0); % only consider active trials
     Data = prep_data_v2(data,n, m,Ks,tiso);
     [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), N);
@@ -142,7 +143,7 @@ for iF = iFs
     
     % springs
     parms.Fse_func = @(dlse, parms) parms.kse0*(exp(parms.kse*dlse)-1);
-    
+    parms.Fpe0 = parms.Fpe0/2;
 %     parms.Fpe_func = @(Lce, parms) parms.kpe * log(1+exp(Lce*parms.K))/parms.K + parms.Fpe0;
 %     parms.kpe_func = @(Lce, parms) parms.kpe .* (1 - 1./(exp(parms.K*Lce)+1));
     parms.Fpe_func = @(L, parms) parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0;
@@ -292,6 +293,7 @@ for iF = iFs
 %      
      
     %% test with fitted paramers 
+    close all
     N = 5e3;
     [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), N);
      
@@ -305,25 +307,27 @@ for iF = iFs
     odeopt = odeset('maxstep', 1e-2);
     
     % initial conditions
-    Q0 = 0;
+    Q0 = .1;
     p0 = 0;
     q0 = .1;
     [Q00, Q20, lce0] = find_steady_state(Q0, p0, q0, parms, 'regular');
-    x0 = [Q00 Q20 lce0 0 0 0];
+    x0 = [Q00 Q20 lce0 0 0 0 0];
 
     nsol = ode15s(@(t,y) fiber_dynamics_explicit_length(t,y, newparms), [0 max(tis)], x0, odeopt);
     nt = nsol.x;
 
     % calc force
-    nL = nsol.y(end-3,:);
-    ndlse = interp1(newparms.ti, newparms.Lts, nsol.x) - nL;
+    nL = nsol.y(3,:);
+    Lts = nsol.y(end,:);
+    
+    ndlse = Lts - nL;
     nF = parms.Fse_func(ndlse, newparms);
     nFp = parms.Fpe_func(nL, newparms);
-    nFi = interp1(nt, nF, tis);
+    nFi = interp1(nt, nF, out.t);
     
     subplot(414); hold on
     plot(out.t, out.Fse * parms.Fscale)
-    plot(tis, nFi * parms.Fscale);
+    plot(out.t, nFi * parms.Fscale);
     
     return
      

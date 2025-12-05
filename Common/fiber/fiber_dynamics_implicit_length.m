@@ -7,11 +7,11 @@ else
     vMtilda = interp1(parms.ti, parms.vts, t);
 end
 
-if numel(parms.Lts) == 1
-    Lts = parms.Lts;
-else
-    Lts = interp1(parms.ti, parms.Lts, t);
-end
+% if numel(parms.Lts) == 1
+%     Lts = parms.Lts;
+% else
+%     Lts = interp1(parms.ti, parms.Lts, t);
+% end
 
 if numel(parms.Cas) == 1
     Ca = parms.Cas;
@@ -29,6 +29,7 @@ Lce  = y(3);
 Non = y(4);
 DRX = y(5);
 R = y(6);
+Lts = y(7);
 
 % PE
 kpe = parms.kpe_func(Lce, parms);
@@ -42,7 +43,6 @@ kse = parms.kse_func(dLse, parms);
 
 % CE
 Fce = Fse - Fpe;
-Q1 = Fce - Q0;
 
 % States
 dQ0dt  = yp(1);
@@ -51,13 +51,17 @@ dLcedt  = yp(3);
 dNondt = yp(4);
 dDRXdt = yp(5);
 dRdt = yp(6);
+dLdt = yp(7);
 
 % mean and standard deviation
-k   = parms.K;
-Q00 = log(1+exp(Q0*k))/k; % note: goes to inf for large k, may need another function
+% k   = parms.K;
+% Q00 = log(1+exp(Q0*k))/k; % note: goes to inf for large k, may need another function
+Q00 = max(Q0, 1e-4);
+Q1 = Fce - Q00;
 p = Q1./Q00; 
 q = Q2./Q00 - p.^2;  
-q = log(1+exp(q*k))/k;
+% q = log(1+exp(q*k))/k;
+q = max(q, 1e-6);
 
 % Thin and thick filament
 if (parms.kon == 0) && (parms.koff == 0) && (parms.koop == 0)
@@ -78,7 +82,9 @@ error_R = dRdt - Rdot;
 % error_length = dLcedt  .* (Q0 + kse + kpe) - (vMtilda .* parms.gamma .* kse - F0dot);
 error_length = LengthEquilibrium(Q0, F0dot, dLcedt, vMtilda, kse, kpe, parms.gamma);
 
+error_vel = dLdt - vMtilda*parms.gamma;
+
 % Combined error
-error = [error_Q0; error_Q2; error_length; error_thin; error_thick; error_R];
+error = [error_Q0; error_Q2; error_length; error_thin; error_thick; error_R; error_vel];
 
 end

@@ -205,11 +205,9 @@ if parms.f > 0 % biophysical models
     error_length    = LengthEquilibrium(Q0, F0dot, Ld, vts, Kse, Kpe, parms.gamma);
     opti.subject_to(error_length(:) == 0);
     
-    V = vts * parms.gamma;
-    
     % needed for slack controls
     opti.subject_to((Ld(1:N-1) + Ld(2:N))*dt/2 + L(1:N-1) == L(2:N));
-    opti.subject_to((V(1:N-1) + V(2:N))*dt/2 + Lts(1:N-1) == Lts(2:N));
+    opti.subject_to((vts(1:N-1) + vts(2:N))*dt/2 + Lts(1:N-1) == Lts(2:N));
     opti.subject_to(Lts(1) == 0);
     
     %% cooperativity

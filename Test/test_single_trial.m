@@ -62,24 +62,25 @@ odeopt = odeset('maxstep', 1e-1);
 parms.K = 1e2;
 ls = {'-', '--', ':'};
 
-for j = 1
+for j = [1 3]
     if j == 1
         [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, 'regular');
         parms.x0 = [Q00 Q20 lce0 0 0 0 0];
         sol = ode15s(@(t,y) fiber_dynamics_explicit_length(t,y, parms), [0 max(parms.ti)], parms.x0(:), odeopt);
     elseif j == 2
-        [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, 'adjusted');
-        parms.x0 = [Q00 Q10 Q20 lce0 0 0 0];
+        parms.PE_isw_SE = 1;
+        [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, 'regular');
+        parms.x0 = [Q00 Q10 Q20 lce0 0 0 0 0];
         sol = ode15s(@(t,y) fiber_dynamics_explicit_no_tendon(t,y, parms), [0 max(parms.ti)], parms.x0(:), odeopt);
     elseif j == 3
         [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, 'regular');
-        parms.x0 = [Q00 Q20 lce0 0 0 0];
+        parms.x0 = [Q00 Q20 lce0 0 0 0 0];
         parms.x0p = zeros(size(parms.x0));
         sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_length(t,y,yp, parms), [0 max(parms.ti)], parms.x0(:), parms.x0p(:), odeopt);
     end
     
     
-    L = sol.y(3,:);
+    L = sol.y(end-4,:);
 %     t = rem(sol.x, max(Ts)); 
     t = sol.x;
     dlse = interp1(parms.ti, parms.Lts, sol.x) - L;
@@ -88,7 +89,8 @@ for j = 1
     Fse = parms.Fse_func(dlse, parms);
      
     if j == 2
-        Fpe = parms.Fpe_func(interp1(parms.ti, parms.Lts, sol.x), parms);
+%         Fpe = parms.Fpe_func(interp1(parms.ti, parms.Lts, sol.x), parms);
+         Fpe = parms.Fpe_func(L, parms);
         F = Fse + Fpe;
     else
         Fpe = parms.Fpe_func(L, parms);
@@ -106,21 +108,21 @@ for j = 1
     title('XB length')
 
     subplot(313)
-    plot(t, F, 'linestyle', ls{j}); hold on
-    plot(t, Fpe, ':')
-    plot(t, F-Fpe, '--')
+    plot(t, Fse, 'linestyle', ls{j}); hold on
+%     plot(t, Fpe, ':')
+%     plot(t, F-Fpe, '--')
     title('Force')
 end
 
     % plot(t, F1-F2)
 
 %%
-N = length(sol.x);
-id = N;
-% id = 190;
-
-dy = fiber_dynamics_explicit_length(sol.x(id), sol.y(:,id), parms)
-
-soln = sol.y(:,id) + dy * .001
-fiber_dynamics_explicit_length(sol.x(id), soln, parms)
+% N = length(sol.x);
+% id = N;
+% % id = 190;
+% 
+% dy = fiber_dynamics_explicit_length(sol.x(id), sol.y(:,id), parms)
+% 
+% soln = sol.y(:,id) + dy * .001
+% fiber_dynamics_explicit_length(sol.x(id), soln, parms)
 

@@ -18,7 +18,7 @@ if parms.f > 0
     q0 = .1;
 
     [Q00, Q20, lce0] = find_steady_state(Q0, p0, q0, parms, 'regular');
-    x0 = [Q00 Q20 lce0 0 0 0]';
+    x0 = [Q00 Q20 lce0 0 0 0 0]';
     xp0 = zeros(size(x0));
     
     if parms.J1 == 0
@@ -41,8 +41,8 @@ if parms.f > 0
 %     parms.Lts = cumtrapz(tis, vts * parms.gamma);
     parms.ti = tis;
     parms.Cas = Cas;
-%     sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_length(t,y,yp,parms), [0 max(tis)], sol0.y(:,end), dx, odeopt);
-    sol = ode15s(@(t,y) fiber_dynamics_explicit_length(t,y,parms), [0 max(tis)], sol0.y(:,end), odeopt);
+    sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_length(t,y,yp,parms), [0 max(tis)], sol0.y(:,end), dx, odeopt);
+%     sol = ode15s(@(t,y) fiber_dynamics_explicit_length(t,y,parms), [0 max(tis)], sol0.y(:,end), odeopt);
     [~, xdot] = deval(sol, sol.x);
     toc
     
@@ -58,7 +58,8 @@ if parms.f > 0
     Li      = interp1(sol.x, sol.y(3,:), tis); % length
     Noni    = interp1(sol.x, sol.y(4,:), tis); % thin filament activation
     DRXi    = interp1(sol.x, sol.y(5,:), tis); % thick filament activation
-    Ri      = interp1(sol.x, sol.y(6,:), tis); % thick filament activation
+    Ri      = interp1(sol.x, sol.y(6,:), tis); % 
+    Lti     = interp1(sol.x, sol.y(7,:), tis); %  
     
     % state derivatives
     dQ0dti  = interp1(sol.x, xdot(1,:), tis); % zero-order moment time derivative
@@ -67,22 +68,27 @@ if parms.f > 0
     dNondti = interp1(sol.x, xdot(4,:), tis); % thin filament activation time derivative
     dDRXdti = interp1(sol.x, xdot(5,:), tis); % thick filament activation time derivative
     dRdti   = interp1(sol.x, xdot(6,:), tis);
+    vti     = interp1(sol.x, xdot(7,:), tis); %  
     
     % state-dependent variables
-    dlse = parms.Lts - Li;
+    dlse = Lti - Li;
     Fse = parms.Fse_func(dlse, parms);
     Fpe = parms.Fpe_func(Li, parms);
     Fce = Fse - Fpe;
-    Q1i = Fce - Q0i;
     kse = parms.kse_func(dlse, parms);
-    kpe = parms.kpe .* (Li > 0);
+    kpe = parms.kpe_func(Li, parms);
+%     kpe = parms.kpe .* (Li > 0);
 
     % mean and standard deviation
-    K = parms.K;
-    Q00i = log(1+exp(Q0i*K))/K;
-    pi = Q1i./Q00i;
-    q = Q2i./Q00i - (Q1i./Q00i).^2;
-    qi = log(1+exp(q*K))/K;
+%     K = parms.K;
+%     Q00i = log(1+exp(Q0i*K))/K;
+    Q00i = max(Q0i, 1e-4);
+    Q1i = Fce - Q00i;
+    pi = Q1i./Q00i; 
+    qi = Q2i./Q00i - pi.^2;  
+    % q = log(1+exp(q*k))/k;
+    qi = max(qi, 1e-6);
+
     
     dQ1dti = 0;
 %     error_Q1i = 0;
@@ -99,35 +105,36 @@ if parms.f > 0
 %     
 %     figure(1)
 %     plot(IG.error')
-    %%
-    % save to struct
+    %% save to struct
+    % states
     IG.Q0i = Q0i;
-    IG.Q1i = Q1i;
     IG.Q2i = Q2i;
-    IG.Fcei = Fce;
-    IG.Fsei = Fse;
-    IG.Fpei = Fpe;
+    IG.Li = Li;
     IG.Noni = Noni;
     IG.DRXi = DRXi;
-    IG.Li = Li;
-    IG.Ldi = Ldi;
     IG.Ri = Ri;
+    IG.Lti = Lti;
     
+    % state derivatives
     IG.dQ0dti = dQ0dti;
-    IG.dQ1dti = dQ1dti;
     IG.dQ2dti = dQ2dti;
+    IG.Ldi = Ldi;
     IG.dNondti = dNondti;
     IG.dDRXdti = dDRXdti;
     IG.dRdti = dRdti;
+    IG.vti = vti;
     
+    % other variables
+    IG.Q1i = Q1i;
+    IG.Fcei = Fce;
+    IG.Fsei = Fse;
+    IG.Fpei = Fpe;
+    IG.dQ1dti = dQ1dti;
     IG.F0doti = F0dot;
-    
     IG.pi = pi;
     IG.qi = qi;
     IG.Q00i = Q00i;
 
-   
-    
 else
     parms.vts = 0;
     parms.ti = 0;

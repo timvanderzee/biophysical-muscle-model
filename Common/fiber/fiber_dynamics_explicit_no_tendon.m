@@ -36,16 +36,18 @@ if length(y) > 7
 end
 
 % Cross-bridge states
-k   = parms.K;
+% k   = parms.K;
 F   = Q1 + Q0;
 % F   = log(1+exp(F*k))/k;
-Q00 = log(1+exp(Q0*k))/k;
+% Q00 = log(1+exp(Q0*k))/k;
 % Q0 = Q00;
+Q00 = max(Q0, 1e-6);
 
 % mean and standard deviation
 p = Q1./Q00; 
 q = Q2./Q00 - p.^2;  
-q = log(1+exp(q*k))/k;
+% q = log(1+exp(q*k))/k;
+q = max(q, 0);
 
 if isfield(parms, 'FL_overlap')
     if parms.FL_overlap
@@ -109,15 +111,18 @@ kpe = 0;
 % kpe = parms.kpe .* (L > 0);
 % Fpe = 0;
 % 
-% if isfield(parms, 'PE_isw_SE') % PE in series with SE
-%     if parms.PE_isw_SE && L > 0
+if isfield(parms, 'PE_isw_SE') % PE in series with SE
+    if parms.PE_isw_SE && L > 0
 %         kpe = parms.kpe;
+        kpe = parms.kpe_func(L, parms);
 %         Fpe = parms.Fpe_func(L, parms);
-%     end
-% end
+    end
+end
 % 
 % Ftot = F;
-kse = parms.kse * (F  .* (F>0) + parms.kse0);
+% dLse = Lt - L;
+% kse = parms.kse_func(dLse, parms);
+kse = parms.kse * (F + parms.kse0);
 
 % dlse = parms.Lse_func(Ftot, parms);
 % kse = parms.kse_func(Ftot, parms);
@@ -138,7 +143,7 @@ dQ2dt = (Q2dot + 2 * Ld .* Q1);
 dDRXdt = J1 - J2 - (Q0dot + Rdot);
 
 if length(y) > 7
-    v = vMtilda;
+    v = vMtilda .* parms.gamma;
 else
     v = [];
 end
