@@ -52,7 +52,7 @@ Cas = data.Cas;
 vts = data.v;
 Fts = data.F;
 toc = data.t;
-% Lts = data.L;
+Lts = data.L;
 idF = data.idF;
 idC = [1:300 data.idC];
 
@@ -66,13 +66,13 @@ if parms.f > 0 % biophysical models
     Q0  = opti.variable(1,N);
     Q2  = opti.variable(1,N);
     L   = opti.variable(1,N);
-    Lts  = opti.variable(1,N);
+%     Lts  = opti.variable(1,N);
     
     % define extra variables
     p   = opti.variable(1,N); % mean strain of the distribution
     q   = opti.variable(1,N); % standard deviation strain of the distribution
     Fse = opti.variable(1,N);
-%     Q1  = opti.variable(1,N);
+    Q1  = opti.variable(1,N);
 
     % (slack) controls (defined as above)
     dQ0dt  = opti.variable(1,N);
@@ -84,14 +84,17 @@ if parms.f > 0 % biophysical models
     dlse = Lts - L;
     opti.subject_to(Fse == kse0 * (exp(kse*dlse)-1));
     
-    Fpe = kpe * log(1+exp(L*parms.K))/parms.K + Fpe0;
+%     Fpe = kpe * log(1+exp(L*parms.K))/parms.K + Fpe0;
+    Fpe = kpe * L + Fpe0;
     Fce = Fse - Fpe;
-    Q1 = Fce - Q0;
+    
+    opti.subject_to(Q1 == Fce - Q0);
     
 %     opti.subject_to(Fce + Fpe == Fse);
  
     % instantaneous stiffnesses
-    Kpe = kpe .* (1 - 1./(exp(parms.K*L)+1));
+%     Kpe = kpe .* (1 - 1./(exp(parms.K*L)+1));
+    Kpe = kpe;
 %     Kse = kse * (Fse + kse0);
     Kse = kse0 * kse * exp(kse*dlse);
     
@@ -101,7 +104,7 @@ if parms.f > 0 % biophysical models
     
     % (potentially) simple bounds
     opti.subject_to(q >= 0);
-    opti.subject_to(Q0 > 1e-6);
+    opti.subject_to(Q0 > 0);
 %     opti.subject_to(L < Lts); % avoid negative dlse
 %     opti.subject_to(Q1 > -Q0);
 %     opti.subject_to(Q2 > 0);
@@ -109,11 +112,11 @@ if parms.f > 0 % biophysical models
 %     opti.subject_to(Fce > 0);
     
     % initial guess states
-    opti.set_initial(Q0, IG.Q00i);
-%     opti.set_initial(Q1, IG.Q1i);
+    opti.set_initial(Q0, IG.Q0i);
+    opti.set_initial(Q1, IG.Q1i);
     opti.set_initial(Q2, IG.Q2i);
     opti.set_initial(L, IG.Li);
-    opti.set_initial(Lts, IG.Lti);
+%     opti.set_initial(Lts, IG.Lti);
       
     % initial guess extra variables
     opti.set_initial(p, IG.pi);
@@ -130,14 +133,14 @@ if parms.f > 0 % biophysical models
     % if thin filament cooperativity
     if parms.koop > 0
         Non = opti.variable(1,N);
-        opti.subject_to(Non > 0);
+        opti.subject_to(Non >= 0);
         opti.set_initial(Non, IG.Noni);
     end
     
     % if thick filament cooperativity
     if parms.J1 > 0    % cooperative models
         DRX = opti.variable(1,N);
-        opti.subject_to(DRX > 0);
+        opti.subject_to(DRX >= 0);
         opti.set_initial(DRX, IG.DRXi);
     end
     
@@ -205,12 +208,12 @@ if parms.f > 0 % biophysical models
     error_length    = LengthEquilibrium(Q0, F0dot, Ld, vts, Kse, Kpe, parms.gamma);
     opti.subject_to(error_length(:) == 0);
     
-    V = vts * parms.gamma;
+%     V = vts * parms.gamma;
     
     % needed for slack controls
     opti.subject_to((Ld(1:N-1) + Ld(2:N))*dt/2 + L(1:N-1) == L(2:N));
-    opti.subject_to((V(1:N-1) + V(2:N))*dt/2 + Lts(1:N-1) == Lts(2:N));
-    opti.subject_to(Lts(1) == 0);
+%     opti.subject_to((V(1:N-1) + V(2:N))*dt/2 + Lts(1:N-1) == Lts(2:N));
+%     opti.subject_to(Lts(1) == 0);
     
     %% cooperativity
     if parms.koop > 0 % cooperative
@@ -244,7 +247,7 @@ Frel = Fse * parms.Fscale;
 
 % not needed for Hill-type, because already enforced by dynamics
 if parms.f > 0 % biophysical models
-    opti.subject_to(Frel(1) == 1);
+    opti.subject_to(Frel(1:10) == 1);
 end
 
 Fcost = (Frel(idF) - Fts(idF)).^2;
@@ -254,7 +257,7 @@ J = 0;
 J = J + w(1) * sum(Fcost); % force-velocity fitting
 
 if parms.f > 0
-    J = J + w(3) * (sum(dQ0dt(idC).^2) + sum(dQ2dt(idC).^2) + 1e-3 * dLcrit.^2); % regularization term
+    J = J + w(3) * (sum(dQ0dt(idC).^2) + sum(dQ2dt(idC).^2)); % regularization term
 else
     J = J + w(3) * (sum(vi(idC).^2)); % regularization term
 end
@@ -273,7 +276,23 @@ options.detect_simple_bounds           = true;
 options.ipopt.max_iter           = 500;
 
 opti.solver('ipopt',options);
-% y = opti.debug.value(error_length,opti.initial())
+%%
+
+% error_length    = LengthEquilibrium(Q0, F0dot, Ld, vts, Kse, Kpe, parms.gamma);
+% [error_Q0, ~, error_Q2, F0dot, dRdt] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, parms.w, k11, k12, k21, k22, Non, Ld, DRX, b, k, R, dLcrit, ps2, parms.approx); 
+%     
+% x = opti.debug.value(Frel,opti.initial())
+% y = opti.debug.value(error_Q2,opti.initial())
+% 
+% close all
+% figure(1)
+% subplot(211)
+% plot(x)
+% 
+% subplot(212)
+% plot(y); hold on
+% % plot(IG.F0doti,'--')
+%%
 
 % Solve the OCP
 % p_opts = struct('detect_simple_bounds', true);

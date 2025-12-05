@@ -44,7 +44,7 @@ bnds.Fpe0 = [1e-5 1e-1];
 
 % parameters to be fitted
 if sum(mcode == [1 1 1]) == 3
-    optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop', 'kpe', 'Fpe0'};
+    optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop'};
 %     optparms = {};
 %     optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF'};
 elseif sum(mcode == [1 1 2]) == 3
@@ -134,7 +134,9 @@ for iF = iFs
     % add some parameters that didn't exist before
 %     parms.ps2 = 0;
     parms.PE_isw_SE = 1;
-
+%     parms.kpe = 0;
+%     parms.Fpe0 = 0;
+    
     parms.act = 1;
     parms.Noverlap = 1;
     parms.approx = 1;
@@ -251,8 +253,8 @@ for iF = iFs
     % specify biophysical parameters to be fitted
 %     parms.kF = parms.J1 * parms.JF;
     fparms = parms;
-    fparms.kF = min(fparms.kF, .9* max(bnds.kF));
-    fparms.kse0 = .15;
+%     fparms.kF = min(fparms.kF, .9* max(bnds.kF));
+%     fparms.kse0 = .15;
     
 %     figure(100)
     [newparms, out] = fit_model_parameters_v2(optparms, w, Xdata, fparms, IG, bnds);
@@ -325,7 +327,7 @@ for iF = iFs
     nFp = parms.Fpe_func(nL, newparms);
     nFi = interp1(nt, nF, out.t);
     
-    return
+    
 %     subplot(414); hold on
 %%
 close all
@@ -340,11 +342,13 @@ for i = 1:size(nsol.y,1)
     
 end
 
-%%
+%
 figure(2)
 plot(Data.t, Data.F,'k.'); hold on
 plot(out.t, out.Fse * parms.Fscale)
 plot(out.t, nFi * parms.Fscale);
+
+legend('Data', 'Fit', 'Sim')
     
     return
      
