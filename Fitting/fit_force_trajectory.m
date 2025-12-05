@@ -66,8 +66,8 @@ for iF = iFs
     cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
     load([fibers{iF},'_cor_new.mat'],'data')
    
-%     Ks = find(Fm(:,iF) < .05); % only consider active trials
-Ks = 1;
+    Ks = find(Fm(:,iF) > .05); % only consider active trials
+%     Ks = 1;
 %     Ks = find(Fm(:,iF) > 0); % only consider active trials
     Data = prep_data_v2(data,n, m,Ks,tiso);
     [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), N);
@@ -310,7 +310,7 @@ Ks = 1;
     Q0 = .1;
     p0 = 0;
     q0 = .1;
-    [Q00, Q20, lce0] = find_steady_state(Q0, p0, q0, parms, 'regular');
+    [Q00, Q20, lce0] = find_steady_state(Q0, p0, q0, newparms, 'regular');
     x0 = [Q00 Q20 lce0 0 0 0 0];
 
     nsol = ode15s(@(t,y) fiber_dynamics_explicit_length(t,y, newparms), [0 max(tis)], x0, odeopt);
@@ -325,9 +325,26 @@ Ks = 1;
     nFp = parms.Fpe_func(nL, newparms);
     nFi = interp1(nt, nF, out.t);
     
-    subplot(414); hold on
-    plot(out.t, out.Fse * parms.Fscale)
-    plot(out.t, nFi * parms.Fscale);
+    return
+%     subplot(414); hold on
+%%
+close all
+figure(1)
+
+out.R = zeros(size(out.Q0));
+X = [out.Q0; out.Q2; out.L; out.Non; out.DRX; out.R; out.Lts];
+
+for i = 1:size(nsol.y,1)
+    nexttile
+    plot(nsol.x, nsol.y(i,:), out.t, X(i,:));
+    
+end
+
+%%
+figure(2)
+plot(Data.t, Data.F,'k.'); hold on
+plot(out.t, out.Fse * parms.Fscale)
+plot(out.t, nFi * parms.Fscale);
     
     return
      

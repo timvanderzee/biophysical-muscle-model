@@ -303,6 +303,8 @@ try
         out.dQ1dt = sol.value(dQ1dt);
         out.dQ2dt = sol.value(dQ2dt);
         
+        out.Lts = sol.value(Lts);
+        
         out.dDRXdt = sol.value(dDRXdt);
         out.dNondt = sol.value(dNondt);
         

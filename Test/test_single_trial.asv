@@ -1,4 +1,4 @@
-% clear all; close all ;clc
+clear all; close all ;clc
 [username, githubfolder] = get_paths();
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
@@ -14,8 +14,25 @@ cd(input_foldername)
 load(['parms_',modelname, parms_version, '.mat'], 'newparms')
 parms = update_parms(newparms);
 
+load('temp_parms.mat', 'newparms')
+parms = newparms;
 
-pCa     = 9;
+odeopt = odeset('maxstep', 1e-2);
+
+Q0 = .1;
+p0 = 0;
+q0 = .1;
+[Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, 'regular');
+parms.x0 = [Q00 Q20 lce0 0 0 0 0];
+
+sol = ode15s(@(t,y) fiber_dynamics_explicit_length(t,y, parms), [0 max(parms.ti)], parms.x0(:), odeopt);
+
+figure(2)
+plot(sol.x, sol.y(2,:))
+
+%%
+
+pCa     = 4.5;
 Ca      = 10.^(-pCa+6);
 AMP     = .0383;
 ISI     = .001;
@@ -33,25 +50,28 @@ N       = round(tiso / dt);
 
 %%
 clc
-parms.vts = [vis vis vis vis];
-parms.ti = linspace(0, max(tis)*4, length(parms.vts));
-parms.Cas = [Cas Cas Cas Cas];
-parms.Lts = [Lis Lis Lis Lis] * parms.gamma;
+% parms.vts = [vis vis vis vis];
+% parms.ti = linspace(0, max(tis)*4, length(parms.vts));
+% parms.Cas = [Cas Cas Cas Cas];
+% parms.Lts = [Lis Lis Lis Lis] * parms.gamma;
+% 
+% parms.x0 = zeros(1,6);
 
-parms.x0 = zeros(1,6);
+% parms.Fpe_func = @(Lce, parms) parms.kpe * log(1+exp(Lce*parms.K))/parms.K + parms.Fpe0;
+% parms.kpe_func = @(Lce, parms) parms.kpe .* (1 - 1./(exp(parms.K*Lce)+1));
+% 
+% parms.Fpe_func = @(L, parms) parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0;
+% % parms.Fpe_func = @(L, parms) parms.kpe*L + parms.Fpe0;
+% parms.kpe_func = @(Lce, parms) parms.kpe;
 
-parms.Fpe_func = @(Lce, parms) parms.kpe * log(1+exp(Lce*parms.K))/parms.K + parms.Fpe0;
-parms.kpe_func = @(Lce, parms) parms.kpe .* (1 - 1./(exp(parms.K*Lce)+1));
-
-parms.Fpe_func = @(L, parms) parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0;
-% parms.Fpe_func = @(L, parms) parms.kpe*L + parms.Fpe0;
-parms.kpe_func = @(Lce, parms) parms.kpe;
-
-Q0 = 0;
+Q0 = .1;
 p0 = 0;
 q0 = .1;
-
-parms.Fse_func = @(dlse, parms) parms.kse0*(exp(parms.kse*dlse)-1);
+        [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, 'regular');
+        parms.x0 = [Q00 Q20 lce0 0 0 0 0];
+        sol = ode15s(@(t,y) fiber_dynamics_explicit_length(t,y, parms), [0 max(parms.ti)], parms.x0(:), odeopt);
+        
+% parms.Fse_func = @(dlse, parms) parms.kse0*(exp(parms.kse*dlse)-1);
 
 %%
 close all
@@ -59,27 +79,28 @@ odeopt = odeset('maxstep', 1e-1);
 
 % parms.kpe = .1;
 
-parms.K = 1e2;
+% parms.K = 1e2;
 ls = {'-', '--', ':'};
 
-for j = 1:2
+for j = 1
     if j == 1
         [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, 'regular');
         parms.x0 = [Q00 Q20 lce0 0 0 0 0];
         sol = ode15s(@(t,y) fiber_dynamics_explicit_length(t,y, parms), [0 max(parms.ti)], parms.x0(:), odeopt);
     elseif j == 2
-        [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, 'adjusted');
-        parms.x0 = [Q00 Q10 Q20 lce0 0 0 0];
+        parms.PE_isw_SE = 1;
+        [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, 'regular');
+        parms.x0 = [Q00 Q10 Q20 lce0 0 0 0 0];
         sol = ode15s(@(t,y) fiber_dynamics_explicit_no_tendon(t,y, parms), [0 max(parms.ti)], parms.x0(:), odeopt);
     elseif j == 3
         [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, 'regular');
-        parms.x0 = [Q00 Q20 lce0 0 0 0];
+        parms.x0 = [Q00 Q20 lce0 0 0 0 0];
         parms.x0p = zeros(size(parms.x0));
         sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_length(t,y,yp, parms), [0 max(parms.ti)], parms.x0(:), parms.x0p(:), odeopt);
     end
     
     
-    L = sol.y(3,:);
+    L = sol.y(end-4,:);
 %     t = rem(sol.x, max(Ts)); 
     t = sol.x;
     dlse = interp1(parms.ti, parms.Lts, sol.x) - L;
@@ -88,7 +109,8 @@ for j = 1:2
     Fse = parms.Fse_func(dlse, parms);
      
     if j == 2
-        Fpe = parms.Fpe_func(interp1(parms.ti, parms.Lts, sol.x), parms);
+%         Fpe = parms.Fpe_func(interp1(parms.ti, parms.Lts, sol.x), parms);
+         Fpe = parms.Fpe_func(L, parms);
         F = Fse + Fpe;
     else
         Fpe = parms.Fpe_func(L, parms);
@@ -106,21 +128,25 @@ for j = 1:2
     title('XB length')
 
     subplot(313)
-    plot(t, F, 'linestyle', ls{j}); hold on
-    plot(t, Fpe, ':')
-    plot(t, F-Fpe, '--')
+    plot(t, Fse, 'linestyle', ls{j}); hold on
+%     plot(t, Fpe, ':')
+%     plot(t, F-Fpe, '--')
     title('Force')
 end
+
+%%
+figure(2)
+plot(sol.x, sol.y(2,:))
 
     % plot(t, F1-F2)
 
 %%
-N = length(sol.x);
-id = N;
-% id = 190;
-
-dy = fiber_dynamics_explicit_length(sol.x(id), sol.y(:,id), parms)
-
-soln = sol.y(:,id) + dy * .001
-fiber_dynamics_explicit_length(sol.x(id), soln, parms)
+% N = length(sol.x);
+% id = N;
+% % id = 190;
+% 
+% dy = fiber_dynamics_explicit_length(sol.x(id), sol.y(:,id), parms)
+% 
+% soln = sol.y(:,id) + dy * .001
+% fiber_dynamics_explicit_length(sol.x(id), soln, parms)
 
