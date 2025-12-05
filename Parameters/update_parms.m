@@ -17,5 +17,7 @@ parms.myofilaments.thick_filament_length = 1530/2;
 parms.myofilaments.thin_filament_length = 1120;
 parms.myofilaments.bare_zone_length = 80;
 
+    parms.Fpe_func = @(L, parms) parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0;
+    parms.kpe_func = @(Lce, parms) parms.kpe .*(Lce>parms.lmtc0);
 
 end

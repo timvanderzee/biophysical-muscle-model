@@ -114,36 +114,15 @@ for iF = iFs
     [output_mainfolder, filename, opt_type, ~] = get_folder_and_model(mmcode);
     
     disp(filename)
-%     output_folder = [opt_type,'\normalized\with_PE_optimized\2_trials'];
-    
-    % get other parameters from other fiber    
-%     output_dir = [output_mainfolder{1}, '\', filename,vs{1}, output_folder];
-%     cd(output_dir)
-%     load([filename,'_F', num2str(iF),'_best.mat'],'parms','exitflag','fopt','C0','Cbounds','model','P0','P')
     
     foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
     cd(foldername)
     load(['parms_', filename, version, '.mat'], 'newparms')
 
     parms = newparms;
-    % convert to parms
-%     C = p_to_c(P, Cbounds);
-%     parms = C_to_parms(C, parms, parms.optvars);
-%     parms = calc_dependent_parms(parms);
     
     % add some parameters that didn't exist before
-%     parms.ps2 = 0;
     parms.PE_isw_SE = 1;
-%     parms.kpe = 0;
-%     parms.Fpe0 = 0;
-    
-    parms.act = 1;
-    parms.Noverlap = 1;
-    parms.approx = 1;
-    parms.K = 100;
-    parms.vF_func = @(vcerel,parms)parms.e(1)*log((parms.e(2)*vcerel./parms.vmax+parms.e(3))+sqrt((parms.e(2)*vcerel./parms.vmax+parms.e(3)).^2+1))+parms.e(4);
-    
-    % springs
     parms.Fse_func = @(dlse, parms) parms.kse0*(exp(parms.kse*dlse)-1);
     parms.Fpe0 = parms.Fpe0/2;
 %     parms.Fpe_func = @(Lce, parms) parms.kpe * log(1+exp(Lce*parms.K))/parms.K + parms.Fpe0;

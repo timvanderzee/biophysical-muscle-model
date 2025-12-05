@@ -3,7 +3,8 @@ function[Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, type)
 % also returns Q00 (obeying log function) and Q20 (from q0, p0 and Q0)
 
 % avoid very small numbers
-Q00 = log(1+exp(Q0))/parms.K; % note: goes to inf for large k, may need another function
+% Q00 = log(1+exp(Q0))/parms.K; % note: goes to inf for large k, may need another function
+Q00 = max(Q0, 1e-6);
 
 % provide Q2
 Q20 = (q0 + p0^2) * Q00;
