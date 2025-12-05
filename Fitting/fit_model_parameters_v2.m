@@ -91,7 +91,8 @@ if parms.f > 0 % biophysical models
  
     % instantaneous stiffnesses
     Kpe = kpe .* (1 - 1./(exp(parms.K*L)+1));
-    Kse = kse * (Fse + kse0);
+%     Kse = kse * (Fse + kse0);
+    Kse = kse0 * kse * exp(kse*dlse);
     
     % extra constraints
     opti.subject_to(Q1 - Q0 .* p == 0);
@@ -104,7 +105,7 @@ if parms.f > 0 % biophysical models
 %     opti.subject_to(Q1 > -Q0);
     opti.subject_to(Q2 > 0);
     opti.subject_to(Fse > 0);
-    opti.subject_to(Fce > 0);
+%     opti.subject_to(Fce > 0);
     
     % initial guess states
     opti.set_initial(Q0, IG.Q00i);

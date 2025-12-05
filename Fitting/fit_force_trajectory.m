@@ -44,8 +44,8 @@ bnds.Fpe0 = [1e-5 1e-1];
 
 % parameters to be fitted
 if sum(mcode == [1 1 1]) == 3
-    optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop', 'kpe', 'Fpe0'};
-%     optparms = {'kpe', 'Fpe0'};
+%     optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop', 'kpe', 'Fpe0'};
+    optparms = {'kpe', 'Fpe0'};
 %     optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF'};
 elseif sum(mcode == [1 1 2]) == 3
     optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'koop', 'kpe', 'Fpe0'};
@@ -66,7 +66,7 @@ for iF = iFs
     cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
     load([fibers{iF},'_cor_new.mat'],'data')
    
-    Ks = find(Fm(:,iF) > .05); % only consider active trials
+    Ks = find(Fm(:,iF) < .05); % only consider active trials
 %     Ks = find(Fm(:,iF) > 0); % only consider active trials
     Data = prep_data_v2(data,n, m,Ks,tiso);
     [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), N);
@@ -140,8 +140,13 @@ for iF = iFs
     parms.K = 100;
     parms.vF_func = @(vcerel,parms)parms.e(1)*log((parms.e(2)*vcerel./parms.vmax+parms.e(3))+sqrt((parms.e(2)*vcerel./parms.vmax+parms.e(3)).^2+1))+parms.e(4);
     
-    parms.Fpe_func = @(Lce, parms) parms.kpe * log(1+exp(Lce*parms.K))/parms.K + parms.Fpe0;
-    parms.kpe_func = @(Lce, parms) parms.kpe .* (1 - 1./(exp(parms.K*Lce)+1));
+    % springs
+    parms.Fse_func = @(dlse, parms) parms.kse0*(exp(parms.kse*dlse)-1);
+    
+%     parms.Fpe_func = @(Lce, parms) parms.kpe * log(1+exp(Lce*parms.K))/parms.K + parms.Fpe0;
+%     parms.kpe_func = @(Lce, parms) parms.kpe .* (1 - 1./(exp(parms.K*Lce)+1));
+    parms.Fpe_func = @(L, parms) parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0;
+    parms.kpe_func = @(Lce, parms) parms.kpe;
 
     if ~isfield(parms, 'gamma')
         parms.gamma = .5*parms.s / parms.h; % length scaling

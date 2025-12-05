@@ -1,4 +1,4 @@
-clear all; close all ;clc
+% clear all; close all ;clc
 [username, githubfolder] = get_paths();
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
@@ -15,7 +15,7 @@ load(['parms_',modelname, parms_version, '.mat'], 'newparms')
 parms = update_parms(newparms);
 
 
-pCa     = 7;
+pCa     = 9;
 Ca      = 10.^(-pCa+6);
 AMP     = .0383;
 ISI     = .001;
@@ -26,6 +26,9 @@ dt      = .001; % gives 10 points in SRS zone
 N       = round(tiso / dt);
 [tis, Cas, Lis, vis, ts, Ts] = create_input(tiso, dTt, dTc, ISI, Ca, N);
 
+
+% vis = vts;
+% Lis = Lts/parms.gamma;
 % load('protocol.mat')
 
 %%
@@ -62,7 +65,7 @@ ls = {'-', '--', ':'};
 for j = 1
     if j == 1
         [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, 'regular');
-        parms.x0 = [Q00 Q20 lce0 0 0 0];
+        parms.x0 = [Q00 Q20 lce0 0 0 0 0];
         sol = ode15s(@(t,y) fiber_dynamics_explicit_length(t,y, parms), [0 max(parms.ti)], parms.x0(:), odeopt);
     elseif j == 2
         [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, 'adjusted');
@@ -76,8 +79,8 @@ for j = 1
     end
     
     
-    L = sol.y(end-3,:);
-    t = rem(sol.x, max(Ts)); 
+    L = sol.y(3,:);
+%     t = rem(sol.x, max(Ts)); 
     t = sol.x;
     dlse = interp1(parms.ti, parms.Lts, sol.x) - L;
     
@@ -95,7 +98,7 @@ for j = 1
     figure(1)
 
     subplot(311)
-    plot(t, L+dlse, 'linestyle', ls{j}); hold on
+    plot(t, sol.y(end,:), 'linestyle', ls{j}); hold on
     title('Overall length')
     
     subplot(312)
@@ -113,10 +116,11 @@ end
 
 %%
 N = length(sol.x);
-id = N-10;
-id = 190;
+id = N;
+% id = 190;
 
 dy = fiber_dynamics_explicit_length(sol.x(id), sol.y(:,id), parms)
 
-
+soln = sol.y(:,id) + dy * .001
+fiber_dynamics_explicit_length(sol.x(id), soln, parms)
 

@@ -7,11 +7,11 @@ else
     vMtilda = interp1(parms.ti, parms.vts, t);
 end
 
-if numel(parms.Lts) == 1
-    Lts = parms.Lts;
-else
-    Lts = interp1(parms.ti, parms.Lts, t);
-end
+% if numel(parms.Lts) == 1
+%     Lts = parms.Lts;
+% else
+%     Lts = interp1(parms.ti, parms.Lts, t);
+% end
 
 if numel(parms.Cas) == 1
     Ca = parms.Cas;
@@ -29,6 +29,7 @@ Lce  = y(3);
 Non = y(4);
 DRX = y(5);
 R = y(6);
+Lts = y(7);
 
 % PE
 kpe = parms.kpe_func(Lce, parms);
@@ -38,7 +39,7 @@ Fpe = parms.Fpe_func(Lce, parms);
 dLse = Lts - Lce;
 Fse = parms.Fse_func(dLse, parms);
 kse = parms.kse_func(dLse, parms);
-% kse = parms.kse * (Fse .* (Fse > 0) + parms.kse0);
+% kse = parms.kse * Fse + parms.kse0;
 
 % CE
 Fce = Fse - Fpe;
@@ -47,11 +48,13 @@ Q1 = Fce - Q0;
 % mean and standard deviation
 k   = parms.K;
 % Fce = log(1+exp(Fce*k))/k; % note: goes to inf for large k, may need another function
-Q00 = log(1+exp(Q0*k))/k + eps; % note: goes to inf for large k, may need another function
+% Q00 = log(1+exp(Q0*k))/k + eps; % note: goes to inf for large k, may need another function
+Q00 = max(Q0, 1e-6);
 % Q0 = Q00;
 p = Q1./Q00; 
 q = Q2./Q00 - p.^2;  
-q = log(1+exp(q*k))/k;
+% q = log(1+exp(q*k))/k;
+q = max(q, 0);
 
 if isfield(parms, 'FL_overlap')
     if parms.FL_overlap
@@ -123,6 +126,6 @@ dQ2dt = (Q2dot + 2 * Ld .* Q1);
 % attachment must be greater. thus, we need to add Rdot to Q0dot
 dDRXdt = J1 - J2 - (Q0dot + Rdot);
 
-dx = [dQ0dt; dQ2dt; Ld; dNondt; dDRXdt; Rdot];
+dx = [dQ0dt; dQ2dt; Ld; dNondt; dDRXdt; Rdot; vMtilda .* parms.gamma];
 
 end

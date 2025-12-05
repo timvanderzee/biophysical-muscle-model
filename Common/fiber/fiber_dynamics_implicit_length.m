@@ -37,8 +37,8 @@ Fpe = parms.Fpe_func(Lce, parms);
 % SE
 dLse = Lts - Lce;
 Fse = parms.Fse_func(dLse, parms);
-% kse = parms.kse_func(dLse, parms);
-kse = parms.kse * (Fse .* (Fse > 0) + parms.kse0);
+kse = parms.kse_func(dLse, parms);
+% kse = parms.kse * (Fse .* (Fse > 0) + parms.kse0);
 
 % CE
 Fce = Fse - Fpe;
