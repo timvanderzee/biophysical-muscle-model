@@ -43,9 +43,9 @@ parms.x0 = zeros(1,6);
 parms.Fpe_func = @(Lce, parms) parms.kpe * log(1+exp(Lce*parms.K))/parms.K + parms.Fpe0;
 parms.kpe_func = @(Lce, parms) parms.kpe .* (1 - 1./(exp(parms.K*Lce)+1));
 
-parms.Fpe_func = @(L, parms) parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0;
+% parms.Fpe_func = @(L, parms) parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0;
 % parms.Fpe_func = @(L, parms) parms.kpe*L + parms.Fpe0;
-parms.kpe_func = @(Lce, parms) parms.kpe;
+% parms.kpe_func = @(Lce, parms) parms.kpe;
 
 Q0 = 0;
 p0 = 0;
@@ -60,12 +60,12 @@ odeopt = odeset('maxstep', 1e-1);
 % parms.kpe = .1;
 
 parms.K = 1e2;
-ls = {'-', '--', '-', '--'};
+ls = {'-', '--', '-', '-'};
 
-ozs = [1 1 0 0];
+ozs = [1 1 1 1];
 
 
-for j = [3 4]
+for j = [1 4]
     parms.PE_isw_SE = ozs(j);
     
     if parms.PE_isw_SE
@@ -90,11 +90,16 @@ for j = [3 4]
         sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_length(t,y,yp, parms), [0 max(parms.ti)], parms.x0(:), parms.x0p(:), odeopt);
     
     elseif j == 4
-        parms.x0 = [Q00 Q10 Q20 0 0 0];
+        [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, type);
+        parms.x0 = [Q00 Q10 Q20 lce0 0 0];
         parms.x0p = zeros(size(parms.x0));
         sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(parms.ti)], parms.x0(:), parms.x0p(:), odeopt);
+        
     end
     
+    [~, xdot] = deval(sol, sol.x);
+    
+   
 %     t = rem(sol.x, max(Ts)); 
     t = sol.x;
 
@@ -102,13 +107,28 @@ for j = [3 4]
     
     if j < 4
         L = sol.y(3,:);
+        Ld = xdot(3,:);
         dlse = Lt - L;
         Fse = parms.Fse_func(dlse, parms);
         
+        
+        
     else
-        Fse = sol.y(1,:) + sol.y(2,:);
-        dlse = parms.Lse_func(Fse, parms);
-        L = Lt - dlse;
+        Fce = sol.y(1,:) + sol.y(2,:);
+
+        L = sol.y(4,:);
+        dlse = Lt - L;
+%         Fse = parms.Fse_func(dlse, parms);
+        
+        if parms.PE_isw_SE
+            Fp =  parms.Fpe_func(L, parms);
+            Fse = Fce + Fp;
+        else
+            Fse = Fce;
+        end
+
+        Ld = xdot(4,:);
+%         Ld = sol.y(4,:);
     end
     
     if parms.PE_isw_SE
@@ -121,15 +141,20 @@ for j = [3 4]
 
     figure(1)
 
-    subplot(311)
+    subplot(411)
     plot(t, Lt, 'linestyle', ls{j}); hold on
     title('Overall length')
     
-    subplot(312)
+    subplot(412)
     plot(t, L, 'linestyle', ls{j}); hold on
     title('XB length')
 
-    subplot(313)
+
+    subplot(413)
+    plot(t, Ld, 'linestyle', ls{j}); hold on
+    title('XB velocity')
+
+    subplot(414)
     plot(t, F, 'linestyle', ls{j}); hold on
 %     plot(t, Fpe, ':')
 %     plot(t, F-Fpe, '--')
