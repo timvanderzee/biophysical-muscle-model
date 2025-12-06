@@ -1,6 +1,9 @@
-function[parms, out] = fit_model_parameters_v2_old(opti, optparms, w, data, parms, IG, bnds)
+function[parms, out] = fit_model_parameters_v2(optparms, w, data, parms, IG, bnds)
 
 import casadi.*
+
+% initialise opti structure
+opti = casadi.Opti();
 
 % parameters
 allparms = {'f','k11','k12','k21','k22','JF','koop','J1','J2', 'kon', 'koff', 'kse','kse0', 'kpe', 'Fpe0','b','k','dLcrit', 'gamma', 'kF', 'vmax', 'kappa', 'ps2', 'act_max'};
@@ -66,8 +69,8 @@ if parms.f > 0 % biophysical models
     % define extra variables
     p  = opti.variable(1,N); % mean strain of the distribution
     q  = opti.variable(1,N); % standard deviation strain of the distribution
-    F  = opti.variable(1,N);
-    F0dot  = opti.variable(1,N);
+%     F  = opti.variable(1,N);
+%     F0dot  = opti.variable(1,N);
     
     % (slack) controls (defined as above)
     dQ0dt  = opti.variable(1,N);
@@ -75,19 +78,20 @@ if parms.f > 0 % biophysical models
     dQ2dt  = opti.variable(1,N);
     
     % extra constraints
-    opti.subject_to(dQ0dt + dQ1dt - F0dot - Ld .* Q0 == 0);
-    opti.subject_to(Q0 + Q1 - F == 0);
+%     opti.subject_to(dQ0dt + dQ1dt - F0dot - Ld .* Q0 == 0);
+%     opti.subject_to(Q0 + Q1 - F == 0);
     opti.subject_to(Q1 - Q0 .* p == 0);
     opti.subject_to(Q2 - Q0 .* (p.^2 + q) == 0);
     
     % (potentially) simple bounds
     opti.subject_to(q > 0);
     opti.subject_to(Q0 > 0);
+    opti.subject_to(Q1 > -Q0);
     opti.subject_to(Q2 > 0);
-    opti.subject_to(F > 0);
+%     opti.subject_to(F > 0);
     
     % set initial guess
-    opti.set_initial(F, IG.Fi);
+%     opti.set_initial(F, IG.Fi);
     opti.set_initial(Q0, IG.Q00i);
     opti.set_initial(Q1, IG.Q1i);
     opti.set_initial(Q2, IG.Q2i);
@@ -97,36 +101,36 @@ if parms.f > 0 % biophysical models
     opti.set_initial(dQ0dt, IG.dQ0dti);
     opti.set_initial(dQ1dt, IG.dQ1dti);
     opti.set_initial(dQ2dt, IG.dQ2dti);
-    opti.set_initial(F0dot, IG.F0doti);
+%     opti.set_initial(F0dot, IG.F0doti);
     
     if parms.J1 > 0    % cooperative models
         Non = opti.variable(1,N);
         DRX = opti.variable(1,N);
         
-        dNondt = opti.variable(1,N);
-        dDRXdt = opti.variable(1,N);
+%         dNondt = opti.variable(1,N);
+%         dDRXdt = opti.variable(1,N);
         
         % (potentially) simple bounds
         opti.subject_to(Non > 0);
         opti.subject_to(DRX > 0);
         
-        opti.set_initial(dNondt, IG.dNondti);
-        opti.set_initial(dDRXdt, IG.dDRXdti);
+%         opti.set_initial(dNondt, IG.dNondti);
+%         opti.set_initial(dDRXdt, IG.dDRXdti);
         opti.set_initial(Non, IG.Noni);
         opti.set_initial(DRX, IG.DRXi);
     end
     
     if parms.b > 0 % FD model
         R = opti.variable(1,N);
-        dRdt = opti.variable(1,N);
+%         dRdt = opti.variable(1,N);
         
         opti.set_initial(R, IG.Ri);
-        opti.set_initial(dRdt, IG.dRdti);
+%         opti.set_initial(dRdt, IG.dRdti);
         
         opti.subject_to(R >= 0);
     else
         R = zeros(1, N);
-        dRdt = zeros(1,N);
+%         dRdt = zeros(1,N);
     end
     
 else % Hill-type model
@@ -157,36 +161,73 @@ else % Hill-type model
 end
 
 %% dynamics constraints
-if parms.f > 0 % biophysical models
+if parms.f > 0 % biophysical models    
 
-    % specify dynamics using error
-    if parms.J1 > 0 % cooperative
-        error_thin      = ThinEquilibrium(Cas, Q0, Non, dNondt, kon, koff, koop, parms.Noverlap); % thin filament dynamics
-        error_thick     = ThickEquilibrium(Q0, dQ0dt, F, DRX, dDRXdt, J1, J2, JF, parms.Noverlap, R, dRdt); % thick filament dynamics
-        
-        opti.subject_to(error_thin(:) == 0);
-        opti.subject_to(error_thick(:) == 0);
-    else
+    
+    if parms.J1 == 0 % cooperative
         Non = Cas.^n ./ (kappa^n + Cas.^n); % sigmoid
         DRX = 1 - Q0;
     end
     
-    % cross-bridge dynamics
-    [error_Q0, error_Q1, error_Q2,  Fdot, Rdot] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, parms.w, k11, k12, k21, k22,  Non, Ld, DRX, b, k, R, dLcrit, ps2, parms.approx); % cross-bridge dynamics
-    
-    error_R = dRdt - Rdot;
-    error_length    = LengthEquilibrium(Q0, F, F0dot, Ld, vts, kse0, kse, parms.gamma);
-    
-    % set errors equal to zero
+    %% cross-bridge dynamics
+    [error_Q0, error_Q1, error_Q2, F0dot, dRdt] = MuscleEquilibrium(Q0, Q1, p, q, dQ0dt, dQ1dt, dQ2dt, f, parms.w, k11, k12, k21, k22, Non, Ld, DRX, b, k, R, dLcrit, ps2, parms.approx); 
     opti.subject_to(error_Q0(:) == 0);
     opti.subject_to(error_Q1(:) == 0);
     opti.subject_to(error_Q2(:) == 0);
+
+%     % get functions
+%     [IG, IGef] = get_IG_IGEf(parms.approx);
+% 
+%     % Compute Qdot
+%     [Q0dot, Q10dot, Q20dot, dRdt] = CrossBridge_Dynamics(Q0, p, q, f, parms.w, [k11 k12], [k21 -k22], IGef, Non, DRX, IG, b, k, R, dLcrit, ps2);
+% 
+%     % velocity - independent derivative
+%     F0dot  = Q0dot + Q10dot;
+% 
+%     dQ0dt = Q0dot;
+%     dQ1dt = Q10dot + 1 * Ld .* Q0;
+%     dQ2dt = Q20dot + 2 * Ld .* Q1;
+%     error_R = dRdt - Rdot;
+    
+    %% length dynamics
+    F = Q0 + Q1;
+    Kse = kse * (F + kse0);
+    error_length    = LengthEquilibrium(Q0, F0dot, Ld, vts, Kse, 0, parms.gamma);
+    
+
+    % set errors equal to zero
+
     opti.subject_to(error_length(:) == 0);
     
-    if parms.b > 0
-        opti.subject_to(error_R(:) == 0);
+        %% cooperativity
+    if parms.J1 > 0 % cooperative
+%         error_thin      = ThinEquilibrium(Cas, Q0, Non, dNondt, kon, koff, koop, parms.Noverlap); % thin filament dynamics
+        [Jon, Joff] = ThinFilament_Dynamics(Cas, Q0, Non, kon, koff, koop, parms.Noverlap);
+    
+        dNondt = Jon - Joff;
+    
+        [k1, k2] = ThickFilament_Dynamics(Q0, F, DRX, J1, J2, JF, parms.Noverlap, R);
+
+        % note: the term "Q0dot + Rdot" is the part of Q0dot due to regular
+        % attachment. explanation: if Rdot is great, it means that Q0 is losing to
+        % R. this implies that for a given Q0dot, the part due to regular
+        % attachment must be greater. thus, we need to add Rdot to Q0dot
+        dDRXdt = k1 - k2 - (dQ0dt + dRdt);
+        
+%         error_thick     = ThickEquilibrium(Q0, dQ0dt, F, DRX, dDRXdt, J1, J2, JF, parms.Noverlap, R, dRdt); % thick filament dynamics
+        
+%         opti.subject_to(error_thin(:) == 0);
+%         opti.subject_to(error_thick(:) == 0);
     end
     
+   %% 
+    if parms.b > 0
+%         opti.subject_to(error_R(:) == 0);
+    end
+ 
+%     Xhalf = 0.5*(Xk + Xk_plus) + dt/8 * (dXnow - dXnex);
+%     [error_Q0, error_Q1, error_Q2, error_R] = MuscleEquilibrium(Xhalf, Yhalf)
+     
     % derivative constraints
     if parms.J1 > 0
         opti.subject_to((dNondt(1:N-1) + dNondt(2:N))*dt/2 + Non(1:N-1) == Non(2:N));
@@ -224,7 +265,7 @@ J = 0;
 J = J + w(1) * sum(Fcost); % force-velocity fitting
 
 if parms.f > 0
-    J = J + w(3) * (sum(dQ0dt(idC).^2) + sum(dQ1dt(idC).^2) + sum(dQ2dt(idC).^2)); % regularization term
+    J = J + w(3) * (sum(dQ0dt(idC).^2) + sum(dQ1dt(idC).^2) + sum(dQ2dt(idC).^2) + 1e-3 * dLcrit.^2); % regularization term
 else
     J = J + w(3) * (sum(vi(idC).^2)); % regularization term
 end
@@ -234,17 +275,24 @@ opti.minimize(J);
 
 %% Solve problem
 % options for IPOPT
-% options.ipopt.tol = 1*10^(-6);
-% options.ipopt.linear_solver = 'mumps';
-% opti.solver('ipopt',options);
+
+options.ipopt.linear_solver = 'mumps';
+% options.ipopt.hessian_approximation = 'limited-memory';
+options.ipopt.mu_strategy           = 'adaptive';
+options.detect_simple_bounds           = true;
+
+options.ipopt.max_iter           = 500;
+
+opti.solver('ipopt',options);
+
 
 % Solve the OCP
-p_opts = struct('detect_simple_bounds', true);
-s_opts = struct('max_iter', 500);
-opti.solver('ipopt',p_opts,s_opts);
+% p_opts = struct('detect_simple_bounds', true);
+% s_opts = struct('max_iter', 500);
+% opti.solver('ipopt',p_opts,s_opts);
 
 % visualize
-opti.callback(@(i) plot(toc, [Fts; opti.debug.value(Frel)]))
+% opti.callback(@(i) plot(toc, [Fts; opti.debug.value(Frel)]))
 
 try
     sol = opti.solve();

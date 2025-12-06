@@ -83,7 +83,9 @@ end
 error_R = dRdt - Rdot;
 
 % Length dynamics
-[error_length] = LengthEquilibrium(Q00, F, F0dot, Ld, vMtilda, parms.kse0, parms.kse, parms.gamma);
+kse = parms.kse * (F + parms.kse0);
+kpe = 0;
+[error_length] = LengthEquilibrium(Q00, F0dot, Ld, vMtilda, kse, kpe, parms.gamma);
 
 % Combined error
 if length(y) < 6
