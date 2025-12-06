@@ -15,7 +15,7 @@ load(['parms_',modelname, parms_version, '.mat'], 'newparms')
 parms = update_parms(newparms);
 
 
-pCa     = 4.5;
+pCa     = 9;
 Ca      = 10.^(-pCa+6);
 AMP     = .0383;
 ISI     = .001;
@@ -60,32 +60,26 @@ odeopt = odeset('maxstep', 1e-1);
 % parms.kpe = .1;
 
 parms.K = 1e2;
-ls = {'-', '--', '-', '--'};
+ls = {'-', '--', ':'};
 
 ozs = [1 1 0 0];
 
 
 for j = [3 4]
     parms.PE_isw_SE = ozs(j);
-    
-    if parms.PE_isw_SE
-        type = 'regular'; 
-    else
-        type = 'adjusted';
-    end
 
     if j == 1
-        [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, type);
+        [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, 'regular');
         parms.x0 = [Q00 Q20 lce0 0 0 0 0];
         sol = ode15s(@(t,y) fiber_dynamics_explicit_length(t,y, parms), [0 max(parms.ti)], parms.x0(:), odeopt);
     elseif j == 2
-%         parms.PE_isw_SE = 1;
-        [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, type);
+        parms.PE_isw_SE = 1;
+        [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, 'regular');
         parms.x0 = [Q00 Q10 Q20 lce0 0 0 0 0];
         sol = ode15s(@(t,y) fiber_dynamics_explicit_no_tendon(t,y, parms), [0 max(parms.ti)], parms.x0(:), odeopt);
     elseif j == 3
-        [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, type);
-        parms.x0 = [Q00 Q20 lce0 0 0 0];
+        [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, 'regular');
+        parms.x0 = [Q00 Q20 lce0 0 0 0 0];
         parms.x0p = zeros(size(parms.x0));
         sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_length(t,y,yp, parms), [0 max(parms.ti)], parms.x0(:), parms.x0p(:), odeopt);
     
@@ -98,31 +92,30 @@ for j = [3 4]
 %     t = rem(sol.x, max(Ts)); 
     t = sol.x;
 
-    Lt = interp1(parms.ti, parms.Lts, sol.x);
-    
     if j < 4
-        L = sol.y(3,:);
-        dlse = Lt - L;
+        L = sol.y(end-4,:);
+        dlse = interp1(parms.ti, parms.Lts, sol.x) - L;
         Fse = parms.Fse_func(dlse, parms);
         
     else
         Fse = sol.y(1,:) + sol.y(2,:);
         dlse = parms.Lse_func(Fse, parms);
-        L = Lt - dlse;
+        L = interp1(parms.ti, parms.Lts, sol.x) - dlse;
     end
-    
-    if parms.PE_isw_SE
+     
+    if j == 2
+%         Fpe = parms.Fpe_func(interp1(parms.ti, parms.Lts, sol.x), parms);
+         Fpe = parms.Fpe_func(L, parms);
+        F = Fse + Fpe;
+    else
         Fpe = parms.Fpe_func(L, parms);
         F = Fse;
-    else
-        Fpe = parms.Fpe_func(Lt, parms);
-        F = Fse + Fpe;
     end
 
     figure(1)
 
     subplot(311)
-    plot(t, Lt, 'linestyle', ls{j}); hold on
+    plot(t, sol.y(end,:), 'linestyle', ls{j}); hold on
     title('Overall length')
     
     subplot(312)
@@ -130,7 +123,7 @@ for j = [3 4]
     title('XB length')
 
     subplot(313)
-    plot(t, F, 'linestyle', ls{j}); hold on
+    plot(t, Fse, 'linestyle', ls{j}); hold on
 %     plot(t, Fpe, ':')
 %     plot(t, F-Fpe, '--')
     title('Force')

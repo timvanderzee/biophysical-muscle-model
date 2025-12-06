@@ -7,11 +7,6 @@ else
     vMtilda = interp1(parms.ti, parms.vts, t);
 end
 
-% if numel(parms.Lts) == 1
-%     Lts = parms.Lts;
-% else
-%     Lts = interp1(parms.ti, parms.Lts, t);
-% end
 
 if numel(parms.Cas) == 1
     Ca = parms.Cas;
@@ -29,16 +24,34 @@ Lce  = y(3);
 Non = y(4);
 DRX = y(5);
 R = y(6);
-Lts = y(7);
+
+if length(y) > 6
+    Lts = y(7);
+    dLdt = yp(7);
+else
+    if numel(parms.Lts) == 1
+        Lts = parms.Lts;
+    else
+        Lts = interp1(parms.ti, parms.Lts, t);
+    end
+end
 
 % PE
-kpe = parms.kpe_func(Lce, parms);
-Fpe = parms.Fpe_func(Lce, parms);
+kpe = 0;
+Fpe = 0;
+
+if isfield(parms, 'PE_isw_SE') % PE in series with SE
+    if parms.PE_isw_SE && L > 0
+        kpe = parms.kpe_func(Lce, parms);
+        Fpe = parms.Fpe_func(Lce, parms);
+    end
+end
 
 % SE
 dLse = Lts - Lce;
 Fse = parms.Fse_func(dLse, parms);
-kse = parms.kse_func(dLse, parms);
+% kse = parms.kse_func(dLse, parms);
+kse = parms.kse * (Fse + parms.kse0);
 % kse = parms.kse * (Fse .* (Fse > 0) + parms.kse0);
 
 % CE
@@ -51,7 +64,7 @@ dLcedt  = yp(3);
 dNondt = yp(4);
 dDRXdt = yp(5);
 dRdt = yp(6);
-dLdt = yp(7);
+
 
 % mean and standard deviation
 % k   = parms.K;
@@ -82,7 +95,11 @@ error_R = dRdt - Rdot;
 % error_length = dLcedt  .* (Q0 + kse + kpe) - (vMtilda .* parms.gamma .* kse - F0dot);
 error_length = LengthEquilibrium(Q0, F0dot, dLcedt, vMtilda, kse, kpe, parms.gamma);
 
-error_vel = dLdt - vMtilda*parms.gamma;
+if length(y) > 6
+    error_vel = dLdt - vMtilda*parms.gamma;
+else
+    error_vel = [];
+end
 
 % Combined error
 error = [error_Q0; error_Q2; error_length; error_thin; error_thick; error_R; error_vel];
