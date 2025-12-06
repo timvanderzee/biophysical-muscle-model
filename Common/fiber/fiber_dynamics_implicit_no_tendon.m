@@ -20,14 +20,14 @@ Act = parms.actfunc(Ca, parms);
 Q0  = y(1);
 Q1  = y(2);
 Q2  = y(3);
-Ld  = y(4);
+L  = y(4);
 Non = y(5);
 
 % State derivatives
 dQ0dt  = yp(1);
 dQ1dt  = yp(2);
 dQ2dt  = yp(3);
-
+Ld  = y(4);
 dNondt = yp(5);
 
 if length(y) > 5

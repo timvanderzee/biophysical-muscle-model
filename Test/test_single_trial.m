@@ -15,7 +15,7 @@ load(['parms_',modelname, parms_version, '.mat'], 'newparms')
 parms = update_parms(newparms);
 
 
-pCa     = 4.5;
+pCa     = 6.1;
 Ca      = 10.^(-pCa+6);
 AMP     = .0383;
 ISI     = .001;
