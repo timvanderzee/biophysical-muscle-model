@@ -1,11 +1,12 @@
 clear all; close all; clc
 [username, githubfolder] = get_paths();
-savefig = 0;
+savefig = 1;
 
 figure(1)
 color = get(gca,'colororder');
 pcolors = flip(parula(7));
-acolors = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
+acolors = lines(4);
+% acolors = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
 
 discretized_model = 1;
 
@@ -13,27 +14,27 @@ discretized_model = 1;
 fig = 6;
 iF = 6;
 
-pCas = [4.5 6.2;
-    4.5 6.2];
+pCas = [4.5 6.2 9;
+    4.5 6.2 9];
 
 % chosen ISIs, AMPs and pCas
 if fig == 4
-    ISIs = [.001 .001; % dashed
-        .100 .100]; % solid
+    ISIs = [.100 .100 .100;
+            .001 .001 .001]; 
     
-    AMPs = [0      0; % dashed
-        .0383 .0383]; % solid
+    AMPs = [.0383 .0383 .0383;
+            0      0 0];% solid
     
     
     titles = {'Maximal activation', 'Submaximal activation'};
     
 elseif fig == 5 || fig == 6
     
-    ISIs = [.316 .316;
-        .001 .001];
+    ISIs = [.316 .316 .316;
+            .001 .001 .001];
     
-    AMPs = [.0383 .0383;
-        .0383 .0383];
+    AMPs = [.0383 .0383 .0383;
+            .0383 .0383 .0383];
     
     titles = {'Maximal activation', 'Submaximal activation'};
     
@@ -58,7 +59,7 @@ if fig == 4 || fig == 5
     
 else
     mcodes = [1 1 1; 1 2 1];
-    colors = acolors(3:end,:);
+    colors = acolors(3:4,:);
     
     
     if discretized_model
@@ -76,7 +77,7 @@ load([fibers{iF},'_cor_new.mat'],'data');
 
 %% evaluate
 odeopt = odeset('maxstep', 1e-2);
-ls = {'-',':'};
+ls = {':','-'};
 
 for j = 1:size(ISIs,1)
     %     if ishandle(j), close(j); end
@@ -84,9 +85,37 @@ for j = 1:size(ISIs,1)
     
     figure(1)
     [texp, Lexp, Fexp, Tsrel] = get_data(data, ISIs(j,:), AMPs(j,:), pCas(j,:));
-    plot_data(texp, Lexp, Fexp, brighten([.5 .5 .5], (j-1)/2), ls{j});
+%     plot_data(texp, Lexp, Fexp, brighten([.5 .5 .5], (j-1)/2), ls{j});
     
+    texp = texp - Tsrel(1,2);
+    tmax = .15 - Tsrel(1,2);
+
     for i = 1:size(ISIs,2)
+    
+        id = texp(:,i) < tmax;
+        
+        subplot(5,1,1)
+        plot(texp(id,i), Lexp(id,i)*100, 'color', brighten([.5 .5 .5], (2-j)/2), 'linewidth', 2, 'linestyle',ls{j}); hold on
+        axis([-.05 tmax -.5 5])
+        box off
+        xticks(-.05:.05:tmax);
+
+        if j == 1
+            set(gca, 'Fontsize', 6)
+            ylabel('Length (%L_0)', 'Fontsize', 8)
+        end
+        
+        subplot(5,1,[2 5])
+        plot(texp(id,i), Fexp(id,i)*100, 'color', brighten([.5 .5 .5], (2-j)/2), 'linewidth', 2, 'linestyle',ls{j}); hold on
+        axis([-.05 tmax 0 200])
+        xticks(-.05:.05:tmax);
+        
+        box off
+
+        if j == 1
+            set(gca, 'Fontsize', 6)
+            ylabel('Force (%F_0)', 'Fontsize', 8)
+        end
         
         % evaluate fit
         Ca = 10.^(-pCas(j,i)+6);
@@ -96,19 +125,13 @@ for j = 1:size(ISIs,1)
         ISI = ISIs(j,i);
         AMP = AMPs(j,i);
         
-        tids = sort([Tsrel(i,:) .15]);
+        tids = sort([Tsrel(i,:) .15]) - Tsrel(1,2);
         
         for kk = 1:size(mcodes,1)
             mcode = mcodes(kk,:);
             [output_mainfolder, modelfilename, ~, ~] = get_folder_and_model(mcodes(kk,:));
             tiso = dTt*3+dTc*2+ISI + 2;
             
-            %             cd([output_mainfolder{2}])
-            %             cd(['parms', versions{kk}])
-            
-            
-            %             [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(kk,:));
-            %             cd([output_mainfolder{2}][filename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10)])
             filename = [output_mainfolder{2}, '\parms', versions{kk},'\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
             disp(filename)
             
@@ -122,37 +145,19 @@ for j = 1:size(ISIs,1)
             
             t = tis + 3*dTt - tiso;
             
+            t = t - Tsrel(1,2);
+            tmax = .15 - Tsrel(1,2);
+            
             figure(1)
-            subplot(4,size(ISIs,2),[i+size(ISIs,2) i+size(ISIs,2)*3])
-            plot(t(t<.15), oFi(t<.15)*100, 'linestyle', ls{j}, 'linewidth',2, 'color', brighten(colors(kk,:), (j-1)/2))
+            subplot(5,1,[2 5])
+            plot(t(t<tmax), oFi(t<tmax)*100, 'linestyle', ls{j}, 'linewidth',2, 'color', brighten(colors(kk,:), (2-j)/2)); hold on
             
             % compute RMSD
             id = t < .15 & t > (-ISI - 2 * dTc - .1);
             oFii = interp1(t(id), oFi(id), texp(:,i));
             
-            %             set(gca, 'Fontsize', 6)
-            
-            %             RMSDs = sqrt((oFii - Fexp(:,i)).^2) * 100;
             xlabel('Time (s)', 'Fontsize', 8)
-            
-            %             figure(10)
-            %             subplot(1,size(ISIs,2),i)
-            %             plot(texp(:,i), RMSDs, 'linestyle', ls{j}, 'linewidth', 2, 'color', brighten(colors(kk,:), (j-1)/2));
-            %             hold on
-            %             box off
-            %
-            %             RMSD = sqrt(sum((oFii - Fexp(:,i)).^2));
-            %
-            %             for ii = 1:(length(tids)-2)
-            %                 plot([tids(ii) tids(ii)], [0 20], ':', 'color', [.5 .5 .5]); hold on
-            %             end
-            %
-            %             axis([-.3 .15 0 20])
-            %             xlabel('Time (s)')
-            %
-            %             if i == 1
-            %                 ylabel('RMSD (%F_0)')
-            %             end
+
         end
         
         % add vertical lines
@@ -163,19 +168,19 @@ for j = 1:size(ISIs,1)
         end
         
         figure(1)
-        subplot(4,size(ISIs,2),i)
-        title(titles{i}, 'Fontsize', 8)
+        subplot(5,1,1)
+%         title(titles{1}, 'Fontsize', 8)
         for ii = 1:(length(tids)-2)
             plot([tids(ii) tids(ii)], [0 20], ':', 'color', [.5 .5 .5]); hold on
             
-            if j == 1
-                text(mean([tids(ii) tids(ii+1)]), 4.5, phases{ii}, 'Fontsize',4,'HorizontalAlignment','center')
+            if j == 2
+                text(mean([tids(ii) tids(ii+1)]), 4.5, phases{ii}, 'Fontsize',8,'HorizontalAlignment','center')
             end
         end
         
-        subplot(4,size(ISIs,2),[i+size(ISIs,2) i+size(ISIs,2)*3])
+        subplot(5,1,[2 5])
         for ii = 1:(length(tids)-2)
-            plot([tids(ii) tids(ii)], [0 300], ':', 'color', [.5 .5 .5]); hold on
+            xline([tids(ii) tids(ii)], ':', 'color', [.5 .5 .5]); hold on
         end
         
         
@@ -184,27 +189,30 @@ end
 
 %%
 figure(1)
-subplot(4,size(ISIs,2),[1+size(ISIs,2) 1+size(ISIs,2)*3])
+subplot(5,1,[2 5])
 
 if fig == 4
-    legend('Data','Hill','XB','XB coop','location','Southwest', 'Fontsize', 8)
+    legend('Data','Hill','2-state','3-state coop','location','north', 'Fontsize', 8)
 elseif fig == 5
-    legend('Data','Hill','XB','XB coop','location','South', 'Fontsize', 8)
+    legend('Data','Hill','2-state','3-state coop','location','best', 'Fontsize', 8)
 else
-    legend('Data','XB coop','XB coop + FD','location','South', 'Fontsize', 8)
+    legend('Data','3-state coop','4-state coop','location','best', 'Fontsize', 8)
 end
-legend box off
+% legend box off
 
-subplot(4,size(ISIs,2),1)
-text(-.4, 6, 'A', 'fontsize', 12, 'fontweight', 'bold')
+% subplot(4,1,1)
+% text(-.4, 6, 'A', 'fontsize', 12, 'fontweight', 'bold')
 
-subplot(4,size(ISIs,2),2)
-text(-.4, 6, 'B', 'fontsize', 12, 'fontweight', 'bold')
+% subplot(4,2,2)
+% text(-.4, 6, 'B', 'fontsize', 12, 'fontweight', 'bold')
 
 %% size
 figure(1)
 
-set(gcf,'units','centimeters','position',[10 10 19 10])
+trange = [-.05 tmax];
+
+
+set(gcf,'units','centimeters','position',[10 5 diff(trange)*25 15])
 % set(gcf,'units','centimeters','position',[5 2.5 0.2 1.7], 'fontsize', 6)
 
 % pause(0.5)
