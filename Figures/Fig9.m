@@ -147,3 +147,71 @@ cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
 figure(1)
 exportgraphics(gcf,['Fig9.png'])
 end
+
+%% plot force traces
+close all
+
+fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
+cd([output_mainfolder{2},'\data'])
+
+iFsd = 6; 
+
+for k = 1:2
+    if k == 1
+        ISIs = .001;
+        AMPs = .0383;
+
+    else
+        ISIs = .316;
+        AMPs = .0383;
+    end
+    
+pCas = [9 6.1 4.5];
+
+color = get(gca, 'colororder');
+dy = 1;
+
+for i = 1:length(pCas) 
+    pCa = pCas(i);
+    
+    subplot(1,2,k)
+
+    % iF = 11;
+    for iF = iFsd
+        load([fibers{iF},'_cor_new.mat'],'data');
+        [texp, Lexp, Fexp, Tsrel] = get_data(data, ISIs, AMPs, pCa);
+
+        plot(texp, Fexp + dy,'k-', 'linewidth', 2); hold on
+    end
+
+    mcodes = [1 1 1; 2 1 1];
+    versions  = {'_v4','_v3'}; 
+    for j = 1:2
+        mcode = mcodes(j,:);
+
+        [output_mainfolder, modelfilename, ~, ~] = get_folder_and_model(mcode);
+        dTt = .0383/.4545; % test stretch (= constant)
+        dTc = AMPs / .4545; % conditioning stretch
+        ISI = ISIs;
+        AMP = AMPs;
+
+        %
+        clc
+        tiso = dTt*3+dTc*2+ISI + 2;
+
+
+        filename = [output_mainfolder{2}, '\parms', versions{j},'\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCa*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
+        disp(filename)
+
+
+        load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts')
+
+        t = tis + 3*dTt - tiso;
+        plot(t, oFi + dy, 'linewidth', 2, 'color', color(j,:))
+
+        xlim([-.2-ISIs .15])
+    end
+    box off
+    ylim([0 3])
+end
+end
