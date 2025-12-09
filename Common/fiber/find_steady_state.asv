@@ -1,4 +1,4 @@
-function[Q00, Q20, lce0, Q10, Fse] = find_steady_state(Q0, p0, q0, parms, type)
+function[Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, type)
 % finds the steady-state length by solving Fce + Fpe = Fse
 % also returns Q00 (obeying log function) and Q20 (from q0, p0 and Q0)
 
@@ -20,14 +20,12 @@ elseif strcmp(type, 'adjusted')
     costfunc = @(L, Fce, parms) (Fce - (parms.kse0*(exp(parms.kse*-L)-1))) .^2;
 end
 
-lce0 = fminsearch(@(L) costfunc(L, Fce, parms), 0);
-
 if strcmp(type, 'regular')
-    Fpe = parms.kpe*(lce0-parms.lmtc0).*(lce0>parms.lmtc0)+parms.Fpe0;
+    Fpe = parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0;
 else
-    Fpe = 0;
+    parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0
 end
 
-Fse = Fce + Fpe;
+lce0 = fminsearch(@(L) costfunc(L, Fce, parms), 0);
 
 end

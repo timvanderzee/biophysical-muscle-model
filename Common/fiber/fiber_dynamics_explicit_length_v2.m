@@ -1,4 +1,4 @@
-function[dx, Fce, Q0] = fiber_dynamics_explicit_length(t,y, parms)
+function[dx, Fce, Q0] = fiber_dynamics_explicit_length_v2(t,y, parms)
 
 % Get velocity and calcium
 if numel(parms.vts) == 1
@@ -25,42 +25,50 @@ Act = parms.actfunc(Ca, parms);
 % States
 Q0  = y(1);
 Q2  = y(2);
-Lce  = y(3);
+Fse  = y(3);
 Non = y(4);
 DRX = y(5);
 R = y(6);
-Lts = y(7);
 
+if length(y) > 6
+    Lts = y(7);
+%     dLdt = yp(7);
+else
+    if numel(parms.Lts) == 1
+        Lts = parms.Lts;
+    else
+        Lts = interp1(parms.ti, parms.Lts, t);
+    end
+end
+
+% SE
+dLse = parms.Lse_func(Fse, parms);
+kse = parms.kse * (Fse + parms.kse0);
+
+% PE
+Lce = Lts - dLse;
 kpe = 0;
 Fpe = 0;
 
-% PE
 if isfield(parms, 'PE_isw_SE') % PE in series with SE
-    if parms.PE_isw_SE && Lce > 0
+    if parms.PE_isw_SE
         kpe = parms.kpe_func(Lce, parms);
         Fpe = parms.Fpe_func(Lce, parms);
     end
 end
-% SE
-dLse = Lts - Lce;
-Fse = parms.Fse_func(dLse, parms);
-% kse = parms.kse_func(dLse, parms);
-kse = parms.kse * Fse + parms.kse0 * parms.kse;
 
 % CE
 Fce = Fse - Fpe;
 
 % mean and standard deviation
 % k   = parms.K;
-% Fce = log(1+exp(Fce*k))/k; % note: goes to inf for large k, may need another function
-% Q00 = log(1+exp(Q0*k))/k + eps; % note: goes to inf for large k, may need another function
+% Q00 = log(1+exp(Q0*k))/k; % note: goes to inf for large k, may need another function
 Q00 = max(Q0, 1e-6);
 Q1 = Fce - Q00;
-% Q1 = max(Q1, -Q0);
 p = Q1./Q00; 
 q = Q2./Q00 - p.^2;  
 % q = log(1+exp(q*k))/k;
-q = max(q, 0);
+q = max(q, 1e-6);
 
 if isfield(parms, 'FL_overlap')
     if parms.FL_overlap
@@ -84,34 +92,12 @@ end
 
 [J1, J2] = ThickFilament_Dynamics(Q0, Fce, DRX, parms.J1, parms.J2, parms.JF, 1, R);
 
-% without limit
-% IGef{1} = @(c,k)(c(1,:)*k(1).*exp(c(3,:)*k(2)^2/4-c(2,:)*k(2)));
-% IGef{2} = @(c,k)(c(1,:)*k(1).*exp(c(3,:)*k(2)^2/4-c(2,:)*k(2))).*(c(2,:)-c(3,:)*k(2)/2);
-% IGef{3} = @(c,k)(c(1,:)*k(1).*exp(c(3,:)*k(2)^2/4-c(2,:)*k(2))).*((c(2,:)-c(3,:)*k(2)/2).^2+c(3,:)/2);
-
-% with limit
-IGef{1} = @(c,k)(c(1,:)*k(1).*exp(10*tanh((c(3,:)*k(2)^2/4-c(2,:)*k(2))/10)));
-IGef{2} = @(c,k)(c(1,:)*k(1).*exp(10*tanh((c(3,:)*k(2)^2/4-c(2,:)*k(2))/10))).*(c(2,:)-c(3,:)*k(2)/2);
-IGef{3} = @(c,k)(c(1,:)*k(1).*exp(10*tanh((c(3,:)*k(2)^2/4-c(2,:)*k(2))/10))).*((c(2,:)-c(3,:)*k(2)/2).^2+c(3,:)/2);
-
-if parms.approx
-    % erf approximation
-    erfap = @(x) (exp(x)-exp(-x)) ./ (exp(x)+exp(-x));
-    IG{1} =  @(x,c)1/2*c(1,:).*erfap((x-c(2,:))./sqrt(c(3,:)));
-    IG{2} =  @(x,c)1/2*c(1,:).*erfap((x-c(2,:))./sqrt(c(3,:))) .* c(2,:)-1/2.*sqrt(c(3,:)).*c(1,:)/sqrt(pi).*exp(-(x-c(2,:)).^2./c(3,:));
-    IG{3} =  @(x,c)1/2*c(1,:).*erfap((x-c(2,:))./sqrt(c(3,:))) .* (c(2,:).^2+c(3,:)/2)-1/2*sqrt(c(3,:)).*c(1,:)/sqrt(pi).*exp(-(x-c(2,:)).^2./c(3,:)).*(c(2,:)+min(x,1e4));
-
-else
-    % erf function
-    IG{1} =  @(x,c)1/2*c(1,:).*erf((x-c(2,:))./sqrt(c(3,:)));
-    IG{2} =  @(x,c)1/2*c(1,:).*erf((x-c(2,:))./sqrt(c(3,:))).*c(2,:)-1/2.*sqrt(c(3,:)).*c(1,:)/sqrt(pi).*exp(-(x-c(2,:)).^2./c(3,:));
-    IG{3} =  @(x,c)1/2*c(1,:).*erf((x-c(2,:))./sqrt(c(3,:))).*(c(2,:).^2+c(3,:)/2)-1/2*sqrt(c(3,:)).*c(1,:)/sqrt(pi).*exp(-(x-c(2,:)).^2./c(3,:)).*(c(2,:)+min(x,1e4));
-
-end
-
 % points where integrals is evaluated
 k1 = [parms.k11 parms.k12];
 k2 = [parms.k21 -parms.k22];
+
+% get functions
+[IG, IGef] = get_IG_IGEf(parms.approx);
 
 % Compute Qdot
 [Q0dot, Q1dot, Q2dot, Rdot] = CrossBridge_Dynamics(Q0, p, q, parms.f, parms.w, k1, k2, IGef, Non, DRX, IG, parms.b, parms.k, R, parms.dLcrit, parms.ps2);
@@ -119,12 +105,18 @@ k2 = [parms.k21 -parms.k22];
 % velocity - independent derivative
 F0dot  = Q1dot + Q0dot;
 
-% compute velocity
-Ld  = (vMtilda .* parms.gamma .* kse - F0dot) ./ (Q0 + kse + kpe);
+% Calculate Ldot
+Ld = (vMtilda .* parms.gamma .* kse - F0dot) /  (Q0 + kse + kpe);
 
 % shift the cross-bridge distribution
 dQ0dt = Q0dot;
 dQ2dt = (Q2dot + 2 * Ld .* Q1);
+
+% force-rate error
+dQ1dt = Q1dot + 1 * Ld .* Q0;
+dFcedt = dQ1dt + dQ0dt;
+dFpedt = Ld * kpe;
+dFsedt = dFcedt + dFpedt;
 
 % note: the term "Q0dot + Rdot" is the part of Q0dot due to regular
 % attachment. explanation: if Rdot is great, it means that Q0 is losing to
@@ -132,6 +124,12 @@ dQ2dt = (Q2dot + 2 * Ld .* Q1);
 % attachment must be greater. thus, we need to add Rdot to Q0dot
 dDRXdt = J1 - J2 - (Q0dot + Rdot);
 
-dx = [dQ0dt; dQ2dt; Ld; dNondt; dDRXdt; Rdot; vMtilda .* parms.gamma];
+if length(y) > 6
+    Ldot = vMtilda .* parms.gamma;
+else
+    Ldot = [];
+end
+
+dx = [dQ0dt; dQ2dt; dFsedt; dNondt; dDRXdt; Rdot; Ldot];
 
 end

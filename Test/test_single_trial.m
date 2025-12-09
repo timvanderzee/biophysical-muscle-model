@@ -40,12 +40,12 @@ parms.Lts = [Lis Lis Lis Lis] * parms.gamma;
 
 parms.x0 = zeros(1,6);
 
-parms.Fpe_func = @(Lce, parms) parms.kpe * log(1+exp(Lce*parms.K))/parms.K + parms.Fpe0;
-parms.kpe_func = @(Lce, parms) parms.kpe .* (1 - 1./(exp(parms.K*Lce)+1));
+% parms.Fpe_func = @(Lce, parms) parms.kpe * log(1+exp(Lce*parms.K))/parms.K + parms.Fpe0;
+% parms.kpe_func = @(Lce, parms) parms.kpe .* (1 - 1./(exp(parms.K*Lce)+1));
 
-% parms.Fpe_func = @(L, parms) parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0;
+parms.Fpe_func = @(L, parms) parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0;
 % parms.Fpe_func = @(L, parms) parms.kpe*L + parms.Fpe0;
-% parms.kpe_func = @(Lce, parms) parms.kpe;
+parms.kpe_func = @(Lce, parms) parms.kpe .*(Lce>parms.lmtc0);
 
 Q0 = 0;
 p0 = 0;
@@ -56,16 +56,18 @@ parms.Fse_func = @(dlse, parms) parms.kse0*(exp(parms.kse*dlse)-1);
 %%
 close all
 odeopt = odeset('maxstep', 1e-1);
+% odeopt = [];
 
 % parms.kpe = .1;
 
 parms.K = 1e2;
-ls = {'-', '--', '-', '-'};
+ls = {'-', '--', '-', '-', '--', ':'};
 
-ozs = [1 1 1 1];
+% ozs = [1 1 1 1 0];
+ozs = ones(1,6);
 
 
-for j = [1 4]
+for j = [1 5 6]
     parms.PE_isw_SE = ozs(j);
     
     if parms.PE_isw_SE
@@ -74,6 +76,7 @@ for j = [1 4]
         type = 'adjusted';
     end
 
+    tic
     if j == 1
         [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms, type);
         parms.x0 = [Q00 Q20 lce0 0 0 0 0];
@@ -95,15 +98,30 @@ for j = [1 4]
         parms.x0p = zeros(size(parms.x0));
         sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [0 max(parms.ti)], parms.x0(:), parms.x0p(:), odeopt);
         
+    elseif j == 5
+        [Q00, Q20, lce0, Q10, Fse] = find_steady_state(Q0, p0, q0, parms, type);
+        parms.x0 = [Q00 Q20 Fse 0 0 0];
+        parms.x0p = zeros(size(parms.x0));
+        sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_length_v2(t,y,yp, parms), [0 max(parms.ti)], parms.x0(:), parms.x0p(:), odeopt);
+        
+    elseif j == 6
+        [Q00, Q20, lce0, Q10, Fse] = find_steady_state(Q0, p0, q0, parms, type);
+        parms.x0 = [Q00 Q20 Fse 0 0 0 0];
+        sol = ode15s(@(t,y) fiber_dynamics_explicit_length_v2(t,y, parms), [0 max(parms.ti)], parms.x0(:), odeopt);
     end
+    
+    toc
     
     [~, xdot] = deval(sol, sol.x);
     
-   
+   %%
 %     t = rem(sol.x, max(Ts)); 
     t = sol.x;
+    
+    disp(length(t));
 
     Lt = interp1(parms.ti, parms.Lts, sol.x);
+    vt = interp1(parms.ti, parms.vts, sol.x);
     
     if j < 4
         L = sol.y(3,:);
@@ -113,7 +131,7 @@ for j = [1 4]
         
         
         
-    else
+    elseif j == 4
         Fce = sol.y(1,:) + sol.y(2,:);
 
         L = sol.y(4,:);
@@ -129,6 +147,12 @@ for j = [1 4]
 
         Ld = xdot(4,:);
 %         Ld = sol.y(4,:);
+
+    elseif j > 4
+        Fse = sol.y(3,:);
+        dlse = parms.Lse_func(Fse, parms);
+        L = Lt - dlse;
+        Ld = nan(size(t));
     end
     
     if parms.PE_isw_SE
