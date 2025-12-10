@@ -42,7 +42,7 @@ else
 end
 
 % SE
-dLse = parms.Lse_func(Fse, parms);
+dLse = max(parms.Lse_func(Fse, parms), 0); % can't be negative
 kse = parms.kse * (Fse + parms.kse0);
 
 % PE

@@ -2,6 +2,32 @@ clear all; close all ;clc
 [username, githubfolder] = get_paths();
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
+%%
+% Hill model: reference
+iFs = 7;
+mcode = [2 1 1];
+parms_version = '';
+[output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
+
+input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iFs}];
+cd(input_foldername)
+load(['parms_',modelname, parms_version, '.mat'], 'newparms')
+parms = update_parms(newparms);
+
+parms.Lts = 0;
+parms.vts = 0;
+parms.Cas = .1;
+
+tic
+for i = 1:1e3
+    [xdot, Fce] = hill_explicit(0,0, parms, parms.Cas);
+    
+end
+
+thill = toc/1e3;
+
+
+%% define parameters
 iFs = 7;
 parms_version = '_v3';
 
@@ -28,8 +54,9 @@ N       = round(tiso / dt);
 
 %% simulate entire protocol
 % discretization parameters
-bw = .03; % standard bin width
-Ns = [logspace(1,3,7) 1e4]; % bin#
+bw = .1; % standard bin width
+% Ns = [logspace(1.5,2.5,10) 1e4]; % bin#
+Ns = [30:30:300, 1e4];
 
 % experiment
 tlin = linspace(0,Ts(end-1),1000);
@@ -38,127 +65,112 @@ dt = 1e-3;
 parms.Cas = mean(Cas);
 
 % pre-allocate
-tsim = nan(length(Ns),2,2, 3);
-Fi = nan(length(tlin), length(Ns));
+tsim = nan(length(Ns),2,3, 3);
 
 tvec = 0:dt:Ts(end);
+Fi = nan(length(tvec), length(Ns));
+
+% tvec = 0:dt:Ts(end);
 % N = length(tvec);
 vts = interp1(tis, vis, tvec);
 Lts = interp1(tis, Lis*parms.gamma, tvec);
 
 % parms.vts = interp1(tis, vis, t2(ii-1));
 
-for r = 1:3
-for f = 1:3 % methods
-    if f == 1
-        parms.method_of_characteristics = 0;
-    else
-        parms.method_of_characteristics = 1;
-    end
+for r = 1 % repetitions
+    for f = 1:3 % methods       
+        for j = 1:2 % ways to change strain vector
+            for id = randperm(length(Ns))
+                disp(id)
 
-    for j = 1:2
-        for id = randperm(length(Ns))
-            
-            if f < 3
-                if j == 1
-                    parms.xi = linspace(-15,15, round(Ns(id)));
-                else
-                    parms.xi = linspace(-bw*round(Ns(id)/2),bw*round(Ns(id)/2), round(Ns(id)));
-                end
-
-                n0 = zeros(size(parms.xi));
-                X0 = [n0'; parms.x0(4:end)'];
-
-            else
-                Q0 = 0;
-                p0 = 0;
-                q0 = .1;
-
-                [Q00, Q20, lce0, Q10, Fse] = find_steady_state(Q0, p0, q0, parms, 'adjusted');
-                X0 = [Q00 Q20 Fse 0 0 0]';
-%                 
-%                 X0 = parms.x0';
-       
-            end
-            
-            t2 = 0;
-            F = 0;
-            y = X0;
-            
-            disp(id)
-           
-            tic
-%             ii = 1;
-            
-            for ii = 2:length(vts)-1
-%                 ii = ii+1;
-                
-                parms.F = F(ii-1);
-                parms.vts = vts(ii);
-                parms.Lts = Lts(ii);
-                        
+                % get X0
                 if f < 3
-                    [yp, F(ii), Q0] = fiber_dynamics_explicit_no_tendon_full(t2(ii-1),y(:,ii-1), parms);
+                    if j == 1
+                        parms.xi = linspace(-15,15, round(Ns(id)));
+                    else
+                        parms.xi = linspace(-bw*round(Ns(id)/2),bw*round(Ns(id)/2), round(Ns(id)));
+                    end
+                    
+                    n0 = zeros(size(parms.xi));
+                    X0 = [n0'; parms.x0(4:end)'];
+                    
                 else
-%                     profile on
-%                     tic
-%                     [yp, F(ii), Q0] = fiber_dynamics_explicit_no_tendon(t2(ii-1),y(:,ii-1), parms);
-%                     toc
+                    Q0 = 0;
+                    p0 = 0;
+                    q0 = .1;
+                    
+                    [Q00, Q20, lce0, Q10, Fse] = find_steady_state(Q0, p0, q0, parms, 'adjusted');
+                    X0 = [Q00 Q20 Fse 0 0 0]';
 
-                    [yp, F(ii), Q0] = fiber_dynamics_explicit_length_v2(t2(ii-1),y(:,ii-1), parms);
-%                     toc
-%                     
-%                     profile viewer
                 end
+
+                % evaluate model                   
+                [tsim(id,j,f,r), Fi(:,id,j,f,r)] = evaluate_model(X0, vts, Lts, dt, f, parms);
                 
-%                 if t2(ii-1) < .01
-%                     dt = 3e-3;
-%                 else
-%                     dt = 3e-3;
-%                 end
                 
-                y(:,ii) = y(:,ii-1) + yp * dt;
-                t2(ii) = t2(ii-1) + dt;
-                  
-                if f == 1 % shift XB distribution
-                    % for n, also need to shift
-                    dx = yp(end-3) * dt;
-                    xi = parms.xi - dx;
-                    n = y(1:length(parms.xi),ii);
-                    
-                    nshift = interp1(parms.xi(:), n, xi(:),'linear',0);
-                    nshift(isnan(nshift)) = 0;
-                    nshift(nshift<0) = 0;
-                    
-                    y(1:length(parms.xi),ii) = nshift;
-   
-%                     Qs = trapz(xi(:), [nshift(:) xi(:).*nshift(:)]);
-%                     F(ii) = sum(Qs);
-                    
-                     F(ii) = F(ii) + dx * Q0;
-                end
             end
-        
-            tsim(id,j,f,r) = toc;
-
-            % compute force
-            Fi(:,id,j,f,r) = interp1(t2, F, tlin);
-
         end
     end
-end
 end
 
 N = ii;
 
+%% test the effect of dt
+% approximated model
+
+dts = linspace(1e-4, 3e-3, 5);
+
+close all
+clc
+figure(10)
+fs = [2 3];
+ls = {'-','--'};
+color = lines(5);
+for i = 1:length(fs)
+    f = fs(i); % methods
+       % get X0
+    if f < 3
+        parms.xi = linspace(-15,15, 90);
+        n0 = zeros(size(parms.xi));
+        X0 = [n0'; parms.x0(4:end)'];
+
+    else
+        Q0 = 0;
+        p0 = 0;
+        q0 = .1;
+
+        [Q00, Q20, lce0, Q10, Fse] = find_steady_state(Q0, p0, q0, parms, 'adjusted');
+        X0 = [Q00 Q20 Fse 0 0 0]';
+
+    end
+                
+    for j = 1:length(dts)
+
+        tvec2 = 0:dts(j):Ts(end);
+        vts = interp1(tis, vis, tvec2);
+        Lts = interp1(tis, Lis*parms.gamma, tvec2);
+
+        % evaluate model                   
+        [tsim2(j), Fi2] = evaluate_model(X0, vts, Lts, dts(j), f, parms);
+
+%         subplot(1,2,i)
+        plot(tvec2, Fi2, 'color', color(j,:), 'linestyle', ls{i}); hold on
+        ylim([0 1])
+    end
+end
+
+%%
+legendCell = eval(['{' sprintf('''dt=%d'' ',dts) '}'])
+legend(legendCell)
+
 %% forces
 if ishandle(2), close(2); end; figure(2)
-% 
+%
 
 % % subplot(221)
-plot(tlin,Fi(:,end,1,2,r)); hold on
-plot(tlin,Fi(:,end,2,2,r),'--')
-plot(tlin,Fi(:,end,1,3,r),':')
+plot(tvec,Fi(:,end,1,2,r)); hold on
+plot(tvec,Fi(:,end,2,2,r),'--')
+plot(tvec,Fi(:,end,1,3,r),':')
 
 % plot(tlin, Fapi,':')
 
@@ -167,78 +179,143 @@ plot(tlin,Fi(:,end,1,3,r),':')
 
 %%
 close all
-titles = {'Fixed strain range', 'Fixed bin width'};
+titles = {'Fixed strain range (± 15 \epsilon_{ps})', 'Fixed bin width (0.1 \epsilon_{ps})'};
 
 figure(3)
 
-color = get(gca,'colororder');
+% color = get(gca,'colororder');
+color = parula(4);
 
 Ntot = 1 * ones(size(tsim));
 
-for j = 1:2
-    for f = 1:3
+error = nan(size(Fi));
+
+for f = 1:3
+    if f < 3
+        m = f;
+    else
+        m = 2;
+    end
+    
+    error(:,:,:,f,:) = abs(Fi(:,:,:,f,:) - Fi(:,end,1,m,:));
+end
+
+% error = deviation wrt largest bin count
+eps = squeeze(mean(error, 'omitnan'));
+
+for j = 1:2 % tests
+    for f = 1:2 % methods
         
         subplot(3,2,j)
-        semilogx(Ns, median(tsim(:,j,f,:),4) ./ Ntot(:,j,f,r),'ko--', 'markerfacecolor', color(f,:)); hold on
+        plot(Ns(1:end-1), median(tsim(1:end-1,j,f,:),4,'omitnan') ./ Ntot((1:end-1),j,f,r),'ko--', 'markerfacecolor', color(f,:)); hold on
         box off
         xlabel('# bins')
-        ylabel('Cost (s)')
+        ylabel('Time per simulation (s)')
         
         title(titles{j})
-        subtitle('Cost')
+        subtitle('Processing time')
         
         xlim([Ns(1) Ns(end-1)])
         
-        ylim([0 max(tsim(1:end-1,:,:,r),[],'all')/mean(Ntot(:), 'omitnan')])
-        %
-%         if f == 2
-%             yline(tapi/Napi, 'k--', 'linewidth', 1)
-%         end
+        ylim([0 max(tsim(1:end-1,:,:,:),[],'all')/mean(Ntot(:), 'omitnan')])
+        yticks([0:.1:.4])
+
         
         subplot(3,2,j+2)
-        semilogx(Ns, mean(abs(Fi(:,:,j,f,r) - Fi(:,end,j,f,r)), 'omitnan'),'ko--', 'markerfacecolor', color(f,:)); hold on
+        plot(Ns(1:end-1), median(eps(1:end-1,j,f,:),4)*100,'ko--', 'markerfacecolor', color(f,:)); hold on
         box off
-        subtitle('Error')
+        subtitle('Force error')
         xlabel('# bins')
-        ylabel('Error (-)')
+        ylabel('Force error (%F_0)')
         
         xlim([Ns(1) Ns(end-1)])
-        ylim([1e-10 .4])
-        
-%         if f == 2
-%             yline(mean(abs(Fapi(:) - Fi(:,end,j,f)), 'omitnan'),'k--', 'linewidth', 1)
-%         end
-        
+        ylim([0 .3]*100)
+                        
         subplot(3,2,j+4)
-        plot( median(tsim(1:end-1,j,f,:),4) ./ Ntot(1:end-1,j,f), mean(abs(Fi(:,1:end-1,j,f,r) - Fi(:,end,j,f,r)), 'omitnan'),'ko--', 'markerfacecolor', color(f,:)); hold on
+        plot(median(tsim(1:end-1,j,f,:),4,'omitnan') ./ Ntot(1:end-1,j,f), median(eps(1:end-1,j,f,:),4)*100,'ko--', 'markerfacecolor', color(f,:)); hold on
         box off
-        subtitle('Error versus cost')
-        xlabel('Cost (s)')
-        ylabel('Error (-)')
+        subtitle('Error - processing time trade-off')
+        xlabel('Time per simulation (s)')
+        ylabel('Force error (%F_0)')
         
-%         if f == 2
-%             plot(tapi/Napi, mean(abs(Fapi(:) - Fi(:,end,j,f)), 'omitnan'), 'ko', 'markerfacecolor', [0 0 0])
-%             yline(mean(abs(Fapi(:) - Fi(:,end,j,f)), 'omitnan'),'k--', 'linewidth', 1)
-%             xline(tapi/Napi, 'k--', 'linewidth', 1)
-%         end
-        
-        ylim([0 .01])
-        xlim([0 max(tsim(1:end-1,:,:,r),[],'all')/mean(Ntot(:), 'omitnan')])
+        ylim([0 1e-2*100])
+        xlim([0 max(tsim(1:end-1,:,:,:),[],'all')/mean(Ntot(:), 'omitnan')])
         %         xlim([Ns(1) Ns(end-1)])
         
     end
 end
 
+% plot approximated
+f = 3;
+figure(3)
+
+for j = 1:2 % tests       
+    subplot(3,2,j)
+    yline(median(min(tsim(:,j,f,:),[],4),'all'),'--', 'color', color(f,:), 'linewidth', 2)
+
+    subplot(3,2,j+2)
+    yline(median(eps(:,j,f,:),'all')*100,'--', 'color', color(f,:), 'linewidth', 2)
+
+    subplot(3,2,j+4)
+    plot(median(min(tsim(:,j,f,:),[],4),'all'), median(eps(:,j,f,:),'all')*100,'ko', 'markerfacecolor', color(f,:))
+end
+
 %%
+figure(3)
+% add second y-axis
+N = length(tvec);
+
+for j = 1:2
+    subplot(3,2,j)
+    
+    yyaxis left
+    ylim([0 .31])
+    xlim([0 330])
+    
+    yl = get(gca, 'ylim');
+    
+    yyaxis right
+    set(gca, 'yscale', 'lin', 'ycolor', [.3 .3 .3])
+    ylim(yl/N * 1e3)
+    ylabel('Time per iteration (ms)')
+    
+    yticks([0:.05:.15])
+    yline(thill*1e3,'--', 'color', color(4,:), 'linewidth', 2)
+    
+    subplot(3,2,j+2)
+    xlim([0 330])
+end
+
+subplot(325)
+% xline(thill * N,'--', 'color', color(4,:), 'linewidth', 2)
+
+subplot(326)
+% xline(thill * N,'--', 'color', color(4,:), 'linewidth', 2)
+
+%%
+figure(3)
+set(gcf,'units','centimeters','position',[5 5 15 17])
 
 subplot(321)
-legend('Tradit.', 'Charac.', 'Approx.', 'location', 'best')
-legend boxon
+legend('Traditional method', 'Method of charac.', 'Approximation', 'Hill model', 'location', 'northwest')
+legend boxoff
 
 
 % subplot(326)
 % legend('Tradit.', 'Charac.', 'Approx.', 'location', 'best')
 % legend boxon
+
+%% figure size
+cd('C:\Users\u0167448\OneDrive\9. Short-range stiffness\figures\MAT')
+figname = 'Fig11.png';
+savefig = 1;
+if savefig
+    figure(3)
+    exportgraphics(gcf,figname)
+end
+
+
+
 
 return
 
@@ -248,7 +325,7 @@ return
 aTs = [0; Ts];
 nzi = find(diff(aTs) > 0);
 vs = [0 .4545 -.4545 0 .4545 0 0];
-X0 = parms.x0'; 
+X0 = parms.x0';
 Y = [];
 t1 = [];
 
@@ -262,21 +339,24 @@ X0 = [Q00 Q20 Fse 0 0 0 0]';
 tap = [];
 Y = [];
 
+Nit = [];
+tic
 for p = 1:(length(nzi)-1)
-
+    
     parms.vts = vs(nzi(p));
-%     parms.Lts = Lts(nzi(p
-
+    %     parms.Lts = Lts(nzi(p
+    
     sol = ode15s(@(t,y,yp) fiber_dynamics_explicit_length_v2(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, []);
-
+    
     Y = [Y sol.y(:,1:end-1)];
     tap = [tap sol.x(1:end-1)];
-
+    
     X0 = sol.y(:,end);
-
-%     Nit(p) = sol.stats.nfevals;
-
+    
+    Nit(p) = sol.stats.nfevals;
+    
 end
+toc
 
 Fap = Y(3,:);
 
@@ -286,7 +366,7 @@ aTs = [0; Ts];
 nzi = find(diff(aTs) > 0);
 vs = [0 .4545 -.4545 0 .4545 0 0];
 
-parms.xi = linspace(-15,15,500);
+parms.xi = linspace(-15,15,90);
 parms.method_of_characteristics = 1;
 n0 = zeros(size(parms.xi));
 X0 = [n0'; parms.x0(4:end)'];
@@ -294,38 +374,47 @@ X0 = [n0'; parms.x0(4:end)'];
 Y = [];
 t1 = [];
 
-for p = 1:(length(nzi)-1)
+Nit = [];
+tic
 
+for p = 1:(length(nzi)-1)
+    
     disp(p)
     parms.vts = vs(nzi(p));
-
+    
     sol = ode15s(@(t,y,yp) fiber_dynamics_explicit_no_tendon_full(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, []);
-
+    
     Y = [Y sol.y(:,1:end-1)];
     t1 = [t1 sol.x(1:end-1)];
-
+    
     X0 = sol.y(:,end);
-
-%     Nit(p) = sol.stats.nfevals;
-
+    
+    Nit(p) = sol.stats.nfevals;
+    
 end
+toc
 
 %%
 F = nan(1, length(Y));
 for i = 1:length(Y)
-[~, F(i), ~] = fiber_dynamics_explicit_no_tendon_full(0,Y(:,i), parms);
+    [~, F(i), ~] = fiber_dynamics_explicit_no_tendon_full(0,Y(:,i), parms);
 end
 
 
 %%
 close all
 figure(1)
-subplot(121)
+subplot(211)
 plot(t1, F, tap, Fap)
+box off
+legend('Discretized', 'Approximated', 'location','best')
+title('Force')
 
-subplot(122)
+subplot(212)
 plot(t1(1:end-1), diff(t1),tap(1:end-1), diff(tap))
-
+box off
+title('Time step ode15s')
+ylabel('dt (s)')
 
 %%
 
@@ -354,3 +443,94 @@ title('Force')
 xlabel('Time (s)')
 box off
 ylabel('Force')
+
+%%
+
+
+figure(3)
+subplot(321)
+yline(thill / 1000 * 1e6, '--')
+
+
+
+
+%%
+
+mcode = [1 1 1];
+parms_version = '_v3';
+[output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
+
+input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iFs}];
+cd(input_foldername)
+load(['parms_',modelname, parms_version, '.mat'], 'newparms')
+parms = update_parms(newparms);
+
+txb = nan(1,1000);
+
+parms.vts = 0;
+parms.Cas = .2;
+
+tic
+for i = 1:1000
+    
+    %     profile on
+    error = fiber_dynamics_explicit_length_v2(0, parms.x0', parms);
+    
+    %     profile viewer
+end
+
+txb = toc;
+
+
+%% functions
+function[tsim, F] = evaluate_model(X0, vts, Lts, dt, f, parms)
+    
+        % pre-allocate
+        F = zeros(1, length(vts)-1);
+        t2 = zeros(1, length(vts)-1);
+        y = repmat(X0, 1, length(vts)-1);
+
+
+        tic
+
+        for ii = 2:length(vts)
+
+            parms.F = F(ii-1);
+            parms.vts = vts(ii);
+            parms.Lts = Lts(ii);
+
+            if f < 3
+                [yp, F(ii), Q0] = fiber_dynamics_explicit_no_tendon_full(t2(ii-1),y(:,ii-1), parms);
+            else
+                [yp, F(ii), Q0] = fiber_dynamics_explicit_length_v2(t2(ii-1),y(:,ii-1), parms);
+%                  [yp, F(ii), Q0] = fiber_dynamics_explicit_no_tendon(t2(ii-1),y(:,ii-1), parms);
+            end
+%             
+%             if F(ii) < 0
+%                 keyboard
+%             end
+
+            y(:,ii) = y(:,ii-1) + yp * dt;
+            t2(ii) = t2(ii-1) + dt;
+
+            if f == 1 % shift XB distribution
+                % for n, also need to shift
+                dx = yp(end-3) * dt;
+                xi = parms.xi - dx;
+                n = y(1:length(parms.xi),ii);
+
+                nshift = interp1(parms.xi(:), n, xi(:),'linear',0);
+                nshift(isnan(nshift)) = 0;
+                nshift(nshift<0) = 0;
+
+                y(1:length(parms.xi),ii) = nshift;
+
+                F(ii) = F(ii) + dx * Q0;
+            end
+        end
+
+        tsim = toc;
+
+        % compute force
+%         Fi = interp1(t2, F, tlin);
+end

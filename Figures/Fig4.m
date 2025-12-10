@@ -8,7 +8,7 @@ pcolors = flip(parula(7));
 acolors = lines(4);
 % acolors = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
 
-discretized_model = 1;
+discretized_model = 0;
 
 %% chose figure number: specify conditions
 fig = 6;
@@ -28,13 +28,17 @@ if fig == 4
     
     titles = {'Maximal activation', 'Submaximal activation'};
     
+    tmax =  0.3195;
+    
 elseif fig == 5 || fig == 6
     
-    ISIs = [.316 .316 .316;
-            .001 .001 .001];
+    ISIs = [ .001 .001 .001;
+             .316 .316 .316];
     
     AMPs = [.0383 .0383 .0383;
             .0383 .0383 .0383];
+        
+        tmax = 0.6345;
     
     titles = {'Maximal activation', 'Submaximal activation'};
     
@@ -88,7 +92,7 @@ for j = 1:size(ISIs,1)
 %     plot_data(texp, Lexp, Fexp, brighten([.5 .5 .5], (j-1)/2), ls{j});
     
     texp = texp - Tsrel(1,2);
-    tmax = .15 - Tsrel(1,2);
+%     tmax = .15 - Tsrel(1,2)
 
     for i = 1:size(ISIs,2)
     
@@ -146,11 +150,11 @@ for j = 1:size(ISIs,1)
             t = tis + 3*dTt - tiso;
             
             t = t - Tsrel(1,2);
-            tmax = .15 - Tsrel(1,2);
+            tmax2 = .15 - Tsrel(1,2);
             
             figure(1)
             subplot(5,1,[2 5])
-            plot(t(t<tmax), oFi(t<tmax)*100, 'linestyle', ls{j}, 'linewidth',2, 'color', brighten(colors(kk,:), (2-j)/2)); hold on
+            plot(t(t<tmax2), oFi(t<tmax2)*100, 'linestyle', ls{j}, 'linewidth',2, 'color', brighten(colors(kk,:), (2-j)/2)); hold on
             
             % compute RMSD
             id = t < .15 & t > (-ISI - 2 * dTc - .1);
