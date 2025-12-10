@@ -8,7 +8,7 @@ version = '_v3';
 % version = '';
 
 % settings
-N = 500;
+N = 1000;
 % N = 1500;
 save_results = 0;
 visualize = 1;
@@ -66,8 +66,8 @@ for iF = iFs
     cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
     load([fibers{iF},'_cor_new.mat'],'data')
    
-    Ks = find(Fm(:,iF) > .05); % only consider active trials
-%     Ks = 1;
+%     Ks = find(Fm(:,iF) > .05); % only consider active trials
+    Ks = 1;
 %     Ks = find(Fm(:,iF) > 0); % only consider active trials
     Data = prep_data_v2(data,n, m,Ks,tiso);
     [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), N);
@@ -183,7 +183,7 @@ for iF = iFs
     
     IG = get_initial_guess(tis, Cas, vis, parms.Lts, parms);
     
-    oFi = (IG.Fcei + parms.Fpe_func(IG.Li, parms)) * parms.Fscale;
+    oFi = (IG.Fsei) * parms.Fscale;
     
     if visualize
         subplot(414); hold on
