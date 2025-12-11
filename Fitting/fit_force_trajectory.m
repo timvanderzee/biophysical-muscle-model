@@ -13,7 +13,7 @@ N = 500;
 save_results = 0;
 visualize = 1;
     
-iFs = 6 %; [2,3,5,6,7,8,11];
+iFs = 7 %; [2,3,5,6,7,8,11];
 n = [3 1]; % ISI number
 m = [7 1]; % AMP number
 % n = [3]; % ISI number
