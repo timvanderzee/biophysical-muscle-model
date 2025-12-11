@@ -14,8 +14,10 @@ save_results = 0;
 visualize = 1;
     
 iFs = 6 %; [2,3,5,6,7,8,11];
-n = [3 1]; % ISI number
-m = [7 1]; % AMP number
+% n = [3 1]; % ISI number
+% m = [7 1]; % AMP number
+n = [3]; % ISI number
+m = [7]; % AMP number
 tiso = 3; % isometric time (s)
 
 % bounds
@@ -38,14 +40,15 @@ bnds.ps2 = [-1 2];
 bnds.k = [1 5000];
 bnds.b = [1 5000];
 bnds.dLcrit = [1 10];
+bnds.Lce0 = [-10 1];
 
 bnds.kpe = [1e-4 1e-1];
 bnds.Fpe0 = [1e-5 1e-1];
 
 % parameters to be fitted
 if sum(mcode == [1 1 1]) == 3
-%     optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop', 'kpe', 'Fpe0'};
-    optparms = {'kpe', 'Fpe0'};
+    optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop', 'kpe', 'Lce0'};
+%     optparms = {'kpe', 'Fpe0'};
 %     optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF'};
 elseif sum(mcode == [1 1 2]) == 3
     optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'koop', 'kpe', 'Fpe0'};
@@ -66,9 +69,9 @@ for iF = iFs
     cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
     load([fibers{iF},'_cor_new.mat'],'data')
    
-%     Ks = find(Fm(:,iF) > 0); % only consider active trials
+    Ks = find(Fm(:,iF) > 0); % only consider active trials
 %     Ks = 1:2;
-    Ks = [1; find(Fm(:,iF) < .05)]; % only consider active trials
+%     Ks = [1; find(Fm(:,iF) < .05)]; % only consider active trials
     Data = prep_data_v2(data,n, m,Ks,tiso);
     [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), N);
     
@@ -125,6 +128,7 @@ for iF = iFs
     parms.PE_isw_SE = 1;
     parms.Fse_func = @(dlse, parms) parms.kse0*(exp(parms.kse*dlse)-1);
     parms.Fpe0 = parms.Fpe0/2;
+    parms.Lce0 = 0;
 %     parms.Fpe_func = @(Lce, parms) parms.kpe * log(1+exp(Lce*parms.K))/parms.K + parms.Fpe0;
 %     parms.kpe_func = @(Lce, parms) parms.kpe .* (1 - 1./(exp(parms.K*Lce)+1));
     parms.Fpe_func = @(L, parms) parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0;
@@ -246,7 +250,16 @@ for iF = iFs
     
      
     %% test with fitted paramers 
-%     newparms.kpe = 0;
+%     clc
+% 
+%     newparms.kpe = .001;
+%     newparms.Fpe0 = .01;
+%     newparms.dLce0 = 10;
+%     newparms.K = 100;
+%     
+%     newparms.Fpe_func = @(L, parms) parms.kpe * L .* (L > 0);
+%     newparms.kpe_func = @(L, parms) parms.kpe  .* (L > 0);
+    
 %     newparms.Fpe0 = 0;
 %     
     close all
@@ -267,7 +280,7 @@ for iF = iFs
     Q0 = .1;
     p0 = -.5;
     q0 = .1;
-    [Q00, Q20, lce0, Q10, Fse0] = find_steady_state(Q0, p0, q0, newparms, 'adjusted');
+    [Q00, Q20, lce0, Q10, Fse0] = find_steady_state(Q0, p0, q0, newparms, 'regular');
     x0 = [Q00 Q20 Fse0 0 0 0];
 
     nsol = ode15s(@(t,y) fiber_dynamics_explicit_length_v2(t,y, newparms), [0 max(tis)], x0, odeopt);
@@ -279,10 +292,24 @@ for iF = iFs
     
 %     ndlse = Lts - nL;
     nF = nsol.y(3,:);
-    nFp = parms.Fpe_func(newparms.Lts, newparms);
+    ndlse = parms.Lse_func(nF, newparms);
+    L = newparms.Lts - interp1(nt, ndlse, newparms.ti);
+    
+    parms.K = 1;
+    nFp = newparms.kpe * log(1+exp((L-newparms.Lce0)*parms.K))/parms.K;
+%     nFp = newparms.Fpe_func(L, newparms);
+%     nFp = 0;
     nFi = interp1(nt, nF, out.t) * parms.Fscale + nFp;
     
-    
+    if ishandle(2), close(2); end
+    figure(2)
+    plot(Data.t, Data.F,'k.'); hold on
+    plot(out.t, out.F)
+    plot(out.t, nFi,'--');
+
+    legend('Data', 'Fit', 'Sim')
+
+    return
 %     subplot(414); hold on
 %%
 % out.Non = de
@@ -305,13 +332,7 @@ legend('Sim', 'Fit')
 
 %%
 %
-if ishandle(2), close(2); end
-figure(2)
-plot(Data.t, Data.F,'k.'); hold on
-plot(out.t, out.F)
-plot(out.t, nFi,'--');
 
-legend('Data', 'Fit', 'Sim')
     
     return
      

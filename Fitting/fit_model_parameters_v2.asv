@@ -161,6 +161,14 @@ dDRXdt = k1 - k2 - (dQ0dt + dRdt);
 opti.subject_to((dDRXdt(1:N-1) + dDRXdt(2:N))*dt/2 + DRX(1:N-1) == DRX(2:N));
 
 %% cost
+% low risk: only add Fpe at the end
+dlse = log(Fse/kse0+1)/kse;
+L = Lts - dlse;
+dLce = L - parms.Lce0;
+Kexp = dLce*parms.K;
+
+Lcor = log(1+exp(Kexp))/parms.K
+
 Frel = Fse * parms.Fscale + kpe * Lts + Fpe0;
 
 % not needed for Hill-type, because already enforced by dynamics

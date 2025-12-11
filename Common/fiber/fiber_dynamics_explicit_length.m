@@ -39,8 +39,11 @@ if isfield(parms, 'PE_isw_SE') % PE in series with SE
     if parms.PE_isw_SE && Lce > 0
         kpe = parms.kpe_func(Lce, parms);
         Fpe = parms.Fpe_func(Lce, parms);
+        
     end
 end
+
+
 % SE
 dLse = Lts - Lce;
 Fse = parms.Fse_func(dLse, parms);

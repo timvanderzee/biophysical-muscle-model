@@ -116,11 +116,31 @@ if parms.f > 0
     IG.DRXi = DRXi;
     IG.Ri = Ri;
 %     IG.Lti = Lti;
+
+%% compute Ldi
+    kpe = 0;
     
+    % points where integrals is evaluated
+    k1 = [parms.k11 parms.k12];
+    k2 = [parms.k21 -parms.k22];
+
+    % get functions
+    [IGf, IGef] = get_IG_IGEf(parms.approx);
+
+    [Q0dot, Q1dot] = CrossBridge_Dynamics(Q0i, pi, qi, parms.f, parms.w, k1, k2, IGef, Noni, DRXi, IGf, parms.b, parms.k, Ri, parms.dLcrit, parms.ps2);
+
+    % velocity - independent derivative
+    F0dot  = Q1dot + Q0dot;
+    
+    kse = parms.kse * (Fsei + parms.kse0);
+    Ldi = (vts .* parms.gamma .* kse - F0dot) ./  (Q0i + kse + kpe);
+
+    %%
     % state derivatives
     IG.dQ0dti = dQ0dti;
     IG.dQ2dti = dQ2dti;
-%     IG.Ldi = Ldi;
+    IG.Ldi = Ldi;
+    
     IG.dNondti = dNondti;
     IG.dDRXdti = dDRXdti;
     IG.dRdti = dRdti;

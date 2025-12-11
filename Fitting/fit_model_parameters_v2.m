@@ -6,7 +6,7 @@ import casadi.*
 opti = casadi.Opti();
 
 % parameters
-allparms = {'f','k11','k12','k21','k22','JF','koop','J1','J2', 'kon', 'koff', 'kse','kse0', 'kpe', 'Fpe0','b','k','dLcrit', 'gamma', 'kF', 'vmax', 'kappa', 'ps2', 'act_max'};
+allparms = {'f','k11','k12','k21','k22','JF','koop','J1','J2', 'kon', 'koff', 'kse','kse0', 'kpe', 'Fpe0','b','k','dLcrit', 'gamma', 'kF', 'vmax', 'kappa', 'ps2', 'act_max', 'Lce0'};
 
 % create variables for all parameters
 for i = 1:length(allparms)
@@ -67,6 +67,9 @@ Q2  = opti.variable(1,N); % derivative constraint
 Q1  = opti.variable(1,N);
 Non = opti.variable(1,N);  % derivative constraint
 DRX = opti.variable(1,N);  % derivative constraint
+
+Ld = opti.variable(1,N);  % derivative constraint
+opti.set_initial(Ld, IG.Ldi);
 
 % p and q
 p   = opti.variable(1,N); % mean strain of the distribution
@@ -133,7 +136,7 @@ k2 = [k21 -k22];
 F0dot  = Q1dot + Q0dot;
 
 % velocity
-Ld = (vts .* parms.gamma .* Kse - F0dot) ./  (Q0 + Kse + Kpe);
+opti.subject_to(Ld .* (Q0 + Kse + Kpe) == (vts .* parms.gamma .* Kse - F0dot));
 
 % cross-bridge derivatives
 dQ0dt = Q0dot;
@@ -161,7 +164,17 @@ dDRXdt = k1 - k2 - (dQ0dt + dRdt);
 opti.subject_to((dDRXdt(1:N-1) + dDRXdt(2:N))*dt/2 + DRX(1:N-1) == DRX(2:N));
 
 %% cost
-Frel = Fse * parms.Fscale + kpe * Lts + Fpe0;
+% low risk: only add Fpe at the end
+dlse = log(Fse/kse0+1)/kse;
+L = Lts - dlse;
+dLce = L - Lce0;
+K = 1;
+Lcor = log(1+exp(dLce*K))/K;
+
+Fp = kpe * Lcor;
+% Fp = 0;
+
+Frel = Fse * parms.Fscale + Fp;
 
 % not needed for Hill-type, because already enforced by dynamics
 opti.subject_to(Frel(1) == 1);
