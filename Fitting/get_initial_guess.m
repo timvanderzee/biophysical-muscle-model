@@ -55,7 +55,7 @@ if parms.f > 0
     % states
     Q0i     = interp1(sol.x, sol.y(1,:), tis); % zero-order moment
     Q2i     = interp1(sol.x, sol.y(2,:), tis); % second-order moment
-    Fsei      = interp1(sol.x, sol.y(3,:), tis); % length
+    Fsei    = interp1(sol.x, sol.y(3,:), tis); % length
     Noni    = interp1(sol.x, sol.y(4,:), tis); % thin filament activation
     DRXi    = interp1(sol.x, sol.y(5,:), tis); % thick filament activation
     Ri      = interp1(sol.x, sol.y(6,:), tis); % 
@@ -76,6 +76,7 @@ if parms.f > 0
 %     Fpe = parms.Fpe_func(Li, parms);
     Fpe = 0;
     Fce = Fsei - Fpe;
+    Fce = max(Fce,0);
     kse = parms.kse_func(dlse, parms);
     kpe = parms.kpe_func(Li, parms);
 %     kpe = parms.kpe .* (Li > 0);
