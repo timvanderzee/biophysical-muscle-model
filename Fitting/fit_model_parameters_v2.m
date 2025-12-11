@@ -127,12 +127,15 @@ dlse = log(Fse/kse0+1)/kse;
 L = Lts - dlse;
 dLce = L - Lce0;
 K = 1;
-Lcor = log(1+exp(dLce*K))/K;
-
-
+% Lcor = log(1+exp(dLce*K))/K;
 
 % passive force
-Fp = kpe * Lcor;
+% Fp = Kpe * Lcor;
+% Kpe = kpe;
+
+% version 2
+Kpe = kpe .* (1 - 1./(exp(K*dLce)+1));
+Fp = kpe * log(1+exp(dLce*K))/K;
 
 %% cross-bridge dynamics
 % points where integrals is evaluated

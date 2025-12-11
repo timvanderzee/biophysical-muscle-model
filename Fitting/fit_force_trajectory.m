@@ -242,6 +242,8 @@ for iF = iFs
 %     fparms.kF = min(fparms.kF, .9* max(bnds.kF));
 %     fparms.kse0 = .15;
     
+    bnds.Lce0 = [-100 0];
+
 %     figure(100)
     [newparms, out, opti] = fit_model_parameters_v2(optparms, w, Xdata, fparms, IG, bnds);
     set(gcf,'units','normalized','position',[.2 .2 .4 .6])
@@ -251,20 +253,10 @@ for iF = iFs
     end
     
      
-    %% test with fitted paramers 
-%     clc
-% 
-%     newparms.kpe = .001;
-%     newparms.Fpe0 = .01;
-%     newparms.Lce0 = 2;
-%     newparms.K = 100;
-%     
-%     newparms.Fpe_func = @(L, parms) parms.kpe * L .* (L > 0);
-%     newparms.kpe_func = @(L, parms) parms.kpe  .* (L > 0);
-    
-%     newparms.Fpe0 = 0;
-%     
+    %% test with fitted paramers     
     close all
+%     newparms.Lce0 = -50;
+    
     N = 500;
     [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), N);
      
@@ -296,8 +288,10 @@ for iF = iFs
     ndlse = parms.Lse_func(nF, newparms);
     L = newparms.Lts - interp1(nt, ndlse, newparms.ti);
     
-    parms.K = 1;
-    nFp = newparms.kpe * log(1+exp((L-newparms.Lce0)*parms.K))/parms.K;
+%     parms.K = 1;
+% dLce = L -  0;
+% Fpe = newparms.kpe * log(1+exp(dLce*newparms.K))/newparms.K;
+%     nFp = newparms.kpe * log(1+exp((L-newparms.Lce0)*parms.K))/parms.K;
 %     nFp = newparms.Fpe_func(L, newparms);
 %     nFp = 0;
     nFi = interp1(nt, nF, out.t) * parms.Fscale; % + nFp;
