@@ -14,10 +14,10 @@ save_results = 0;
 visualize = 1;
     
 iFs = 6 %; [2,3,5,6,7,8,11];
-% n = [3 1]; % ISI number
-% m = [7 1]; % AMP number
-n = [3]; % ISI number
-m = [7]; % AMP number
+n = [3 1]; % ISI number
+m = [7 1]; % AMP number
+% n = [3]; % ISI number
+% m = [7]; % AMP number
 tiso = 3; % isometric time (s)
 
 % bounds
@@ -40,7 +40,7 @@ bnds.ps2 = [-1 2];
 bnds.k = [1 5000];
 bnds.b = [1 5000];
 bnds.dLcrit = [1 10];
-bnds.Lce0 = [-50 0];
+bnds.Lce0 = [-100 0];
 
 bnds.kpe = [1e-4 1e-1];
 bnds.Fpe0 = [1e-5 1e-1];
