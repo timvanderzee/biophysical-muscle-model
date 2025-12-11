@@ -30,10 +30,12 @@ for i = 1:length(dTc)
     vx(tx > Ts(6) & tx <=  Ts(7)) = -.4545;
 
     % integrate to get length
-    Lx = cumtrapz(tx, vx);
+%     Lx = cumtrapz(tx, vx);
 
     % set back to 0
 %     vx(tx > Ts(6) & tx <=  Ts(7)) = 0;
+    
+    Lx = cumtrapz(tx, vx);
 
     % interpolate
     vi = interp1(tx, vx, ti, [], 'extrap');

@@ -79,7 +79,7 @@ IG.Ri = Ri;
 %     IG.Lti = Lti;
 
 %% compute Ldi
-% kpe = 0;
+kpe = 0;
 
 % points where integrals is evaluated
 k1 = [parms.k11 parms.k12];

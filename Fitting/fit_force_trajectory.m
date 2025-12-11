@@ -69,7 +69,7 @@ for iF = iFs
     cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
     load([fibers{iF},'_cor_new.mat'],'data')
    
-    Ks = find(Fm(:,iF) > 0); % only consider active trials
+    Ks = find(Fm(:,iF) > .05); % only consider active trials
 %     Ks = 1:2;
 %     Ks = [1; find(Fm(:,iF) < .05)]; % only consider active trials
     Data = prep_data_v2(data,n, m,Ks,tiso);
