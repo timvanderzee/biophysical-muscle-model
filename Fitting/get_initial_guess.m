@@ -12,12 +12,14 @@ if parms.f > 0
     parms.ti = [0 5];
     parms.Lts = [0 0];
     parms.Cas = Cas(1) * [1 1];
+    
+    parms.PE_isw_SE = 0;
            
     Q0 = 0;
     p0 = 0;
     q0 = .1;
 
-    [Q00, Q20, lce0, Q10, Fse0] = find_steady_state(Q0, p0, q0, parms, 'regular');
+    [Q00, Q20, lce0, Q10, Fse0] = find_steady_state(Q0, p0, q0, parms, 'adjusted');
     x0 = [Q00 Q20 Fse0 0 0 0]';
     xp0 = zeros(size(x0));
     
@@ -25,7 +27,7 @@ if parms.f > 0
         x0(6) = 1;
     end
     
-    odeopt = odeset('maxstep', 1e-1);
+    odeopt = odeset('maxstep', 1e-2);
 %     odeopt = [];
     
     % isometric contraction
@@ -71,7 +73,8 @@ if parms.f > 0
     % state-dependent variables
     dlse = parms.Lse_func(Fsei, parms);
     Li = Lts - dlse;
-    Fpe = parms.Fpe_func(Li, parms);
+%     Fpe = parms.Fpe_func(Li, parms);
+    Fpe = 0;
     Fce = Fsei - Fpe;
     kse = parms.kse_func(dlse, parms);
     kpe = parms.kpe_func(Li, parms);
@@ -80,7 +83,7 @@ if parms.f > 0
     % mean and standard deviation
 %     K = parms.K;
 %     Q00i = log(1+exp(Q0i*K))/K;
-    Q00i = max(Q0i, 1e-4);
+    Q00i = max(Q0i, 1e-6);
     Q1i = Fce - Q00i;
     pi = Q1i./Q00i; 
     qi = Q2i./Q00i - pi.^2;  

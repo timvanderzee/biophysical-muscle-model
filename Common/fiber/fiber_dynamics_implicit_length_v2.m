@@ -40,6 +40,7 @@ else
 end
 
 % SE
+Fse = max(Fse, 1e-6);
 dLse = parms.Lse_func(Fse, parms);
 kse = parms.kse * (Fse + parms.kse0);
 

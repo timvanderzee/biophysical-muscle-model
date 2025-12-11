@@ -50,12 +50,12 @@ Lce = Lts - dLse;
 kpe = 0;
 Fpe = 0;
 
-if isfield(parms, 'PE_isw_SE') % PE in series with SE
-    if parms.PE_isw_SE
-        kpe = parms.kpe_func(Lce, parms);
-        Fpe = parms.Fpe_func(Lce, parms);
-    end
-end
+% if isfield(parms, 'PE_isw_SE') % PE in series with SE
+%     if parms.PE_isw_SE
+%         kpe = parms.kpe_func(Lce, parms);
+%         Fpe = parms.Fpe_func(Lce, parms);
+%     end
+% end
 
 % CE
 Fce = Fse - Fpe;
