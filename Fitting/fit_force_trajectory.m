@@ -40,7 +40,7 @@ bnds.ps2 = [-1 2];
 bnds.k = [1 5000];
 bnds.b = [1 5000];
 bnds.dLcrit = [1 10];
-bnds.Lce0 = [-10 1];
+bnds.Lce0 = [-50 0];
 
 bnds.kpe = [1e-4 1e-1];
 bnds.Fpe0 = [1e-5 1e-1];
@@ -236,7 +236,9 @@ for iF = iFs
     
     % specify biophysical parameters to be fitted
 %     parms.kF = parms.J1 * parms.JF;
+    parms.Lce0 = -20;
     fparms = parms;
+
 %     fparms.kF = min(fparms.kF, .9* max(bnds.kF));
 %     fparms.kse0 = .15;
     
@@ -254,7 +256,7 @@ for iF = iFs
 % 
 %     newparms.kpe = .001;
 %     newparms.Fpe0 = .01;
-%     newparms.dLce0 = 10;
+%     newparms.Lce0 = 2;
 %     newparms.K = 100;
 %     
 %     newparms.Fpe_func = @(L, parms) parms.kpe * L .* (L > 0);
@@ -263,7 +265,6 @@ for iF = iFs
 %     newparms.Fpe0 = 0;
 %     
     close all
-%     N = 5e3;
     N = 500;
     [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), N);
      
@@ -299,7 +300,7 @@ for iF = iFs
     nFp = newparms.kpe * log(1+exp((L-newparms.Lce0)*parms.K))/parms.K;
 %     nFp = newparms.Fpe_func(L, newparms);
 %     nFp = 0;
-    nFi = interp1(nt, nF, out.t) * parms.Fscale + nFp;
+    nFi = interp1(nt, nF, out.t) * parms.Fscale; % + nFp;
     
     if ishandle(2), close(2); end
     figure(2)

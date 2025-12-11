@@ -88,7 +88,7 @@ Fce = Q0 + Q1;
 Fse = Fce;
 Kse = kse * (Fse + kse0);
 % Kpe = kpe;
-Kpe = 0;
+% Kpe = 0;
 
 % extra constraints
 % opti.subject_to(Q1 + Q0 + Fpe == Fse);
@@ -120,6 +120,19 @@ opti.set_initial(DRX, IG.DRXi);
 
 R = 0;
 dRdt = 0;
+
+%% Passive force
+% low risk: only add Fpe at the end
+dlse = log(Fse/kse0+1)/kse;
+L = Lts - dlse;
+dLce = L - Lce0;
+K = 1;
+Lcor = log(1+exp(dLce*K))/K;
+
+
+
+% passive force
+Fp = kpe * Lcor;
 
 %% cross-bridge dynamics
 % points where integrals is evaluated
@@ -164,17 +177,7 @@ dDRXdt = k1 - k2 - (dQ0dt + dRdt);
 opti.subject_to((dDRXdt(1:N-1) + dDRXdt(2:N))*dt/2 + DRX(1:N-1) == DRX(2:N));
 
 %% cost
-% low risk: only add Fpe at the end
-dlse = log(Fse/kse0+1)/kse;
-L = Lts - dlse;
-dLce = L - Lce0;
-K = 1;
-Lcor = log(1+exp(dLce*K))/K;
-
-Fp = kpe * Lcor;
-% Fp = 0;
-
-Frel = Fse * parms.Fscale + Fp;
+Frel = (Fse + Fp) * parms.Fscale;
 
 % not needed for Hill-type, because already enforced by dynamics
 opti.subject_to(Frel(1) == 1);
