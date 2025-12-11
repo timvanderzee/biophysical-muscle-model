@@ -13,7 +13,7 @@ N = 500;
 save_results = 0;
 visualize = 1;
     
-iFs = 6 %; [2,3,5,6,7,8,11];
+iFs = 11 %; [2,3,5,6,7,8,11];
 % n = [3 1]; % ISI number
 % m = [7 1]; % AMP number
 n = [3]; % ISI number
@@ -47,7 +47,7 @@ bnds.Fpe0 = [1e-5 1e-1];
 
 % parameters to be fitted
 if sum(mcode == [1 1 1]) == 3
-    optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop', 'kpe', 'Lce0'};
+    optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop', 'Lce0', 'kpe'};
 %     optparms = {'kpe', 'Fpe0'};
 %     optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF'};
 elseif sum(mcode == [1 1 2]) == 3
@@ -69,9 +69,7 @@ for iF = iFs
     cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
     load([fibers{iF},'_cor_new.mat'],'data')
    
-    Ks = find(Fm(:,iF) > .05); % only consider active trials
-%     Ks = 1:2;
-%     Ks = [1; find(Fm(:,iF) < .05)]; % only consider active trials
+    Ks = find(Fm(:,iF) > 0.05); % only consider active trials
     Data = prep_data_v2(data,n, m,Ks,tiso);
     [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), N);
     

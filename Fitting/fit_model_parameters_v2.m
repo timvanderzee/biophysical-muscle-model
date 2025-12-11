@@ -99,7 +99,7 @@ opti.subject_to(Q2 - Q0 .* (p.^2 + q) == 0);
 opti.subject_to(q > 0);
 opti.subject_to(p > -5);
 opti.subject_to(p < 5);
-opti.subject_to(Q0 > 0);
+opti.subject_to(Q0 > 1e-6);
 opti.subject_to(Fse > 0);
 
 % initial guess states
