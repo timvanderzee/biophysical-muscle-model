@@ -63,7 +63,7 @@ dt = mean(diff(toc));
 % define opti states (defined as above)
 Q0  = opti.variable(1,N); % derivative constraint
 Q2  = opti.variable(1,N); % derivative constraint
-% Fse = opti.variable(1,N); % derivative constraint
+Fse = opti.variable(1,N); % derivative constraint
 Q1  = opti.variable(1,N);
 Non = opti.variable(1,N);  % derivative constraint
 DRX = opti.variable(1,N);  % derivative constraint
@@ -85,7 +85,7 @@ q   = opti.variable(1,N); % standard deviation strain of the distribution
 Fpe = 0;
 
 Fce = Q0 + Q1;
-Fse = Fce;
+% Fse = Fce;
 Kse = kse * (Fse + kse0);
 % Kpe = kpe;
 % Kpe = 0;
@@ -110,7 +110,7 @@ opti.set_initial(Q2, IG.Q2i);
 % initial guess extra variables
 opti.set_initial(p, IG.pi);
 opti.set_initial(q, IG.qi);
-% opti.set_initial(Fse, IG.Fsei);
+opti.set_initial(Fse, IG.Fsei);
 
 opti.subject_to(Non > 0);
 opti.set_initial(Non, IG.Noni);
@@ -136,6 +136,8 @@ K = 1;
 % version 2
 Kpe = kpe .* (1 - 1./(exp(K*dLce)+1));
 Fp = kpe * log(1+exp(dLce*K))/K;
+
+opti.subject_to(Fse == Fce + Fp);
 
 %% cross-bridge dynamics
 % points where integrals is evaluated
@@ -180,7 +182,8 @@ dDRXdt = k1 - k2 - (dQ0dt + dRdt);
 opti.subject_to((dDRXdt(1:N-1) + dDRXdt(2:N))*dt/2 + DRX(1:N-1) == DRX(2:N));
 
 %% cost
-Frel = (Fse + Fp) * parms.Fscale;
+% Frel = (Fse + Fp) * parms.Fscale;
+Frel = Fse * parms.Fscale;
 
 % not needed for Hill-type, because already enforced by dynamics
 opti.subject_to(Frel(1) == 1);
