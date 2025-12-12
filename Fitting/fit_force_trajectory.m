@@ -13,7 +13,7 @@ N = 500;
 save_results = 0;
 visualize = 1;
     
-iFs = 2 %; [2,3,5,6,7,8,11];
+iFs = 11 %; [2,3,5,6,7,8,11];
 % n = [3 1]; % ISI number
 % m = [7 1]; % AMP number
 n = [3]; % ISI number
@@ -127,11 +127,12 @@ for iF = iFs
     parms.Fse_func = @(dlse, parms) parms.kse0*(exp(parms.kse*dlse)-1);
     parms.Fpe0 = parms.Fpe0/2;
     parms.Lce0 = -1;
-%     parms.Fpe_func = @(Lce, parms) parms.kpe * log(1+exp(Lce*parms.K))/parms.K + parms.Fpe0;
-%     parms.kpe_func = @(Lce, parms) parms.kpe .* (1 - 1./(exp(parms.K*Lce)+1));
     parms.Fpe_func = @(L, parms) parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0;
     parms.kpe_func = @(Lce, parms) parms.kpe;
 
+    parms.kF = min(parms.kF, .9*bnds.kF(2));
+    parms.kse0 = max(parms.kse0, 1.1*bnds.kse0(1));
+    
     if ~isfield(parms, 'gamma')
         parms.gamma = .5*parms.s / parms.h; % length scaling
     end
