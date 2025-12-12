@@ -40,7 +40,7 @@ bnds.ps2 = [-1 2];
 bnds.k = [1 5000];
 bnds.b = [1 5000];
 bnds.dLcrit = [1 10];
-bnds.Lce0 = [-10 0];
+bnds.Lce0 = [-100 0];
 
 bnds.kpe = [1e-4 1e-1];
 bnds.Fpe0 = [1e-5 1e-1];
@@ -126,7 +126,7 @@ for iF = iFs
     parms.PE_isw_SE = 1;
     parms.Fse_func = @(dlse, parms) parms.kse0*(exp(parms.kse*dlse)-1);
     parms.Fpe0 = parms.Fpe0/2;
-    parms.Lce0 = -1;
+    parms.Lce0 = -20;
 %     parms.Fpe_func = @(Lce, parms) parms.kpe * log(1+exp(Lce*parms.K))/parms.K + parms.Fpe0;
 %     parms.kpe_func = @(Lce, parms) parms.kpe .* (1 - 1./(exp(parms.K*Lce)+1));
     parms.Fpe_func = @(L, parms) parms.kpe*(L-parms.lmtc0).*(L>parms.lmtc0)+parms.Fpe0;
@@ -195,21 +195,21 @@ for iF = iFs
     
     Lcost = @(dlse, Lis, parms) ((parms.kse0*(exp(parms.kse*dlse)-1)) - (parms.kpe * (Lis*parms.gamma - dlse - parms.Lce0))).^2;
 
-    for i = 1:length(Lis)
-        dlse(i) = fminsearch(@(L) Lcost(L, Lis(i), parms), 0);
-    end
+for i = 1:length(Lis)
+    dlse(i) = fminsearch(@(L) Lcost(L, Lis(i), parms), 0);
+end
 
-    dLce = (Lis * parms.gamma - dlse) - parms.Lce0;
+dLce = (Lis * parms.gamma - dlse) - parms.Lce0;
 
-    Fse = parms.Fse_func(dlse, parms) * parms.Fscale;
-    Fpe = parms.kpe * dLce  * parms.Fscale;
+Fse = parms.Fse_func(dlse, parms) * parms.Fscale;
+Fpe = parms.kpe * dLce  * parms.Fscale;
 
-    figure(1)
-    subplot(414)
-    plot(tis, Fse, '-', tis, Fpe, '--')
+figure(1)
+subplot(414)
+plot(tis, Fse, '-', tis, Fpe, '--')
 
-    % initial guess
-    IG.F9 = Fse;
+% initial guess
+IG.F = Fse;
 
     %% intervals of interest
     id1 = nan(length(Ks), length(parms.ti), length(m));
@@ -243,7 +243,7 @@ for iF = iFs
     Xdata.L = Lis * parms.gamma;
     Xdata.Cas = Cas;
     Xdata.idF = idF(idF<idA(end));
-    Xdata.idC = idC(idC<idA(end));
+    Xdata.idC = idC(idF<idA(end));
     
     % active
     Xdata.idA = idA;
@@ -255,7 +255,7 @@ for iF = iFs
     %% do fitting        
     % define weigth vector
     w1 = 100;    % weight for fitting force-velocity
-    w2 = 1000;   % weight for fitting short-range stiffness
+    w2 = 100;   % weight for fitting short-range stiffness
     w3 = 1000; 	% weight for regularization
     w = [w1 w2 w3];
     
@@ -263,6 +263,11 @@ for iF = iFs
 %     parms.kF = parms.J1 * parms.JF;
 %     parms.Lce0 = -20;
     fparms = parms;
+
+%     fparms.kF = min(fparms.kF, .9* max(bnds.kF));
+%     fparms.kse0 = .15;
+    
+    bnds.Lce0 = [-100 0];
 
 %     figure(100)
     [newparms, out, opti] = fit_model_parameters_v2(optparms, w, Xdata, fparms, IG, bnds);
@@ -300,56 +305,54 @@ for iF = iFs
     nt = nsol.x;
 
     % calc force
+%     nL = nsol.y(3,:);
+%     Lts = nsol.y(end,:);
+    
+%     ndlse = Lts - nL;
     nF = nsol.y(3,:);
     ndlse = parms.Lse_func(nF, newparms);
     L = newparms.Lts - interp1(nt, ndlse, newparms.ti);
-    nFi = interp1(nt, nF, tis) * parms.Fscale; % + nFp;
+    
+%     parms.K = 1;
+% dLce = L -  0;
+% Fpe = newparms.kpe * log(1+exp(dLce*newparms.K))/newparms.K;
+%     nFp = newparms.kpe * log(1+exp((L-newparms.Lce0)*parms.K))/parms.K;
+%     nFp = newparms.Fpe_func(L, newparms);
+%     nFp = 0;
+    nFi = interp1(nt, nF, out.t) * parms.Fscale; % + nFp;
     
     if ishandle(2), close(2); end
     figure(2)
     plot(Data.t, Data.F,'k.'); hold on
     plot(out.t, out.F)
-    plot(tis, nFi,'--');
+    plot(out.t, nFi,'--');
 
     legend('Data', 'Fit', 'Sim')
 
-    %% estimate SRS
-    % recreate the input, but with a higher sampling rate
+    return
+%     subplot(414); hold on
+%%
+% out.Non = de
 
-    nFii = interp1(tis, nFi, Data.t);
+close all
+figure(1)
 
-    % pre-allocate
-    ns = nan(length(Ks), 2);
-    ds = nan(length(Ks), 2);
-    F0 = nan(length(Ks), 1);
-    
-    [id0,id1,id2] = get_indices(Data.t, tiso, ts, Data.dTt, Data.dTc(1), Data.ISI(1), Data.Ca(Ks));
-    
-    for i = 1:length(Ks)
-        
-        np1 = polyfit(Data.L(id1(i,:)), nFii(id1(i,:)), 1);
-        np2 = polyfit(Data.L(id2(i,:)), nFii(id2(i,:)), 1);
-        
-        dp1 = polyfit(Data.L(id1(i,:)), Data.F(id1(i,:)), 1);
-        dp2 = polyfit(Data.L(id2(i,:)), Data.F(id2(i,:)), 1);
-        
-        ds(i,:) = [dp1(1) dp2(1)];
-        ns(i,:) = [np1(1) np2(1)];
-        
-        F0(i) = mean(Data.F(id0(i,:)));
-        
-    end
+out.R = zeros(size(out.Q0));
+X = [out.Q0; out.Q2; out.F; out.Non; out.DRX; out.R];
 
-    
-    figure(6)
-    plot(F0, ds(:,1)./ds(:,2),'o-'); hold on
-    plot(F0, ns(:,1)./ns(:,2),'o-')
-    box off
-    xlabel('Isometric force (F_0)')
-    ylabel('Relative stiffness')
-    legend('Data', 'Model', 'location', 'best')
-    legend boxoff
-    xlim([0 1.05])
+% Y = [nsol.y(1,:); nsol.y(2,:); nsol.y(3,:)*2; nsol.y(3,:)-nsol.y(1,:)];
+Y = nsol.y;
+
+for i = 1:size(Y,1)
+    nexttile
+    plot(nsol.x, Y(i,:), '-', out.t, X(i,:),'--'); 
+end
+
+legend('Sim', 'Fit')
+
+%%
+%
+
     
     return
      
@@ -488,7 +491,77 @@ for iF = iFs
 %     plot(osol.x, osol.y(end,:)); hold on
 %     plot(nsol.x, nsol.y(end,:))
     
+    %% estimate SRS
+    % recreate the input, but with a higher sampling rate
 
+    nFii = interp1(tis, nFi, Data.t);
+    oFii = interp1(tis, oFi, Data.t);
+       
+    if visualize
+        if ishandle(5), close(5); end
+        figure(5)
+        subplot(131);
+        plot(Data.L, Data.F,'.'); hold on
+
+        subplot(132);
+        plot(Data.L, oFii,'.'); hold on
+
+        subplot(133)
+        plot(Data.L, nFii,'.'); hold on
+    end
+    
+    % pre-allocate
+    ns = nan(length(Ks), 2);
+    os = nan(length(Ks), 2);
+    ds = nan(length(Ks), 2);
+    F0 = nan(length(Ks), 1);
+    
+    [id0,id1,id2] = get_indices(Data.t, tiso, ts, Data.dTt, Data.dTc(1), Data.ISI(1), Data.Ca(Ks));
+    
+    for i = 1:length(Ks)
+        
+        np1 = polyfit(Data.L(id1(i,:)), nFii(id1(i,:)), 1);
+        np2 = polyfit(Data.L(id2(i,:)), nFii(id2(i,:)), 1);
+        
+        op1 = polyfit(Data.L(id1(i,:)), oFii(id1(i,:)), 1);
+        op2 = polyfit(Data.L(id2(i,:)), oFii(id2(i,:)), 1);
+        
+        dp1 = polyfit(Data.L(id1(i,:)), Data.F(id1(i,:)), 1);
+        dp2 = polyfit(Data.L(id2(i,:)), Data.F(id2(i,:)), 1);
+        
+        ns(i,:) = [np1(1) np2(1)];
+        os(i,:) = [op1(1) op2(1)];
+        ds(i,:) = [dp1(1) dp2(1)];
+        
+        F0(i) = mean(Data.F(id0(i,:)));
+        
+        if visualize
+            subplot(131)
+            plot(Data.L(id0(i,:)), Data.F(id0(i,:)), 'g.')
+            plot(Data.L(id1(i,:)), Data.F(id1(i,:)), 'r.')
+            plot(Data.L(id2(i,:)), Data.F(id2(i,:)), 'y.')
+
+            subplot(132)
+            plot(Data.L(id1(i,:)), oFii(id1(i,:)), 'r.')
+            plot(Data.L(id2(i,:)), oFii(id2(i,:)), 'y.')
+
+            subplot(133)
+            plot(Data.L(id1(i,:)), nFii(id1(i,:)), 'r.')
+            plot(Data.L(id2(i,:)), nFii(id2(i,:)), 'y.')
+        end
+    end
+    
+    if visualize
+        titles = {'Data','Old parameters', 'New parameters'};
+        for i = 1:3
+            subplot(1,3,i)
+            box off
+            xlabel('Length (L_0)')
+            ylabel('Force (F_0)')
+            title(titles{i})
+        end
+    end
+    
     %% summary plot
     figure(6)
     nexttile

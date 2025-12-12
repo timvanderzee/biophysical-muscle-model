@@ -56,8 +56,6 @@ Lts = data.L;
 idF = data.idF;
 idC = [1:300 data.idC];
 idA = data.idA;
-idP = data.idP;
-idFP = data.idFP;
 
 % N = length(toc);
 N = length(idA);
@@ -120,7 +118,7 @@ opti.subject_to(Non > 0);
 opti.set_initial(Non, IG.Noni(idA));
 
 opti.subject_to(DRX > 0);
-opti.set_initial(DRX, IG.DRXi(idA));
+opti.set_initial(DRX, IG.DRXi);
 
 R = 0;
 dRdt = 0;
@@ -128,7 +126,7 @@ dRdt = 0;
 %% Passive force
 % low risk: only add Fpe at the end
 dlse = log(Fse/kse0+1)/kse;
-L = Lts(idA) - dlse;
+L = Lts - dlse;
 dLce = L - Lce0;
 K = 1;
 % Lcor = log(1+exp(dLce*K))/K;
@@ -142,28 +140,6 @@ Kpe = kpe .* (1 - 1./(exp(K*dLce)+1));
 Fp = kpe * log(1+exp(dLce*K))/K;
 
 opti.subject_to(Fse == Fce + Fp);
-
-%% Passive force during pCa 9
-N9 = length(idP);
-
-Fse9 = opti.variable(1,N9);
-opti.set_initial(Fse9, IG.F9(idP));
-opti.subject_to(Fse9 > 0);
-
-% lengths
-dlse9 = log(Fse9/kse0+1)/kse;
-L9 = data.L(idP) - dlse9;
-dLce9 = L9 - Lce0;
-
-% parallel force
-Fpe9 = kpe * dLce9;
-
-% constraint (assume Fce = 0)
-opti.subject_to(Fse9 == Fpe9);
-
-% cost
-Frel9 = Fse9 * parms.Fscale;
-Fcost9 = (Frel9(idFP - N) - Fts(idFP)).^2;
 
 %% cross-bridge dynamics
 % points where integrals is evaluated
@@ -180,7 +156,7 @@ k2 = [k21 -k22];
 F0dot  = Q1dot + Q0dot;
 
 % velocity
-opti.subject_to(Ld .* (Q0 + Kse + Kpe) == (vts(idA) .* parms.gamma .* Kse - F0dot));
+opti.subject_to(Ld .* (Q0 + Kse + Kpe) == (vts .* parms.gamma .* Kse - F0dot));
 
 % cross-bridge derivatives
 dQ0dt = Q0dot;
@@ -199,7 +175,7 @@ opti.subject_to((dQ2dt(1:N-1) + dQ2dt(2:N))*dt/2 + Q2(1:N-1) == Q2(2:N));
 % opti.subject_to((dFsedt(1:N-1) + dFsedt(2:N))*dt/2 + Fse(1:N-1) == Fse(2:N));
 
 %% cooperativity
-[Jon, Joff] = ThinFilament_Dynamics(Cas(idA), Q0, Non, kon, koff, koop, parms.Noverlap);
+[Jon, Joff] = ThinFilament_Dynamics(Cas, Q0, Non, kon, koff, koop, parms.Noverlap);
 dNondt = Jon - Joff;
 opti.subject_to((dNondt(1:N-1) + dNondt(2:N))*dt/2 + Non(1:N-1) == Non(2:N));
 
@@ -218,8 +194,7 @@ Fcost = (Frel(idF) - Fts(idF)).^2;
 
 % cost function
 J = 0;
-J = J + w(1) * sum(Fcost);
-J = J + w(2) * sum(Fcost9); 
+J = J + w(1) * sum(Fcost); % force-velocity fitting
 J = J + w(3) * (sum(dQ0dt(idC).^2) + sum(dQ1dt(idC).^2) + sum(dQ2dt(idC).^2)); % regularization term
 
 % optimize
@@ -245,7 +220,6 @@ try
     out.F     = sol.value(Frel);
     out.J     = sol.value(J);
     out.Fcost = sol.value(Fcost);
-    out.Fcost9 = sol.value(Fcost9);
     
     if exist('s')
         out.s = sol.value(s);
