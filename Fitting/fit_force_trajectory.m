@@ -13,7 +13,7 @@ N = 500;
 save_results = 0;
 visualize = 1;
     
-iFs = 6 %; [2,3,5,6,7,8,11];
+iFs = 7 %; [2,3,5,6,7,8,11];
 % n = [3 1]; % ISI number
 % m = [7 1]; % AMP number
 n = [3]; % ISI number
@@ -275,9 +275,7 @@ for iF = iFs
      
     %% test with fitted paramers     
     close all
-%     newparms.Lce0 = -50;
-    
-    N = 500;
+    N = 1000;
     [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), N);
      
     nLiss = Lis * newparms.gamma;
@@ -318,6 +316,8 @@ for iF = iFs
 
     nFii = interp1(tis, nFi, Data.t);
 
+    Lti = interp1(tis, newparms.Lts, Data.t);
+    
     % pre-allocate
     ns = nan(length(Ks), 2);
     ds = nan(length(Ks), 2);
@@ -327,8 +327,8 @@ for iF = iFs
     
     for i = 1:length(Ks)
         
-        np1 = polyfit(Data.L(id1(i,:)), nFii(id1(i,:)), 1);
-        np2 = polyfit(Data.L(id2(i,:)), nFii(id2(i,:)), 1);
+        np1 = polyfit(Lti(id1(i,:)), nFii(id1(i,:)), 1);
+        np2 = polyfit(Lti(id2(i,:)), nFii(id2(i,:)), 1);
         
         dp1 = polyfit(Data.L(id1(i,:)), Data.F(id1(i,:)), 1);
         dp2 = polyfit(Data.L(id2(i,:)), Data.F(id2(i,:)), 1);
