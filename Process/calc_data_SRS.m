@@ -105,7 +105,7 @@ for k = 1:length(iFs)
     end
 end
 
-return
+
 
 %% average some pCas
 th = [0 .05 .1 .25 .7 1.5];
@@ -123,5 +123,5 @@ end
 
 %% save
 cd([githubfolder, '\biophysical-muscle-model\Data'])
-save('SRS_data_v3.mat', 'SRSrel', 'F0s', 'SRS_post', 'SRS_pre', 'th', 'F0')
+save('SRS_data_v4.mat', 'SRSrel', 'F0s', 'SRS_post', 'SRS_pre', 'th', 'F0')
 

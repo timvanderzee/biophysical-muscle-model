@@ -23,7 +23,7 @@ for p = 1:7
         
         [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(ii,:));
         
-            cd(['C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Model output\RMSD\', versions{ii}])
+        cd(['C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Model output\RMSD\', versions{ii}])
         load([filename, '_RMSD.mat'], 'RMSD', 'AMPs', 'ISIs')
         
         sAMPs = AMPs;

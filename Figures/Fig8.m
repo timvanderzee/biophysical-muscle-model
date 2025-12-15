@@ -3,10 +3,15 @@ savefig = 0;
 
 [username, githubfolder] = get_paths();
 
+% selected conditions
+sAMPs = [0, 0.0012, 0.0038, 0.0121, 0.0383];
+sISIs = [0.001, 0.1, 0.3160, 1, 10];
+
+% if only 1 condition is selected
+sISI = .001;
+sAMP = .0383;
 
 %% Model
-tid = [3 1 7];
-
 showbar = 0;
 showline = 1;
 % figure(1)
@@ -16,56 +21,62 @@ filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full
 % versions = {'parms_v3', 'parms_v2d', 'parms_v3d', 'parms_v3d'};
 versions = {'parms_v3', 'parms_v4', 'parms_v6', 'parms_v5'};
 
-% filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS'};
-% visualize_model_SRS_simple(filenames, th, id)
-
-th = [0 .07 .15 .3 .5 .8 1.5];
-tid(1) = 4;
-
 iFs = [2,3,5,6,7,8,11];
-yrange = [.3 1.5];
 
 figure(1)
 color = get(gca,'colororder');
 pcolors = flip(parula(7));
 color = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
 
+xlims = [0 1; 0 .06; 1e-3 1e1];
+
 for i = 1:3
     subplot(1,3,i);
     plot([1e-3 1e2], [1 1], 'k--'); hold on
+    xlim(xlims(i,:))
 end
 set(gca, 'XScale', 'log', 'Xlim', [5e-4 2e1])
+
+
+type = 'interp';
 
 for kk = 1:length(filenames)
     
     cd(['C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Model output\SRS\', versions{kk}])
     load(filenames{kk},'Stest', 'Scond', 'AMPs', 'pCas', 'ISIs', 'F0')
-    
-    % average
-    SRSrel_m = nan(length(th)-1,length(ISIs),length(AMPs),iFs(end));
-    F0s_m = nan(length(th)-1, length(ISIs),length(AMPs),iFs(end));
-    
-    for k = iFs
-        for i = 1:length(th)-1
-            id = F0(:,1,7,k) > th(i) & F0(:,1,7,k) <= th(i+1);
-            
-            nn(k,i) = sum(id);
-            
-            if i == 1
-                id = length(F0(:,1,7,k));
+ 
+        % interpolate
+        Flin = linspace(.05, 1, 101);
+        SRSrel_m = nan(length(Flin), length(ISIs),length(AMPs),iFs(end));
+        SRS = nan(length(pCas), length(ISIs),length(AMPs),iFs(end));
+        F0s_m = F0;
+
+        for i = 1:length(ISIs)
+            for j = 1:length(AMPs)
+                for k = iFs
+                    if sum(isfinite(F0s_m(:,1,7,k))) > 1
+                        SRS(:,i,j,k) = Stest(:,i,j,k) ./ Scond(:,1,7,k);
+                        SRSrel_m(:,i,j,k) = interp1(F0s_m(:,1,7,k), SRS(:,i,j,k), Flin, [], 'extrap');
+                    end
+                end
             end
-            
-            SRSrel_m(i,:,:,k) = mean(Stest(id,:,:,k),1,'omitnan') ./ mean(Scond(id,1,7,k),'all', 'omitnan');
-            F0s_m(i,:,:,k) = mean(F0(id,:,:,k), 1,'omitnan');
         end
-    end
+        
+    % find selected conditions
+    [~, tid(1)] = min((Flin - 0.418).^2);   % intermediate activation    
+    tid(2) = find(ISIs==sISI);
+    tid(3) = find(AMPs==sAMP);
     
     figure(1)
     
     for i = iFs
         subplot(131);
-        plot(F0s_m(:,tid(2),tid(3),i), SRSrel_m(1:end,tid(2),tid(3),i), '-', 'color', [color(kk,:) .2], 'linewidth',.1); hold on
-
+        if ~strcmp(type, 'interp')
+            plot(F0s_m(:,tid(2),tid(3),i), SRSrel_m(1:end,tid(2),tid(3),i), '-', 'color', [color(kk,:) .2], 'linewidth',.1); hold on
+        else
+            plot([0 Flin], [1 SRSrel_m(1:end,tid(2),tid(3),i)'], '-', 'color', [color(kk,:) .2], 'linewidth',.1); hold on
+        end
+        
         subplot(132);
         plot(AMPs, squeeze(SRSrel_m(tid(1),tid(2),1:end,i)),'-', 'color',[color(kk,:) .2], 'linewidth', .1); hold on
 
@@ -74,18 +85,20 @@ for kk = 1:length(filenames)
     end
     
     subplot(131);
-    plot(mean(F0s_m(:,tid(2),tid(3),:), 4, 'omitnan'), mean(SRSrel_m(1:end,tid(2),tid(3),:),4, 'omitnan'),'-', 'color', color(kk,:), 'linewidth',2, 'marker', 'o', 'markerfacecolor', color(kk,:), 'markeredgecolor', [1 1 1], 'markersize', 4); hold on
-   
+    if ~strcmp(type, 'interp')
+        plot(mean(F0s_m(:,tid(2),tid(3),:), 4, 'omitnan'), mean(SRSrel_m(1:end,tid(2),tid(3),:),4, 'omitnan'),'-', 'color', color(kk,:), 'linewidth',2, 'marker', 'o', 'markerfacecolor', color(kk,:), 'markeredgecolor', [1 1 1], 'markersize', 4); hold on
+    else
+        plot([0 Flin], [1 mean(SRSrel_m(:,tid(2),tid(3),:),4, 'omitnan')'],'-', 'color', color(kk,:), 'linewidth',2); hold on
+    end
+    
     subplot(132);
-    plot(AMPs, squeeze(mean(SRSrel_m(tid(1),tid(2),1:end,:),4, 'omitnan')),'.-','color',color(kk,:), 'linewidth', 2, 'marker', 'o', 'markerfacecolor', color(kk,:), 'markeredgecolor', [1 1 1], 'markersize', 4); hold on
+    plot(AMPs, squeeze(mean(SRSrel_m(tid(1),tid(2),1:end,:),4, 'omitnan')),'-','color',color(kk,:), 'linewidth', 2); hold on
     
     subplot(133);
-    plot(ISIs, squeeze(mean(SRSrel_m(tid(1),1:end,tid(3),:),4, 'omitnan')),'.-', 'color',color(kk,:),'linewidth',2, 'marker', 'o', 'markerfacecolor', color(kk,:), 'markeredgecolor', [1 1 1], 'markersize', 4); hold on
+    plot(ISIs, squeeze(mean(SRSrel_m(tid(1),1:end,tid(3),:),4, 'omitnan')),'-', 'color',color(kk,:),'linewidth',2); hold on
     
     set(gca, 'XScale', 'log', 'Xlim', [5e-4 2e1])
 
-
-    
 end
 
 figure(1)
@@ -105,25 +118,23 @@ for j = 1:3
     if j == 1
         ylabel(ylabels,'Fontsize', 8)
     end
-    
-    ylim(yrange)
-
-    
-    %     for ii = 1:length(AMPs)
-    %         yline(mean(SRSrel(pCaid,ISIid,ii,:),4, 'omitnan'), ':','color', color(ii,:))
-    %     end
 end
 
 
 
 %% Data
-eth = [0 .07 .25 .7 1.5];
+% eth = [0 .07 .25 .7 1.5];
+eth = [0 .05 .3 .7 1.2];
+
+% experimental conditions
+eAMPs = [0 12 38 121 216 288 383 682]/10000;
+eISIs = [1 10 100 316 1000 3160 10000]/1000;
 
 tid = [3 1 7];
 
 Cid = tid(1);
-ISIid = tid(2);
-AMPid = tid(3);
+ISIid = find(eISIs==sISI);
+AMPid = find(eAMPs==sAMP);
 
 % [username, githubfolder] = get_paths();
 % cd([githubfolder, '\biophysical-muscle-model\Data'])
@@ -149,12 +160,13 @@ end
 
 
 % summary plot
-eAMPs = [0 12 38 121 216 288 383 682]/10000;
-eISIs = [1 10 100 316 1000 3160 10000]/1000;
 
-miid = [1 3 4 5 7];
-maid = [1, 3, 4, 7];
+miid = find(ismember(eISIs, sISIs));
+maid = find(ismember(eAMPs, sAMPs));
+% maid = [1, 3, 4, 7];
 pCaid = 2:3;
+
+
 
 ms = 5;
 
@@ -181,8 +193,8 @@ plot(AMPs(AMPid) * ones(1,2), ylim,  ':', 'color', [.7 .7 .7])
 SST(2) = sum((squeeze(mean(SRSrel(Cid,ISIid, maid, :),4,'omitnan')) - mean(mean(SRSrel(Cid,ISIid, maid, :),4,'omitnan'),'omitnan')).^2,'omitnan');
 
 plot(eAMPs(maid), squeeze(SRSrel(Cid,ISIid,maid,:)), '.', 'color', [.5 .5 .5]); hold on
-errorbar(eAMPs(maid(1:3)), squeeze(mean(SRSrel(Cid,ISIid,maid(1:3),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,maid(1:3),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [1 1 1], 'markersize', ms)
-errorbar(eAMPs(maid(4)), squeeze(mean(SRSrel(Cid,ISIid,maid(4),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,maid(4),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5], 'markersize', ms)
+errorbar(eAMPs(maid(1:4)), squeeze(mean(SRSrel(Cid,ISIid,maid(1:4),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,maid(1:4),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [1 1 1], 'markersize', ms)
+errorbar(eAMPs(maid(5)), squeeze(mean(SRSrel(Cid,ISIid,maid(5),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,maid(5),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5], 'markersize', ms)
 set(gca, 'yticklabel', {}, 'yColor', 'none')
     
 subplot(133)
@@ -209,45 +221,52 @@ text(1e-4, 1.55, 'C', 'fontsize', 12,'fontweight','bold')
 
 
 %% calc and diplay R2
-% selected conditions
-sAMPs = [0, 0.0012, 0.0038, 0.0121, 0.0383];
-sISIs = [0.001, 0.1, 0.3160, 1, 10];
-sACTis = [1 2 4 6];
+% sACTis = [1 2 4 6];
 
 sACTi = 3;
-sISI = .001;
-sAMP = .0383;
+
 
 for kk = 1:length(filenames)
     
     cd(['C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Model output\SRS\', versions{kk}])
     load(filenames{kk},'Stest', 'Scond', 'AMPs', 'pCas', 'ISIs', 'F0')
     
-    % average
-    SRSrel_m = nan(length(th)-1,length(ISIs),length(AMPs),iFs(end));
-    F0s_m = nan(length(th)-1, length(ISIs),length(AMPs),iFs(end));
-    
-    for k = iFs
-        for i = 1:length(th)-1
-            id = F0(:,1,7,k) > th(i) & F0(:,1,7,k) <= th(i+1);
-            
-            if i == 1
-                id = length(F0(:,1,7,k));
+    % interpolate
+    Flin = linspace(.02, 1, 101);
+    SRSrel_m = nan(length(Flin), length(ISIs),length(AMPs),iFs(end));
+    SRS = nan(length(pCas), length(ISIs),length(AMPs),iFs(end));
+    F0s_m = F0;
+
+    for i = 1:length(ISIs)
+        for j = 1:length(AMPs)
+            for k = iFs
+                if sum(isfinite(F0s_m(:,1,7,k))) > 1
+                    SRS(:,i,j,k) = Stest(:,i,j,k) ./ Scond(:,1,7,k);
+                    SRSrel_m(:,i,j,k) = interp1(F0s_m(:,1,7,k), SRS(:,i,j,k), Flin, [], 'extrap');
+                end
             end
-            
-            SRSrel_m(i,:,:,k) = mean(Stest(id,:,:,k),1,'omitnan') ./ mean(Scond(id,1,7,k),'all', 'omitnan');
-            F0s_m(i,:,:,k) = mean(F0(id,:,:,k), 1,'omitnan');
         end
     end
     
+    % average over fibers
+    SRS_model = mean(SRSrel_m, 4, 'omitnan');
+    SRS_data = mean(SRSrel, 4, 'omitnan');
+    
+    F0_data = mean(F0s(:,1,7,:),4,'omitnan');
+    
+    for j = 1:size(SRS_data,1)
+        [~, sACTis(j)] = min((Flin - F0_data(j)).^2);  
+    end
+    
     % activation
-    SSE(kk,1) = sum((squeeze(mean(SRSrel(:,eISIs==sISI, eAMPs==sAMP, :),4,'omitnan')) - squeeze(mean(SRSrel_m(sACTis,ISIs==sISI, AMPs==sAMP, :),4,'omitnan'))).^2,'omitnan');
+    SSE(kk,1) = sum((SRS_data(:,eISIs==sISI, eAMPs==sAMP) - SRS_model(sACTis,ISIs==sISI, AMPs==sAMP)).^2);
     
     % amplitude
-    SSE(kk,2) = sum((squeeze(mean(SRSrel(sACTi,eISIs==sISI, ismember(eAMPs, sAMPs), :),4,'omitnan')) - squeeze(mean(SRSrel_m(sACTis(sACTi),ISIs==sISI, ismember(AMPs, sAMPs), :),4,'omitnan'))).^2,'omitnan');
+    SSE(kk,2) = sum((SRS_data(sACTi,eISIs==sISI, ismember(eAMPs, sAMPs)) - SRS_model(sACTis(sACTi),ISIs==sISI, ismember(AMPs, sAMPs))).^2);
     
     % recovery time
-    SSE(kk,3) = sum((squeeze(mean(SRSrel(sACTi,ismember(eISIs, sISIs), eAMPs==sAMP, :),4,'omitnan')) - squeeze(mean(SRSrel_m(sACTis(sACTi),ismember(ISIs, sISIs), AMPs==sAMP, :),4,'omitnan'))).^2,'omitnan');
+    SSE(kk,3) = sum((SRS_data(sACTi,ismember(eISIs, sISIs), eAMPs==sAMP) - SRS_model(sACTis(sACTi),ismember(ISIs, sISIs), AMPs==sAMP)).^2);
+
 end
 
 R2 = 1 - SSE ./ SST;
@@ -258,9 +277,10 @@ subplot(131)
 
 xl = [.42 .5; .001 .005; 1.5e-3 4e-3];
 yl = [1.35; 0.6; 1.35];
+yl = [1.8 1.8 1.8];
 
 r = [5 6 100];
-dy = .07;
+dy = .1;
 
 modelnames = {'Hill', 'XB', 'XB coop', 'XB coop + FD'};
 
@@ -303,12 +323,15 @@ errorbar(.9, .4, .05, 'o', 'color', [.5 .5 .5], 'markersize', ms, 'markerfacecol
 
 subplot(131)
 xlim([0 1.01])
+ylim([0 2])
 
 subplot(132)
 xlim([0 .06])
+ylim([0 2])
 
 subplot(133)
 xlim([1e-3 1e1])
+ylim([0 2])
 
 %% set size
 figure(1)

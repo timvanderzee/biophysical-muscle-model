@@ -5,16 +5,16 @@ clear all; close all; clc
 
 % binary inputs
 save_results = 1;
-redo = 0;
+redo = 1;
 visualize = 0;
 discretized_model = 0;
 
 % versions
-output_version = '_v6';
-parms_version = '_v4'; 
+output_version = '_v3';
+parms_version = ''; 
 
 % model
-mcodes = [1 1 1];
+mcodes = [2 1 1];
 
 % fibers
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
@@ -41,7 +41,7 @@ for iii = 1:size(mcodes,1)
         allparms(iF) = update_parms(newparms);
     end
     
-    for k = 1:length(iFs)
+    for k = 2 %1:length(iFs)
         iF = iFs(k);
         parms = allparms(iF);
         
@@ -54,7 +54,7 @@ for iii = 1:size(mcodes,1)
             
         else
             x0 = parms.x0';
-        end
+        
         
         x0 = zeros(1,6);
         Q0 = .1;
@@ -62,7 +62,7 @@ for iii = 1:size(mcodes,1)
         q0 = .1;
         [Q00, Q20, lce0, Q10, Fse0] = find_steady_state(Q0, p0, q0, newparms, 'regular');
         x0 = [Q00 Q20 Fse0 0 0 0];
-
+        end
 
         xp0 = zeros(size(x0));        
         
@@ -113,6 +113,8 @@ for iii = 1:size(mcodes,1)
                         
                         % run simulation
                         if contains(modelname, 'Hill')
+                            parms.Fse_func = @(dlse, parms) parms.kse0*(exp(parms.kse*dlse)-1);
+                            
                             % simulate
                             sol = ode15i(@(t,y,yp) hill_type_implicit_v2(t,y,yp, parms), [0 max(tis)], X0, xp0, odeopt);
                             
