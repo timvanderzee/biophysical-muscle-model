@@ -13,13 +13,13 @@ showline = 1;
 filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_alternative_SRS'};
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
 % filenames = {'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
-versions = {'parms_v3', 'parms_v2d', 'parms_v3d', 'parms_v3d'};
-% versions = {'parms_v3', 'parms_v4', 'parms_v5', 'parms_v5'};
+% versions = {'parms_v3', 'parms_v2d', 'parms_v3d', 'parms_v3d'};
+versions = {'parms_v3', 'parms_v4', 'parms_v6', 'parms_v5'};
 
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS'};
 % visualize_model_SRS_simple(filenames, th, id)
 
-th = [0 .07 .15 .3 .5 .7 1.5];
+th = [0 .07 .15 .3 .5 .8 1.5];
 tid(1) = 4;
 
 iFs = [2,3,5,6,7,8,11];
@@ -48,6 +48,8 @@ for kk = 1:length(filenames)
     for k = iFs
         for i = 1:length(th)-1
             id = F0(:,1,7,k) > th(i) & F0(:,1,7,k) <= th(i+1);
+            
+            nn(k,i) = sum(id);
             
             if i == 1
                 id = length(F0(:,1,7,k));
@@ -116,6 +118,7 @@ end
 
 %% Data
 eth = [0 .07 .25 .7 1.5];
+
 tid = [3 1 7];
 
 Cid = tid(1);
@@ -127,10 +130,12 @@ AMPid = tid(3);
 load('SRS_data_v3.mat', 'SRS_pre', 'F0', 'SRS_post')
 
 % average some pCas
-iFs = 1:11;
+% iFs = 1:11;
 %  iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
-SRSrel = nan(length(eth)-1,7,8,length(iFs));
-F0s = nan(length(eth)-1, 7,8,length(iFs));
+iFs = [2,3,5,6,7,8,11];
+
+SRSrel = nan(length(eth)-1,7,8,iFs(end));
+F0s = nan(length(eth)-1, 7,8,iFs(end));
 
 for k = iFs
     for i = 1:length(eth)-1

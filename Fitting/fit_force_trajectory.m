@@ -4,16 +4,16 @@ fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18De
 
 % model to be fitted
 mcode = [1 1 1];
-version = '_v3'; 
-% version = '';
+old_version = '_v3';
+new_version = '_v4';
 
 % settings
 N = 500;
 % N = 1500;
-save_results = 0;
+save_results = 1;
 visualize = 1;
     
-iFs = 7 %; [2,3,5,6,7,8,11];
+iFs = 11 %; [2,3,5,6,7,8,11];
 n = [3 1]; % ISI number
 m = [7 1]; % AMP number
 % n = [1]; % ISI number
@@ -138,7 +138,7 @@ for iF = iFs
     
     foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
     cd(foldername)
-    load(['parms_', filename, version, '.mat'], 'newparms')
+    load(['parms_', filename, old_version, '.mat'], 'newparms')
 
     parms = newparms;
     
@@ -298,13 +298,24 @@ for iF = iFs
     end
     
     %% sim output
+    Ks = find(Fm(:,iF) > .05);
+    Data = prep_data_v2(data,n,m,Ks,tiso);
+
     if ishandle(2), close(2); end
     figure(2)
+    subplot(121);
     plot(Data.t, Data.F,'k.'); hold on
     plot(out.t, out.F) 
+
+    for i = 1:length(optparms)
+        lb(i) = bnds.(optparms{i})(1);
+        ub(i) = bnds.(optparms{i})(2);
+    end
+    
+    subplot(122);
+    bar(categorical(optparms), out.s)
      
     %% test with fitted paramers     
-    close all
     Ks = find(Fm(:,iF) > 0);
     Data = prep_data_v2(data,n,m,Ks,tiso);
 
@@ -322,11 +333,12 @@ for iF = iFs
     
     % initial conditions
     Q0 = .1;
-    p0 = -.5;
+    p0 = -1;
     q0 = .1;
     [Q00, Q20, lce0, Q10, Fse0] = find_steady_state(Q0, p0, q0, newparms, 'regular');
     x0 = [Q00 Q20 Fse0 0 0 0];
-
+    x0 = zeros(1,6);
+    
     nsol = ode15s(@(t,y) fiber_dynamics_explicit_length_v2(t,y, newparms), [0 max(tis)], x0, odeopt);
     nt = nsol.x;
 
@@ -382,157 +394,7 @@ for iF = iFs
     legend('Data', 'Model', 'location', 'best')
     legend boxoff
     xlim([0 1.05])
-    
-    return
-     
-    %% load 
-    [output_mainfolder, filename, opt_type, ~] = get_folder_and_model(mmcode);
 
-    foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
-    if ~isfolder(foldername)
-        mkdir(foldername)
-    end
-
-    cd(foldername)
-
-    oldparms = load(['parms_', filename, version, '.mat'], 'newparms', 'optparms', 'out', 'bnds');
-    oparms = oldparms.newparms;
-    
-    %% test with fitted paramers 
-    N = 5e3;
-    [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca, N);
-      
-    oparms.approx = 0;
-    newparms.approx = 0;
-    
-    oLiss = Lis * oparms.gamma;
-    nLiss = Lis * newparms.gamma;
-    
-%     oparms.Fpe_func = @(Lce, parms) parms.kpe * log(1+exp(Lce*parms.K))/parms.K + parms.Fpe0;
-%     oparms.kpe_func = @(Lce, parms) parms.kpe .* (1 - 1./(exp(parms.K*Lce)+1));
-    
-    oparms.ti = tis;
-    oparms.vts = vis;
-    oparms.Cas = Cas;
-    oparms.Lts = oLiss;
-    
-    newparms.ti = tis;
-    newparms.vts = vis;
-    newparms.Cas = Cas;
-    newparms.Lts = nLiss;
-    
-    newparms.kpe = 0;
-    newparms.Fpe0 = 0;
-    
-    odeopt = odeset('maxstep', 1e-2);
-    
-    % initial conditions
-    Q00 = 0;
-    p0 = 0;
-    q0 = .1;
-%     [Q00, Q20, lce0, Q10] = find_steady_state(Q0, p0, q0, parms);
-
-    if newparms.f > 0
-%         x0 = 1e-3 * ones(7,1);
-        
-        if newparms.J1 == 0
-            x0(6) = 1;
-        end
-        
-        xp0 = zeros(size(x0));
-        
-        [Q00, Q20, lce0, Q10] = find_steady_state(Q00, p0, q0, oparms, 'adjusted');
-        x0 = [Q00 Q10 Q20 lce0 0 0 0];
-        osol = ode15s(@(t,y) fiber_dynamics_explicit_no_tendon(t,y, oparms), [0 max(tis)], x0, odeopt);
-        
-        Q0 = osol.y(1,:);
-        Q1 = osol.y(2,:);
-        oF = (Q0 + Q1) * parms.Fscale + oparms.Fpe_func(interp1(oparms.ti, oparms.Lts, osol.x), oparms);
-        ot = osol.x;
-        oFi = interp1(ot, oF, tis);
-       
-
-        [Q00, Q20, lce0, Q10] = find_steady_state(Q00, p0, q0, newparms, 'regular');
-        x0 = [Q00 Q20 lce0 0 0 0];
-        nsol = ode15s(@(t,y) fiber_dynamics_explicit_length(t,y, newparms), [0 max(tis)], x0, odeopt);
-        nt = nsol.x;
-        
-        % calc force
-        nL = nsol.y(end-3,:);
-        ndlse = interp1(newparms.ti, newparms.Lts, nsol.x) - nL;
-        nF = newparms.Fse_func(ndlse, newparms) * parms.Fscale;
-        
-        nFp = newparms.Fpe_func(nL, newparms);
-        
-        nFi = interp1(nt, nF, tis);
- 
-        
-    else
-        
-        x0 = 0;
-        xp0 = zeros(size(x0));
-        
-        % simulate
-        osol = ode15i(@(t,y,yp) hill_type_implicit_v2(t,y,yp, oparms), [0 max(tis)], x0, xp0, odeopt);
-        nsol = ode15i(@(t,y,yp) hill_type_implicit_v2(t,y,yp, newparms), [0 max(tis)], x0, xp0, odeopt);
-        
-        % elastic elements
-        oL = oLiss - interp1(osol.x, osol.y(1,:), tis);
-        nL = nLiss - interp1(nsol.x, nsol.y(1,:), tis);
-        
-        oFi = parms.Fse_func(oL, oparms) * parms.Fscale + parms.Fpe_func(oLiss, oparms);
-        nFi = parms.Fse_func(nL, newparms) * parms.Fscale + parms.Fpe_func(nLiss, newparms);
-        
-    end
-    
-    %% compare forces 
-    Data = prep_data_v2(data,n, m,1:7,tiso);
-        
-    if visualize
-        if ishandle(2), close(2); end
-
-        figure(2)
-        plot(Data.t, Data.F,'k.'); hold on
-%         plot(out.t, out.F, 'linewidth', 2)
-        plot(tis, nFi,'-', 'linewidth', 2); 
-        plot(tis, oFi,'-', 'linewidth', 2);
-
-        box off
-        legend('Data', 'New', 'Old', 'location', 'best')
-        legend boxoff
-    end
-    
-    %% parameter values
-    for i = 1:length(optparms)
-        lb(i) = bnds.(optparms{i})(1);
-        ub(i) = bnds.(optparms{i})(2);
-        nv(i) = (oldparms.newparms.(optparms{i}) - lb(i)) / (ub(i)-lb(i));
-    end
-    
-    figure(3)
-    nexttile
-   
-    bar(categorical(optparms), [out.s; nv])
-    
-    %% SRS state    
-%     figure(4)
-%     nexttile
-%     plot(osol.x, osol.y(end,:)); hold on
-%     plot(nsol.x, nsol.y(end,:))
-    
-
-    %% summary plot
-    figure(6)
-    nexttile
-    plot(F0, ds(:,1)./ds(:,2),'o-'); hold on
-    plot(F0, os(:,1)./os(:,2),'o-')
-    plot(F0, ns(:,1)./ns(:,2),'o-')
-    box off
-    xlabel('Isometric force (F_0)')
-    ylabel('Relative stiffness')
-    legend('Data', 'Old parameters', 'New parameters', 'location', 'best')
-    legend boxoff
-    xlim([0 1.05])
 
     %% save
     if save_results
@@ -545,7 +407,7 @@ for iF = iFs
         end
 
         cd(foldername)
-        save(['parms_', filename, '_v3.mat'], 'newparms', 'optparms', 'out', 'bnds')
+        save(['parms_', filename, new_version,'.mat'], 'newparms', 'optparms', 'out', 'bnds')
     end
     
 end

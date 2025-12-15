@@ -41,7 +41,8 @@ aeISIs = repmat(eISIs(:), 1, 8);
 % model  
 modelnames = {'Hill_regular','biophysical_no_regular', 'biophysical_full_regular', 'biophysical_full_alternative'};
 titles = {'Hill model', 'XB model', 'XB coop', 'XB coop + FD'};
-versions = {'parms_v3', 'parms_v2d', 'parms_v3d', 'parms_v3d'};
+% versions = {'parms_v3', 'parms_v2d', 'parms_v3d', 'parms_v3d'};
+% versions = {'parms_v3', 'parms_v4', 'parms_v6', 'parms_v4'};
 
 % modelnames =  {'biophysical_full_alternative'};
 

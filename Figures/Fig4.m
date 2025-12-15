@@ -1,6 +1,6 @@
 clear all; close all; clc
 [username, githubfolder] = get_paths();
-savefig = 1;
+savefig = 0;
 
 figure(1)
 color = get(gca,'colororder');
@@ -12,10 +12,10 @@ discretized_model = 0;
 
 %% chose figure number: specify conditions
 fig = 6;
-iF = 6;
+iF = 7;
 
-pCas = [4.5 6.2 9;
-    4.5 6.2 9];
+pCas = [4.5 6.2 6.4;
+        4.5 6.2 6.4];
 
 % chosen ISIs, AMPs and pCas
 if fig == 4
@@ -62,14 +62,15 @@ if fig == 4 || fig == 5
     end
     
 else
-    mcodes = [1 1 1; 1 2 1];
+    mcodes = [1 1 1; 1 1 1];
     colors = acolors(3:4,:);
     
     
     if discretized_model
         versions = {'_v2d', '_v2d'};
     else
-        versions = {'_v4', '_v4'};
+%         versions = {'_v4', '_v4'};
+        versions = {'_v4', '_v6'};
     end
 end
 

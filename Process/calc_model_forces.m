@@ -4,17 +4,17 @@ clear all; close all; clc
 [username, githubfolder] = get_paths();
 
 % binary inputs
-save_results = 0;
+save_results = 1;
 redo = 0;
 visualize = 0;
 discretized_model = 0;
 
 % versions
-output_version = '_v3d';
-parms_version = '_v3'; 
+output_version = '_v6';
+parms_version = '_v4'; 
 
 % model
-mcodes = [1 2 1];
+mcodes = [1 1 1];
 
 % fibers
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
@@ -41,7 +41,7 @@ for iii = 1:size(mcodes,1)
         allparms(iF) = update_parms(newparms);
     end
     
-    parfor k = 1:length(iFs)
+    for k = 1:length(iFs)
         iF = iFs(k);
         parms = allparms(iF);
         
@@ -55,6 +55,14 @@ for iii = 1:size(mcodes,1)
         else
             x0 = parms.x0';
         end
+        
+        x0 = zeros(1,6);
+        Q0 = .1;
+        p0 = -1;
+        q0 = .1;
+        [Q00, Q20, lce0, Q10, Fse0] = find_steady_state(Q0, p0, q0, newparms, 'regular');
+        x0 = [Q00 Q20 Fse0 0 0 0];
+
 
         xp0 = zeros(size(x0));        
         
@@ -147,7 +155,8 @@ for iii = 1:size(mcodes,1)
                                 if discretized_model
                                     sol = ode15s(@(t,y,yp) fiber_dynamics_explicit_no_tendon_full(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, odeopt);
                                 else
-                                    sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, XP0, []);
+%                                     sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, XP0, []);
+                                    sol = ode15s(@(t,y) fiber_dynamics_explicit_length_v2(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, []);
                                 end
                                 
                                 [~,xdot] = deval(sol, sol.x);
@@ -171,7 +180,9 @@ for iii = 1:size(mcodes,1)
                                     end
                                     
                                 else
-                                    F = (sol.y(1,:) + sol.y(2,:));
+%                                     F = (sol.y(1,:) + sol.y(2,:));
+                                    F = sol.y(3,:);
+                                    
                                 end
                                 
                                 tall = [tall t];
@@ -187,7 +198,7 @@ for iii = 1:size(mcodes,1)
                             [~, ui] = unique(tall);
                             
                             % interpolate force
-                            oFi = interp1(tall(ui), Fall(ui), tis) * parms.Fscale + parms.Fpe_func(parms.Lts, parms);
+                            oFi = interp1(tall(ui), Fall(ui), tis) * parms.Fscale; % + parms.Fpe_func(parms.Lts, parms);
                         end
                         %                 toc
                         %%
@@ -222,6 +233,7 @@ for iii = 1:size(mcodes,1)
                             xlim([0 14])
                             
                             drawnow
+%                             pause
                         end
                     end
                 end

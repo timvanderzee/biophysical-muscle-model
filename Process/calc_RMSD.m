@@ -8,11 +8,11 @@ tiso = 3;
 iFs = [2,3,5,6,7,8,11];
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
-mcodes = [1 1 3];
+mcodes = [1 1 1];
 
 visualize = 0;
 
-version = 'parms_v2d';
+version = 'parms_v6';
 
 %% calc RMSD
 AMPs = [0 12 38 121 216 288 383 682]/10000;
@@ -101,8 +101,14 @@ for iii = 1:size(mcodes,1)
     
     
     %% save
-    cd(githubfolder)
-    cd(['biophysical-muscle-model/Model output/RMSD/', version])
+%     cd(githubfolder)
+    savefolder = [githubfolder, '/biophysical-muscle-model/Model output/RMSD/', version];
+%     cd(['biophysical-muscle-model/Model output/RMSD/', version])
+    if ~isfolder(savefolder)
+        mkdir(savefolder)
+    end
+    
+    cd(savefolder)
     
     save([modelname, '_RMSD.mat'])
 end
