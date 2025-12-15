@@ -3,7 +3,7 @@ clear all; close all; clc
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
 % model to be fitted
-mcode = [1 1 1];
+mcode = [1 2 1];
 old_version = '_v3';
 new_version = '_v4';
 
@@ -13,7 +13,7 @@ N = 500;
 save_results = 1;
 visualize = 1;
     
-iFs = 11 %; [2,3,5,6,7,8,11];
+iFs = 2 %; [2,3,5,6,7,8,11];
 n = [3 1]; % ISI number
 m = [7 1]; % AMP number
 % n = [1]; % ISI number
@@ -51,13 +51,13 @@ if sum(mcode == [1 1 1]) == 3
 %     optparms = {'kpe', 'Fpe0'};
 %     optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF'};
 elseif sum(mcode == [1 1 2]) == 3
-    optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'koop', 'kpe', 'Fpe0'};
+    optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'koop','Lce0', 'kpe'};
 elseif sum(mcode == [1 1 3]) == 3
-    optparms = {'f', 'k11', 'k22', 'k21', 'n','kappa', 'kse', 'kse0'};
+    optparms = {'f', 'k11', 'k22', 'k21', 'n','kappa', 'kse', 'kse0','Lce0', 'kpe'};
 elseif sum(mcode == [2 1 1]) == 3
     optparms = {'n','kappa', 'kse', 'kse0', 'vmax'};
 elseif sum(mcode == [1 2 1]) == 3
-    optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop', 'dLcrit'};
+    optparms = {'f', 'k11', 'k22', 'k21', 'kon', 'kse', 'kse0', 'kF', 'koop', 'dLcrit', 'Lce0', 'kpe'};
 end
 
 %% specify data
@@ -126,7 +126,7 @@ for iF = iFs
     if sum(mcode == [1 2 1]) == 3 % use parms from coop model
         mmcode = [1 1 1];
     elseif sum(mcode == [1 1 2]) == 3
-        mmcode = [1 1 3];
+        mmcode = [1 1 1];
     else
         mmcode = mcode; % use own parms
     end
@@ -173,10 +173,10 @@ for iF = iFs
 %         parms.J2 = 200;
         
     elseif sum(mcode == [1 1 2]) == 3 % thin coop only
-        parms.actfunc = @(Ca,parms) Ca;
-        parms.koop = 5;
-        parms.koff = 80;
-        parms.kon  = 33;
+        parms.J1 = 0;
+        parms.J2 = 0;
+        parms.JF = 0;
+        parms.kF = 0;
         
     elseif sum(mcode == [2 1 1]) == 3 % Hill-type
         parms.f = 0;
@@ -290,7 +290,7 @@ for iF = iFs
     fparms = parms;
 
 %     figure(100)
-    [newparms, out, opti] = fit_model_parameters_v2(optparms, w, Xdata, fparms, IG, bnds);
+    [newparms, out, opti] = fit_model_parameters_v2(optparms, w, Xdata, fparms, IG, bnds, mcode);
     set(gcf,'units','normalized','position',[.2 .2 .4 .6])
     
     if newparms.J1 > 0
@@ -338,6 +338,7 @@ for iF = iFs
     [Q00, Q20, lce0, Q10, Fse0] = find_steady_state(Q0, p0, q0, newparms, 'regular');
     x0 = [Q00 Q20 Fse0 0 0 0];
     x0 = zeros(1,6);
+    x0(5) = 1;
     
     nsol = ode15s(@(t,y) fiber_dynamics_explicit_length_v2(t,y, newparms), [0 max(tis)], x0, odeopt);
     nt = nsol.x;
@@ -385,7 +386,7 @@ for iF = iFs
     end
 
     
-    figure(6)
+    if ishandle(6), close(6); end; figure(6)
     plot(F0, ds(:,1)./ds(:,2),'o-'); hold on
     plot(F0, ns(:,1)./ns(:,2),'o-')
     box off

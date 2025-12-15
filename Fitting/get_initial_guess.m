@@ -15,7 +15,7 @@ Fse0 = parms.Fse_func(L0, parms);
 
 
 % [Q00, Q20, lce0, Q10, Fse0] = find_steady_state(Q0, p0, q0, parms, 'regular');
-x0 = [0 0 Fse0 0 0 0]';
+x0 = [0 0 Fse0 0 1 0]';
 
 odeopt = odeset('maxstep', 1e-2);
 

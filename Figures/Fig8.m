@@ -15,11 +15,12 @@ sAMP = .0383;
 showbar = 0;
 showline = 1;
 % figure(1)
-filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_alternative_SRS'};
+% filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_alternative_SRS'};
+filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_thin_regular_SRS', 'biophysical_full_regular_SRS'};
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
 % filenames = {'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
 % versions = {'parms_v3', 'parms_v2d', 'parms_v3d', 'parms_v3d'};
-versions = {'parms_v3', 'parms_v4', 'parms_v6', 'parms_v5'};
+versions = {'parms_v3', 'parms_v4', 'parms_v5', 'parms_v6'};
 
 iFs = [2,3,5,6,7,8,11];
 
@@ -211,13 +212,13 @@ set(gca, 'yticklabel', {}, 'yColor', 'none')
 %% A, B labels
 figure(1)
 subplot(131)
-text(-.15, 1.55, 'A', 'fontsize', 12,'fontweight','bold')
+text(-.15, 2, 'A', 'fontsize', 12,'fontweight','bold')
 
 subplot(132)
-text(-.008, 1.55, 'B', 'fontsize', 12,'fontweight','bold')
+text(-.008, 2, 'B', 'fontsize', 12,'fontweight','bold')
 
 subplot(133)
-text(1e-4, 1.55, 'C', 'fontsize', 12,'fontweight','bold')
+text(1e-4, 2, 'C', 'fontsize', 12,'fontweight','bold')
 
 
 %% calc and diplay R2
@@ -283,6 +284,7 @@ r = [5 6 100];
 dy = .1;
 
 modelnames = {'Hill', 'XB', 'XB coop', 'XB coop + FD'};
+modelnames = {'Hill', '2-state', '2-state coop', '3-state coop'};
 
 % if length(filenames) > 2
 for i = 1:3

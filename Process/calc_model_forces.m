@@ -10,11 +10,11 @@ visualize = 0;
 discretized_model = 0;
 
 % versions
-output_version = '_v3';
-parms_version = ''; 
+output_version = '_v4';
+parms_version = '_v2'; 
 
 % model
-mcodes = [2 1 1];
+mcodes = [1 1 3];
 
 % fibers
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
@@ -41,7 +41,7 @@ for iii = 1:size(mcodes,1)
         allparms(iF) = update_parms(newparms);
     end
     
-    for k = 2 %1:length(iFs)
+    for k = 1:length(iFs)
         iF = iFs(k);
         parms = allparms(iF);
         
@@ -53,15 +53,21 @@ for iii = 1:size(mcodes,1)
             x0 = [n0'; parms.x0(4:end)'];
             
         else
-            x0 = parms.x0';
-        
-        
-        x0 = zeros(1,6);
-        Q0 = .1;
-        p0 = -1;
-        q0 = .1;
-        [Q00, Q20, lce0, Q10, Fse0] = find_steady_state(Q0, p0, q0, newparms, 'regular');
-        x0 = [Q00 Q20 Fse0 0 0 0];
+            
+       
+                x0 = parms.x0';
+
+
+                x0 = zeros(1,6);
+                Q0 = .1;
+                p0 = -1;
+                q0 = .1;
+                [Q00, Q20, lce0, Q10, Fse0] = find_steady_state(Q0, p0, q0, newparms, 'regular');
+                x0 = [Q00 Q20 Fse0 0 0 0];
+            
+            if isequal(mcode, [1 1 2]) || isequal(mcode, [1 1 3])
+                x0(5) = 1-Q00;
+            end
         end
 
         xp0 = zeros(size(x0));        
