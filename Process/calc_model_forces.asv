@@ -59,7 +59,7 @@ for iii = 1:size(mcodes,1)
 
 
                 x0 = zeros(1,6);
-                Q0 = .1e-6;
+                Q0 = .1;
                 p0 = -1;
                 q0 = .1;
                 [Q00, Q20, lce0, Q10, Fse0] = find_steady_state(Q0, p0, q0, newparms, 'regular');

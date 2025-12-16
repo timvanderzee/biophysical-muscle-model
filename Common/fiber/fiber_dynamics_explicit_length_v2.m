@@ -44,7 +44,7 @@ else
 end
 
 % SE
-Fse(Fse<0) = 0;
+Fse(Fse<1e-6) = 1e-6;
 dLse = max(parms.Lse_func(Fse, parms), 0); % can't be negative
 kse = parms.kse * (Fse + parms.kse0);
 

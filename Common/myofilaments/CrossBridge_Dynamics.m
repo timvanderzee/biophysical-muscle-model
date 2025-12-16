@@ -32,6 +32,7 @@ if b > 0
 %     end
     
 try
+%     disp('Imagine')
     phiR0 = -k * (IG{1}(10, c1) -IG{1}(dLcrit, c1)) + gamma(1) * R;
     phiR1 = -k * (IG{2}(10, c1) -IG{2}(dLcrit, c1)) + gamma(2) * R;
     phiR2 = -k * (IG{3}(10, c1) -IG{3}(dLcrit, c1)) + gamma(3) * R;

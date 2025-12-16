@@ -16,11 +16,11 @@ showbar = 0;
 showline = 1;
 % figure(1)
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_alternative_SRS'};
-filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_thin_regular_SRS', 'biophysical_full_regular_SRS'};
+filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_thin_regular_SRS', 'biophysical_full_regular_SRS','biophysical_full_alternative_SRS'};
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
 % filenames = {'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
 % versions = {'parms_v3', 'parms_v2d', 'parms_v3d', 'parms_v3d'};
-versions = {'parms_v3', 'parms_v4', 'parms_v5', 'parms_v6'};
+versions = {'parms_v3', 'parms_v4', 'parms_v5', 'parms_v6','parms_v6'};
 
 iFs = [2,3,5,6,7,8,11];
 
@@ -28,6 +28,8 @@ figure(1)
 color = get(gca,'colororder');
 pcolors = flip(parula(7));
 color = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
+
+color = lines(5);
 
 xlims = [0 1; 0 .06; 1e-3 1e1];
 
@@ -284,7 +286,7 @@ r = [5 6 100];
 dy = .1;
 
 modelnames = {'Hill', 'XB', 'XB coop', 'XB coop + FD'};
-modelnames = {'Hill', '2-state', '2-state coop', '3-state coop'};
+modelnames = {'Hill', '2-state', '2-state coop', '3-state coop', '4-state coop'};
 
 % if length(filenames) > 2
 for i = 1:3
@@ -294,12 +296,13 @@ for i = 1:3
     plot(xl(i,:), [yl(i) yl(i)]-dy, 'color', color(2,:),'linewidth',2)
     plot(xl(i,:), [yl(i) yl(i)]-2*dy, 'color', color(3,:),'linewidth',2)
     plot(xl(i,:), [yl(i) yl(i)]-3*dy, 'color', color(4,:),'linewidth',2)
+    plot(xl(i,:), [yl(i) yl(i)]-4*dy, 'color', color(5,:),'linewidth',2)
     
     
-    text(xl(i,1), yl(i)+dy, 'Model', 'fontsize',8)
+    text(xl(i,1), yl(i)+dy, 'Model', 'fontsize',8) 
     text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)+dy,'R^2', 'fontsize',8,'horizontalalignment','center')
     
-    for j = 1:length(filenames)
+    for j = 1:length(modelnames)
         text(xl(i,2) + diff(xl(i,:)) * .1, yl(i)-dy*(j-1), modelnames{j}, 'fontsize',6)
         text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-dy*(j-1), num2str(round(R2(j,i),2),3), 'fontsize',6,'horizontalalignment','center')
     end
