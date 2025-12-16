@@ -30,6 +30,8 @@ Non = y(4);
 DRX = y(5);
 R = y(6);
 
+R(R<0) = 0;
+
 if length(y) > 6
     Lts = y(7);
 %     dLdt = yp(7);

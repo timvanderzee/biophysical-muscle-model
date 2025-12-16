@@ -3,14 +3,14 @@ clear all; close all; clc
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
 % model to be fitted
-mcode = [1 2 1];
+mcode = [1 1 1];
 old_version = '_v3';
 new_version = '_v4';
 
 % settings
 N = 500;
 % N = 1500;
-save_results = 1;
+save_results = 0;
 visualize = 1;
     
 iFs = 2 %; [2,3,5,6,7,8,11];
@@ -198,12 +198,36 @@ for iF = iFs
         parms.ps2 = 0;
     end
     
-    %% get initial guess
+    %% intervals of interest
     parms.ti = tis;
     parms.vts = vis;
     parms.Cas = Cas;
     parms.Lts = Lis * parms.gamma;
     
+    id1 = nan(length(Ks), length(parms.ti), length(m));
+    id2 = nan(length(Ks), length(parms.ti), length(m));
+    tmax = [0 tiso * length(Ks) tiso * (length(Ks)*2)];
+    
+    for i = 1:length(m)
+        for k = 1:length(Ks)
+            id1(k,:,i) = (parms.ti > (tmax(i) + ts(k) + tiso - 4*AData.dTt - 2*AData.dTc(i) - AData.ISI(i))) & (parms.ti < (tmax(i) + ts(k)+tiso - AData.dTt));
+            id2(k,:,i) = (parms.ti > (tmax(i) + ts(k) + tiso - 5*AData.dTt - 2*AData.dTc(i) - AData.ISI(i))) & (parms.ti < (tmax(i) + ts(k) + tiso - 4*AData.dTt - 2*AData.dTc(i) - AData.ISI(i)));
+        end
+    end
+    
+    % sum across conditions and pCas
+    idF = find(sum(sum(id1,3, 'omitnan'),1) & isfinite(Fis));
+    idC = find(sum(sum(id2,3, 'omitnan'),1));
+    
+    % active indices (assume last trial is passive)
+    idA = 1:length(tis) - N;
+    
+    % passive
+    idP = (idA(end)+1):length(tis);
+    idFP = find((parms.ti > (tmax(3) + tiso - 4*PData.dTt - 2*PData.dTc - PData.ISI)) & (parms.ti < (tmax(3) + tiso - PData.dTt)) & isfinite(Fis));
+      
+    
+    %% get initial guess
     IG = get_initial_guess(tis, Cas, vis, parms.Lts, parms);
     
     oFi = (IG.Fsei) * parms.Fscale;
@@ -212,6 +236,9 @@ for iF = iFs
         figure(1)
         subplot(414); hold on
         plot(tis, oFi,'b'); hold on
+        
+        plot(tis(idF), oFi(idF),'m*', 'markersize', 1); hold on
+        plot(tis(idC), oFi(idC),'g.'); hold on
     end
     
     Lcost = @(dlse, Lis, parms) ((parms.kse0*(exp(parms.kse*dlse)-1)) - (parms.kpe * (Lis*parms.gamma - dlse - parms.Lce0))).^2;
@@ -232,35 +259,7 @@ for iF = iFs
     % initial guess
     IG.F9 = Fse;
 
-    %% intervals of interest
-    id1 = nan(length(Ks), length(parms.ti), length(m));
-    id2 = nan(length(Ks), length(parms.ti), length(m));
-    tmax = [0 tiso * length(Ks) tiso * (length(Ks)*2)];
-    
-    for i = 1:length(m)
-        for k = 1:length(Ks)
-            id1(k,:,i) = (parms.ti > (tmax(i) + ts(k) + tiso - 4*AData.dTt - 2*AData.dTc(i) - AData.ISI(i))) & (parms.ti < (tmax(i) + ts(k)+tiso - AData.dTt));
-            id2(k,:,i) = (parms.ti > (tmax(i) + ts(k) + tiso - 5*AData.dTt - 2*AData.dTc(i) - AData.ISI(i))) & (parms.ti < (tmax(i) + ts(k) + tiso - 4*AData.dTt - 2*AData.dTc(i) - AData.ISI(i)));
-        end
-    end
-    
-    % sum across conditions and pCas
-    idF = find(sum(sum(id1,3, 'omitnan'),1) & isfinite(Fis));
-    idC = find(sum(sum(id2,3, 'omitnan'),1));
-
-    if visualize
-        subplot(414); hold on
-        plot(tis(idF), oFi(idF),'m*', 'markersize', 1); hold on
-        plot(tis(idC), oFi(idC),'g.'); hold on
-    end
-    
-    % active indices (assume last trial is passive)
-    idA = 1:length(tis) - N;
-    
-    % passive
-    idP = (idA(end)+1):length(tis);
-    idFP = find((parms.ti > (tmax(3) + tiso - 4*PData.dTt - 2*PData.dTc - PData.ISI)) & (parms.ti < (tmax(3) + tiso - PData.dTt)) & isfinite(Fis));
-            
+      
     %% select data for fitting
     Xdata.t = tis;
     Xdata.F = Fis;
