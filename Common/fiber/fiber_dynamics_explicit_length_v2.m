@@ -44,6 +44,7 @@ else
 end
 
 % SE
+Fse(Fse<0) = 0;
 dLse = max(parms.Lse_func(Fse, parms), 0); % can't be negative
 kse = parms.kse * (Fse + parms.kse0);
 
@@ -85,6 +86,9 @@ q = Q2./Q00 - p.^2;
 % q = log(1+exp(q*k))/k;
 q = max(q, 0);
 
+if sum(~isreal(q)) > 0
+    keyboard
+end
 
 if isfield(parms, 'FL_overlap')
     if parms.FL_overlap
@@ -148,4 +152,8 @@ end
 
 dx = [dQ0dt; dQ2dt; dFsedt; dNondt; dDRXdt; Rdot; Ldot];
 
+
+% if sum(isnan(dx(:))) > 0
+%     keyboard
+% end
 end

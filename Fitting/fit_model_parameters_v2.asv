@@ -118,7 +118,8 @@ end
 
 if isequal(mcode, [1 2 1])
    R = opti.variable(1,N);  % derivative constraint
-%    opti.subject_to(R > 0);
+   dRdt = opti.variable(1,N);  % derivative constraint
+   opti.subject_to(R > 0);
    opti.set_initial(R, IG.Ri(idA));
 else
     R = 0;
@@ -194,10 +195,10 @@ opti.subject_to((dQ2dt(1:N-1) + dQ2dt(2:N))*dt/2 + Q2(1:N-1) == Q2(2:N));
 
 %% cooperativity
 if isequal(mcode, [1 2 1])
-%     dRdt = Rdot;
+    dRdt = Rdot;
     opti.subject_to((Rdot(1:N-1) + Rdot(2:N))*dt/2 + R(1:N-1) == R(2:N));
 else
-    dRdt = 0;
+    Rdot = 0;
 end
 
 if isequal(mcode, [1 1 1]) || isequal(mcode, [1 1 2])  || isequal(mcode, [1 2 1])
@@ -239,7 +240,7 @@ options.ipopt.linear_solver = 'mumps';
 options.ipopt.mu_strategy           = 'adaptive';
 options.detect_simple_bounds           = true;
 
-options.ipopt.max_iter = 1e3;
+options.ipopt.max_iter           = 500;
 
 opti.solver('ipopt',options);
 
@@ -306,10 +307,6 @@ catch
     out.J     = opti.debug.value(J);
     out.Fcost = opti.debug.value(Fcost);
     out.Lts = sol.value(Lts);
-        
-    if exist('s')
-        out.s = sol.value(s);
-    end
     
     if parms.f > 0
         % Extract the result
