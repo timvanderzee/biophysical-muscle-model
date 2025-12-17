@@ -19,8 +19,8 @@ showline = 1;
 filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_thin_regular_SRS', 'biophysical_full_regular_SRS','biophysical_full_alternative_SRS'};
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
 % filenames = {'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
-% versions = {'parms_v3', 'parms_v2d', 'parms_v3d', 'parms_v3d'};
-versions = {'parms_v3', 'parms_v4', 'parms_v5', 'parms_v6','parms_v6'};
+versions = {'parms_v3', 'parms_v2d', 'parms_v4d', 'parms_v4d', 'parms_v4d'};
+% versions = {'parms_v3', 'parms_v4', 'parms_v5', 'parms_v6','parms_v6'};
 
 iFs = [2,3,5,6,7,8,11];
 

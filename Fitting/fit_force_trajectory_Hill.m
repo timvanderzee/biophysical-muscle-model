@@ -240,9 +240,17 @@ for iF = iFs
       
     
     %% get initial guess
-
-    IG = get_initial_guess(tis(idA), Cas(idA), vis(idA), parms.Lts(idA), parms);
-   
+    if ~isequal(mcode, [1 1 2])
+        IG = get_initial_guess(tis(idA), Cas(idA), vis(idA), parms.Lts(idA), parms);
+    else
+        
+        IG.Fcei = parms.vF_func(vis, parms);
+        IG.Fpei = parms.kpe * (Lis - parms.Lce0) * parms.gamma;
+        
+        IG.Fsei = IG.Fce + IG.Fpe;
+    end
+        
+        
     oFi = (IG.Fsei) * parms.Fscale;
     
     if visualize
