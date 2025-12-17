@@ -4,17 +4,17 @@ clear all; close all; clc
 [username, githubfolder] = get_paths();
 
 % binary inputs
-save_results = 0;
-redo = 0;
-visualize = 1;
+save_results = 1;
+redo = 1;
+visualize = 0;
 discretized_model = 1;
 
 % versions
 output_version = '_v4d';
-parms_version = '_v4'; 
+parms_version = ''; 
 
 % model
-mcodes = [1 2 1];
+mcodes = [1 1 2];
 
 % fibers
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
@@ -26,12 +26,12 @@ ISIs = [ 0.0010    0.0100    0.0500    0.1000    0.2000    0.3160    0.5000    1
 pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
 Ca = 10.^(-pCas+6);
 
-
-iFs = 11;
-pCa = 6.1;
-Ca = 10.^(-pCa+6);
-AMPs = .0682;
-ISIs = .001;
+% 
+% iFs = 11;
+% pCa = 4.5;
+% Ca = 10.^(-pCa+6);
+% AMPs = .0682;
+% ISIs = .001;
 
 for iii = 1:size(mcodes,1)
     
@@ -67,6 +67,10 @@ for iii = 1:size(mcodes,1)
         
             x0 = [n0'; parms.x0(4:end)'];
             x0(end-3) = lce0;
+            
+            if isequal(mcode, [1 1 2]) || isequal(mcode, [1 1 3])
+                x0(end-1) = 1;
+            end
             
         else
             
