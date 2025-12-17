@@ -248,7 +248,7 @@ for j = 1:2 % tests
         ylim([0 .3]*100)
                         
         subplot(3,2,j+4)
-        plot(median(tsim(:,j,f,:),4,'omitnan') ./ Ntot(:,j,f), median(eps(:,j,f,:),4)*100,'ko--', 'markerfacecolor', color(f,:)); hold on
+        pl(median(tsim(:,j,f,:),4,'omitnan') ./ Ntot(:,j,f), median(eps(:,j,f,:),4)*100,'ko--', 'markerfacecolor', color(f,:)); hold on
         box off
         subtitle('Error - processing time trade-off')
         xlabel('Time per simulation (s)')
