@@ -11,10 +11,10 @@ discretized_model = 1;
 
 % versions
 output_version = '_v4d';
-parms_version = '_v2'; 
+parms_version = '_v4'; 
 
 % model
-mcodes = [1 1 3];
+mcodes = [1 2 1];
 
 % fibers
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
@@ -25,6 +25,13 @@ AMPs = [0    0.0012    0.0038    0.0121    0.0216    0.0288    0.0383    0.0532 
 ISIs = [ 0.0010    0.0100    0.0500    0.1000    0.2000    0.3160    0.5000    1.0000    3.1600   10.0000];
 pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
 Ca = 10.^(-pCas+6);
+
+
+iFs = 11;
+pCa = 6.1;
+Ca = 10.^(-pCa+6);
+AMPs = .0682;
+ISIs = .001;
 
 for iii = 1:size(mcodes,1)
     
@@ -117,7 +124,7 @@ for iii = 1:size(mcodes,1)
                         
                         dt = .001; % gives 10 points in SRS zone
                         N = round(tiso / dt);
-                        
+                       
                         [tis, Cas, Lis, vis, ts, Ts] = create_input(tiso, dTt, dTc, ISI, Ca(i), N);
                         
                         parms.ti = tis;
@@ -145,7 +152,7 @@ for iii = 1:size(mcodes,1)
                             oFi = Fact + parms.Fpe_func(parms.Lts, parms);
                             
                         else
-                            
+                           
                             aTs = [0; Ts];
                             X0 = x0;
                             XP0 = xp0;
@@ -163,7 +170,7 @@ for iii = 1:size(mcodes,1)
                             
 %                             odeopt = odeset('maxstep', 1e-3);
                             odeopt = [];
-                            
+%              load('temp4.mat', 'parms')
                             for p = 1:(length(nzi)-1)
 %                                 disp(p)
                                 
@@ -188,13 +195,20 @@ for iii = 1:size(mcodes,1)
                                     dlse = interp1(parms.ti, parms.Lts, t) - L;
 %                                     F = parms.Fse_func(dlse, parms);
 %                                     
-                                    F = nan(1, length(sol.x));
+                                    FXB = nan(1, length(sol.x));
                                     for iiii = 1:length(sol.x)
                                         n = sol.y(1:end-4,iiii);
                                         xi = parms.xi + L(iiii);
-                                        F(iiii) = trapz(xi, xi .* n') + trapz(xi, n');
+                                        FXB(iiii) = trapz(xi, xi .* n') + trapz(xi, n');
                                     end
                                     
+                                    dLce = L - parms.Lce0;
+                                    Fpe = nan(1, length(sol.x));
+                                    Fpe((dLce*parms.K) < 10) = parms.kpe * log(1+exp(dLce((dLce*parms.K) < 10)*parms.K))/parms.K;
+                                    Fpe((dLce*parms.K) >= 10) = parms.kpe * dLce((dLce*parms.K) >= 10);
+                                    
+                                    F = FXB + Fpe;
+
                                 else
 %                                     F = (sol.y(1,:) + sol.y(2,:));
                                     F = sol.y(3,:);
