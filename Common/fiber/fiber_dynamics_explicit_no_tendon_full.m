@@ -67,9 +67,9 @@ beta = parms.f_func(xi, parms.f, parms.w, 0);
 phi = -(parms.g_func(xi, k1(1), -k1(2)) + parms.g_func(xi, k2(1), -k2(2))) .* n';   
 
 % forcible detachment
-gamma = parms.f_func(xi, parms.b, parms.w, parms.ps2) * R;
+gamma = parms.f_func(xi, parms.b, parms.w, 0) * R;
 % phiR = -parms.k*(xi > (parms.dLcrit)) .* n' + gamma;
-phiR = -parms.k * (1/2 * (tanh((xi - parms.dLcrit)*3) + 1)) .* n' + gamma;
+phiR = -parms.k * (1/2 * (tanh((xi - parms.dLcrit)*20) + 1)) .* n' + gamma;
 dRdt = -trapz(xi, phiR);
 
 % total phi
@@ -97,9 +97,27 @@ end
 % attachment must be greater. thus, we need to add Rdot to Q0dot
 dDRXdt = J1 - J2 - (Qdot(1) + dRdt);
 
-kse = parms.kse * (F + parms.kse0);
+kpe = 0;
+Fpe = 0;
 
-Ld  = (vMtilda .* parms.gamma .* kse - F0dot) ./ (Q0 + kse);
+if isfield(parms, 'PE_isw_SE') % PE in series with SE
+    if parms.PE_isw_SE
+        dLce = L - parms.Lce0;
+
+        if parms.K*dLce < 10
+            kpe = parms.kpe .* (1 - 1./(exp(parms.K*dLce)+1));
+            Fpe = parms.kpe * log(1+exp(dLce*parms.K))/parms.K;
+        else
+            kpe = parms.kpe;
+            Fpe = parms.kpe * dLce;
+        end
+    end
+end
+
+Ftot = F + Fpe;
+kse = parms.kse * (Ftot + parms.kse0);
+
+Ld  = (vMtilda .* parms.gamma .* kse - F0dot) ./ (Q0 + kse + kpe);
 
 yp = [ndot(:); Ld; dNondt; dDRXdt; dRdt];
 
