@@ -1,5 +1,5 @@
 clear all; close all; clc
-savefig = 0; 
+savefig = 1; 
 
 [username, githubfolder] = get_paths();
 mcodes = [2 1 1; 1 1 3; 1 1 2; 1 1 1; 1 2 1];
@@ -15,8 +15,8 @@ F0s = nan(length(th)-1, 7,8,11, 5);
 RMSDc = nan(length(th)-1,7,8,11, 7, 5);
 
 % versions = {'parms_v4', 'parms_v2d', 'parms_v2d', 'parms_v2d'};
-% versions = {'parms_v4','parms_v4d', 'parms', 'parms_v4d', 'parms_v4d'};
-versions = {'parms_v4','parms_v4', 'parms', 'parms_v6', 'parms_v6'};
+versions = {'parms_v4','parms_v4d', 'parms_v4d', 'parms_v4d', 'parms_v4d'};
+% versions = {'parms_v4','parms_v4', 'parms', 'parms_v6', 'parms_v6'};
 
 for p = 1:7
     

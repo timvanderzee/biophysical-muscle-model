@@ -10,11 +10,11 @@ iFs = [2,3,5,6,7,8,11];
 % iFs = [6,7,8,11];
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 mcodes = [1 1 1; 1 1 2; 1 1 3; 1 2 1];
-mcodes = [1 2 1];
+mcodes = [1 1 2];
 
 visualize = 0;
 
-version = 'parms_v6';
+version = 'parms_v4d';
 
 %% calc RMSD
 AMPs = [0 12 38 121 216 288 383 682]/10000;
