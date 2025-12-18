@@ -19,8 +19,8 @@ showline = 1;
 filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_thin_regular_SRS', 'biophysical_full_regular_SRS','biophysical_full_alternative_SRS'};
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
 % filenames = {'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
-versions = {'parms_v3', 'parms_v2d', 'parms_v4d', 'parms_v4d', 'parms_v4d'};
-% versions = {'parms_v3', 'parms_v4', 'parms_v5', 'parms_v6','parms_v6'};
+% versions = {'parms_v3', 'parms_v4d', 'parms_v4d', 'parms_v4d', 'parms_v4d'};
+versions = {'parms_v3', 'parms_v4', 'parms_v5', 'parms_v6','parms_v6'};
 
 iFs = [2,3,5,6,7,8,11];
 
@@ -72,20 +72,21 @@ for kk = 1:length(filenames)
     
     figure(1)
     
-    for i = iFs
-        subplot(131);
-        if ~strcmp(type, 'interp')
-            plot(F0s_m(:,tid(2),tid(3),i), SRSrel_m(1:end,tid(2),tid(3),i), '-', 'color', [color(kk,:) .2], 'linewidth',.1); hold on
-        else
-            plot([0 Flin], [1 SRSrel_m(1:end,tid(2),tid(3),i)'], '-', 'color', [color(kk,:) .2], 'linewidth',.1); hold on
-        end
-        
-        subplot(132);
-        plot(AMPs, squeeze(SRSrel_m(tid(1),tid(2),1:end,i)),'-', 'color',[color(kk,:) .2], 'linewidth', .1); hold on
-
-        subplot(133);
-        plot(ISIs, squeeze(SRSrel_m(tid(1),1:end,tid(3),i)),'-', 'color',[color(kk,:) .2],'linewidth',.1); hold on
-    end
+    % individual subjects
+%     for i = iFs
+%         subplot(131);
+%         if ~strcmp(type, 'interp')
+%             plot(F0s_m(:,tid(2),tid(3),i), SRSrel_m(1:end,tid(2),tid(3),i), '-', 'color', [color(kk,:) .2], 'linewidth',.1); hold on
+%         else
+%             plot([0 Flin], [1 SRSrel_m(1:end,tid(2),tid(3),i)'], '-', 'color', [color(kk,:) .2], 'linewidth',.1); hold on
+%         end
+%         
+%         subplot(132);
+%         plot(AMPs, squeeze(SRSrel_m(tid(1),tid(2),1:end,i)),'-', 'color',[color(kk,:) .2], 'linewidth', .1); hold on
+% 
+%         subplot(133);
+%         plot(ISIs, squeeze(SRSrel_m(tid(1),1:end,tid(3),i)),'-', 'color',[color(kk,:) .2],'linewidth',.1); hold on
+%     end
     
     subplot(131);
     if ~strcmp(type, 'interp')

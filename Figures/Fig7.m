@@ -1,8 +1,8 @@
 clear all; close all; clc
-savefig = 1; 
+savefig = 0; 
 
 [username, githubfolder] = get_paths();
-mcodes = [2 1 1; 1 1 3; 1 1 1; 1 2 1];
+mcodes = [2 1 1; 1 1 3; 1 1 2; 1 1 1; 1 2 1];
 
 % iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
 
@@ -10,11 +10,13 @@ iFs = [2,3,5,6,7,8,11];
 
 th = [0 .07 .25 .7 1.5];
 
-RMSDs = nan(length(th)-1,7,8,11, 7, 4);
-F0s = nan(length(th)-1, 7,8,11, 4);
-RMSDc = nan(length(th)-1,7,8,11, 7, 4);
+RMSDs = nan(length(th)-1,7,8,11, 7, 5);
+F0s = nan(length(th)-1, 7,8,11, 5);
+RMSDc = nan(length(th)-1,7,8,11, 7, 5);
 
-versions = {'parms_v4', 'parms_v2d', 'parms_v2d', 'parms_v2d'};
+% versions = {'parms_v4', 'parms_v2d', 'parms_v2d', 'parms_v2d'};
+% versions = {'parms_v4','parms_v4d', 'parms', 'parms_v4d', 'parms_v4d'};
+versions = {'parms_v4','parms_v4', 'parms', 'parms_v6', 'parms_v6'};
 
 for p = 1:7
     
@@ -30,6 +32,7 @@ for p = 1:7
         sISIs = ISIs;
         
         %% remove some trials
+        % second fiber pCa 4.5, all small AMPs or large ISIs
         RMSD(1,:,sAMPs < .03,2,:) = nan;
         RMSD(1,sISIs > 1,:,2,:) = nan;
         
@@ -75,37 +78,55 @@ clc
 
 % yrange = [-.05 .15];
 
-color = get(gca,'colororder');
-pcolors = flip(parula(7));
-color = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
+% color = get(gca,'colororder');
+% pcolors = flip(parula(7));
+% color = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
 
 
 %%
+% close all
 figure(1)
 
-ms = [7 6 6 5];
-sym = {'s','h','v','o'};
+color = lines(7);
 
+ms = [7 6 6 5 5];
+sym = {'s','h','v','o', '^'};
+
+p = 1;
+for kk = 1:size(mcodes,1)
+
+    % effect of activation
+    AMPid = 7;
+    ISIid = 3;
+    pCaid = 1:4;
+
+    subplot(3,3,1)
+     plot(mean(F0s(pCaid,ISIid,AMPid,:, kk), 4, 'omitnan'), mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1), kk),4, 'omitnan'), '--', 'color', color(kk,:)); hold on
+end
+
+
+%%
+
+figure(1)
 for p = 1:3
     % figure;
     for kk = 1:size(mcodes,1)
 %         color = get(gca,'colororder');
         
-        
-        % effect of activation
+       % effect of activation
         AMPid = 7;
         ISIid = 3;
         pCaid = 1:4;
         
         subplot(3,3,1 + (p-1)*3);
-         plot(mean(F0s(pCaid,ISIid,AMPid,:, kk), 4, 'omitnan'), mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1), kk),4, 'omitnan'), '--', 'color', color(kk,:)); hold on
-     
+        plot(mean(F0s(pCaid,ISIid,AMPid,:, kk), 4, 'omitnan'), mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1), kk),4, 'omitnan'), '--', 'color', color(kk,:)); hold on
+         
         if kk == 1
-            if (p-1)*3 == 0
-                yrange = [-.02 .05];
-            else
-                yrange = [-.02 .2];
-            end
+%             if (p-1)*3 == 0
+%                 yrange = [-.02 .05];
+%             else
+                yrange = [-.02 .15];
+%             end
             
             plot(ones(1,2) * mean(F0s(pCaid(3),ISIid,AMPid,:, kk), 4, 'omitnan'), yrange, 'k--'); hold on
             
@@ -209,6 +230,17 @@ for j = 1:9
     
 end
 
+%%
+for i = 1:9
+    subplot(3,3,i)
+    yline(0,'k-')
+end
+
+%%
+subplot(331)
+% modelnames = {'Hill model','2-state XB model','2-state XB coop','3-state XB coop','4-state XB coop'};
+% legend(modelnames, 'location', 'bestoutside', 'fontsize', 6)
+
 %% titles
 subtitles = {'Overall', 'Pre-stretch', 'Test stretch'};
 
@@ -251,19 +283,19 @@ subtitle(subtitles{3}, 'fontsize', 8)
 
 %% make manual legend
 % if ishandle(2), close(2); end; figure(2)
-modelnames = {'Hill model','XB model','XB coop','XB coop + FD'};
-figure(1)
+% modelnames = {'Hill model','XB model','XB coop','XB coop + FD'};
+% figure(1)
 ys = .19;
-
-subplot(331)
-for i = 1:4
-    fake_data = -i * .02  + ys * [.95 1 1.05];
-    errorbar(.1, mean(fake_data, 2), std(fake_data,1,2),sym{i}, 'color', color(i,:),'markerfacecolor', color(i,:),'markersize', ms(i)*.5, 'Capsize',3); hold on
-    errorbar(.8, mean(fake_data, 2), std(fake_data,1,2),sym{i}, 'color', color(i,:), 'markerfacecolor', [1 1 1],'markersize', ms(i)*.5, 'Capsize',3); hold on
-
-    text(.45, ys - i * .02, modelnames{i}, 'fontsize', 7, 'horizontalalignment', 'center')
-
-end
+% 
+% subplot(331)
+% for i = 1:4
+%     fake_data = -i * .02  + ys * [.95 1 1.05];
+%     errorbar(.1, mean(fake_data, 2), std(fake_data,1,2),sym{i}, 'color', color(i,:),'markerfacecolor', color(i,:),'markersize', ms(i)*.5, 'Capsize',3); hold on
+%     errorbar(.8, mean(fake_data, 2), std(fake_data,1,2),sym{i}, 'color', color(i,:), 'markerfacecolor', [1 1 1],'markersize', ms(i)*.5, 'Capsize',3); hold on
+% 
+%     text(.45, ys - i * .02, modelnames{i}, 'fontsize', 7, 'horizontalalignment', 'center')
+% 
+% end
 
 %%
 text(.1, ys, 'HD', 'fontsize', 7, 'horizontalalignment', 'center')
@@ -273,7 +305,7 @@ plot(.8, ys, 'rx', 'linewidth', 2)
 
 %%
 figure(1)
-set(gcf,'units','centimeters','position',[10 10 19 11])
+set(gcf,'units','centimeters','position',[10 5 15 19])
 
 
 %% A, B labels

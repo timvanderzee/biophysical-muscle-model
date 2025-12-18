@@ -11,31 +11,36 @@ acolors = lines(5);
 discretized_model = 1;
 
 %% chose figure number: specify conditions
-fig = 5;
+fig = 6;
 iF = 6;
 
 pCas = [4.5 6.2 9;
+        4.5 6.2 9;
         4.5 6.2 9];
 
 % chosen ISIs, AMPs and pCas
-if fig == 4
-    ISIs = [.001 .001 .001;
-            .001 .001 .001]; 
+if fig == 4 || fig == 5
+    ISIs = [.1 .1 .1;
+            .001 .001 .001;
+            .1 .1 .1;]; 
     
     AMPs = [.0383 .0383 .0383;
-            0      0 0];% solid
+            0      0 0;
+            .0383 .0383 .0383];% solid
     
     
     titles = {'Maximal activation', 'Submaximal activation'};
     
-    tmax =  0.3195;
+    tmax =  0.4;
     
-elseif fig == 5 || fig == 6
+elseif fig == 6
     
-    ISIs = [ .001 .001 .001;
+    ISIs = [ .316 .316 .316;
+            .001 .001 .001;
              .316 .316 .316];
     
     AMPs = [.0383 .0383 .0383;
+            .0383 .0383 .0383;
             .0383 .0383 .0383];
         
         tmax = 0.6345;
@@ -43,14 +48,14 @@ elseif fig == 5 || fig == 6
     titles = {'Maximal activation', 'Submaximal activation'};
     
 end
-
-ISIs = flip(ISIs,1);
-AMPs = flip(AMPs,1);
-pCas = flip(pCas,1);
+% 
+% ISIs = flip(ISIs,1);
+% AMPs = flip(AMPs,1);
+% pCas = flip(pCas,1);
 
 %% choose fiber: load data and parameters
 if fig == 4
-    mcodes = [2 1 1; 1 1 3; 1 1 2];
+    mcodes = [2 1 1; 1 1 3];
     colors = acolors;
     
     %     versions = {'_v3', '_v3', '_v4'};
@@ -62,24 +67,23 @@ if fig == 4
     end
     
 elseif fig == 5
-    mcodes = [1 1 3; 1 1 2; 1 1 1];
+    mcodes = [1 1 3; 1 1 2; 1 1 1;  1 2 1];
     colors = acolors(2:end,:);
-    
-    %     versions = {'_v3', '_v3', '_v4'};
+   
     
     if discretized_model
-        versions = {'_v4d', '_v4d', '_v4d'};
+        versions = {'_v4d', '_v4d', '_v4d', '_v4d'};
     else
         versions = {'_v3', '_v3', '_v4'};
     end
     
 else
-    mcodes = [1 1 1; 1 2 1];
-    colors = acolors(4:5,:);
+    mcodes = [1 1 3; 1 1 2; 1 1 1; 1 2 1];
+    colors = acolors(2:end,:);
     
     
     if discretized_model
-        versions = {'_v4d', '_v4d'};
+        versions = {'_v3', '_v4d', '_v4d','_v4d'};
     else
 %         versions = {'_v4', '_v4'};
         versions = {'_v4', '_v6'};
@@ -99,7 +103,9 @@ ax2 = subplot(5,1,[2 5]);
 
 %% evaluate
 odeopt = odeset('maxstep', 1e-2);
-ls = {':','-'};
+ls = {'-',':','-'; '-',':','-'; '-',':','-'; '--',':','--'};
+
+bf = [0 .5 0];
 
 for j = 1:size(ISIs,1)
     %     if ishandle(j), close(j); end
@@ -117,7 +123,7 @@ for j = 1:size(ISIs,1)
         id = texp(:,i) < tmax;
         
 %         subplot(5,1,1)
-        plot(ax1, texp(id,i), Lexp(id,i)*100, 'color', brighten([.5 .5 .5], (2-j)/2), 'linewidth', 2, 'linestyle',ls{j}); 
+        plot(ax1, texp(id,i), Lexp(id,i)*100, 'color', brighten([.5 .5 .5], bf(j)), 'linewidth', 2, 'linestyle',ls{1,j}); 
         hold(ax1, 'on')
         axis(ax1, [-.05 tmax -.5 5])
         set(ax1, 'box', 'off', 'Fontsize', 6)
@@ -125,7 +131,7 @@ for j = 1:size(ISIs,1)
         ylabel(ax1, 'Length (%L_0)', 'Fontsize', 8)
         
 %         subplot(5,1,[2 5])
-        plot(ax2, texp(id,i), Fexp(id,i)*100, 'color', brighten([.5 .5 .5], (2-j)/2), 'linewidth', 2, 'linestyle',ls{j}); hold on
+        plot(ax2, texp(id,i), Fexp(id,i)*100, 'color', brighten([.5 .5 .5], bf(j)), 'linewidth', 2, 'linestyle',ls{1,j}); hold on
         axis([-.05 tmax 0 200])
         xticks(-.05:.05:tmax);
         
@@ -166,7 +172,7 @@ for j = 1:size(ISIs,1)
             
 %             figure(1)
 %             subplot(5,1,[2 5])
-            plot(ax2, t(t<tmax2), oFi(t<tmax2)*100, 'linestyle', ls{j}, 'linewidth',2, 'color', brighten(colors(kk,:), (2-j)/2)); hold on
+            plot(ax2, t(t<tmax2), oFi(t<tmax2)*100, 'linestyle', ls{kk,j}, 'linewidth',2, 'color', brighten(colors(kk,:), bf(j))); hold on
             
             % compute RMSD
             id = t < .15 & t > (-ISI - 2 * dTc - .1);
@@ -190,8 +196,8 @@ for j = 1:size(ISIs,1)
 %             yl = get(ax1, 'ylim');
             xline(ax1, tids(ii), ':', 'color', [.5 .5 .5]); hold on
             
-            if j == 2 && i == 1
-                text(ax1, mean([tids(ii) tids(ii+1)]), 4.5, phases{ii}, 'Fontsize',8,'HorizontalAlignment','center')
+            if j == 3 && i == 1
+                text(ax1, mean([tids(ii) tids(ii+1)]), 4.5, phases{ii}, 'Fontsize',7,'HorizontalAlignment','center')
             end
         end
         
@@ -209,11 +215,11 @@ end
 % subplot(5,1,[2 5])
 
 if fig == 4
-    legend('Data','Hill','2-state','2-state coop','location','bestoutside', 'Fontsize', 8)
+    legend('Data','Hill','2-state','location','bestoutside', 'Fontsize', 8)
 elseif fig == 5
-    legend('Data','2-state','2-state coop','3-state coop','location','bestoutside', 'Fontsize', 8)
+    legend('Data','2-state','2-state coop','3-state coop','4-state coop','location','bestoutside', 'Fontsize', 8)
 else
-    legend('Data','3-state coop','4-state coop','location','bestoutside', 'Fontsize', 8)
+    legend('Data','2-state','2-state coop','3-state coop','4-state coop','location','bestoutside', 'Fontsize', 8)
 end
 
 
@@ -235,6 +241,7 @@ trange = [-.05 tmax];
 set(gcf,'units','centimeters','position',[10 5 diff(trange)*30 15])
 % set(gcf,'units','centimeters','position',[5 2.5 0.2 1.7], 'fontsize', 6)
 % fix both subplots
+pause(0.5)
 
 P2 = get(ax2, 'Position');
 w2 = P2(3);

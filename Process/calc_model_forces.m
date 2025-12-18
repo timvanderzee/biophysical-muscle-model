@@ -6,11 +6,11 @@ clear all; close all; clc
 % binary inputs
 save_results = 1;
 redo = 1;
-visualize = 0;
-discretized_model = 1;
+visualize = 1;
+discretized_model = 0;
 
 % versions
-output_version = '_v4d';
+output_version = '';
 parms_version = ''; 
 
 % model
@@ -26,11 +26,11 @@ ISIs = [ 0.0010    0.0100    0.0500    0.1000    0.2000    0.3160    0.5000    1
 pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
 Ca = 10.^(-pCas+6);
 
-% 
-% iFs = 11;
-% pCa = 4.5;
-% Ca = 10.^(-pCa+6);
-% AMPs = .0682;
+% % 
+iFs = 5;
+% pCas = 6.6;
+% Ca = 10.^(-pCas+6);
+% AMPs = 0;
 % ISIs = .001;
 
 for iii = 1:size(mcodes,1)
@@ -78,7 +78,7 @@ for iii = 1:size(mcodes,1)
 
 
             x0 = zeros(1,6);
-            Q0 = .1e-6;
+            Q0 = .2;
             p0 = -1;
             q0 = .1;
             [Q00, Q20, lce0, Q10, Fse0] = find_steady_state(Q0, p0, q0, newparms, 'regular');
