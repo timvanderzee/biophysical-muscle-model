@@ -13,7 +13,7 @@ acolors(6,:) = brighten(acolors(6,:), .7);
 discretized_model = 1;
 
 %% chose figure number: specify conditions
-fig = 4;
+fig = 5;
 iF = 6;
 
 pCas = [4.5 6.2 9;
@@ -97,8 +97,11 @@ load([fibers{iF},'_cor_new.mat'],'data');
 
 %% make axes
 figure(1)
-ax1 = subplot(511);
-ax2 = subplot(5,1,[2 5]);
+
+for i = 1:5
+    ax(i) = axes();
+end
+
 
 %% evaluate
 odeopt = odeset('maxstep', 1e-2);
@@ -107,15 +110,9 @@ ls = {'-',':','-'; '-',':','-'; '-',':','-'; '--',':','--'};
 bf = [0 .5 0];
 
 for j = 1:size(ISIs,1)
-    %     if ishandle(j), close(j); end
-    %     figure(j)
-    
-    figure(1)
+
     [texp, Lexp, Fexp, Tsrel] = get_data(data, ISIs(j,:), AMPs(j,:), pCas(j,:));
-%     plot_data(texp, Lexp, Fexp, brighten([.5 .5 .5], (j-1)/2), ls{j});
-    
     texp = texp - Tsrel(1,2);
-%     tmax = .15 - Tsrel(1,2)
 
     for i = 1:size(ISIs,2)
     
@@ -123,21 +120,24 @@ for j = 1:size(ISIs,1)
         
         tmax = max(tmaxs);
         
-%         subplot(5,1,1)
-        plot(ax1, texp(id,i), Lexp(id,i)*100, 'color', brighten([.5 .5 .5], bf(j)), 'linewidth', 2, 'linestyle',ls{1,j}); 
-        hold(ax1, 'on')
-        axis(ax1, [-.05 tmax -.5 5])
-        set(ax1, 'box', 'off', 'Fontsize', 6)
-        xticks(ax1, -.05:.05:tmax);
-        ylabel(ax1, 'Length (%L_0)', 'Fontsize', 8)
+
+        plot(ax(1), texp(id,i), Lexp(id,i)*100, 'color', brighten([.5 .5 .5], bf(j)), 'linewidth', 2, 'linestyle',ls{1,j}); 
+        hold(ax(1), 'on')
+        axis(ax(1), [-.05 tmax -.5 5])
+        set(ax(1), 'box', 'off', 'Fontsize', 6)
+        xticks(ax(1), -.05:.05:tmax);
+        ylabel(ax(1), 'Length (%L_0)', 'Fontsize', 8)
         
-%         subplot(5,1,[2 5])
-        plot(ax2, texp(id,i), Fexp(id,i)*100, 'color', brighten([.5 .5 .5], bf(j)), 'linewidth', 2, 'linestyle',ls{1,j}); hold on
-        axis([-.05 tmax 0 200])
-        xticks(-.05:.05:tmax);
+        for k = 1:4
+            plot(ax(k+1), texp(id,i), Fexp(id,i)*100, 'color', brighten([.5 .5 .5], bf(j)), 'linewidth', 2, 'linestyle',ls{1,j}); 
+            hold(ax(k+1), 'on')
+            axis(ax(k+1), [-.05 tmax 0 200])
+            xticks(ax(k+1), -.05:.05:tmax);
+
+            set(ax(k+1), 'box', 'off', 'Fontsize', 6)
+        end
         
-        set(ax2, 'box', 'off', 'Fontsize', 6)
-        ylabel(ax2, 'Force (%F_0)', 'Fontsize', 8)
+        ylabel(ax(2), 'Force (%F_0)', 'Fontsize', 8)
         
         
         % evaluate fit
@@ -171,9 +171,9 @@ for j = 1:size(ISIs,1)
             t = t - Tsrel(1,2);
             tmax2 = .15 - Tsrel(1,2);
             
-%             figure(1)
-%             subplot(5,1,[2 5])
-            plot(ax2, t(t<tmax2), oFi(t<tmax2)*100, 'linestyle', ls{kk,j}, 'linewidth',2, 'color', brighten(colors(kk,:), bf(j))); hold on
+            for k = 1:4
+                plot(ax(k+1), t(t<tmax2), oFi(t<tmax2)*100, 'linestyle', ls{kk,j}, 'linewidth',2, 'color', brighten(colors(kk,:), bf(j))); hold on
+            end
             
             % compute RMSD
             id = t < .15 & t > (-ISI - 2 * dTc - .1);
@@ -190,21 +190,18 @@ for j = 1:size(ISIs,1)
             phases = {'Isometric','Pre-stretch','Shortening','','Test stretch','Isom.'};
         end
         
-%         figure(1)
-%         ax1 = subplot(5,1,1)
-%         title(titles{1}, 'Fontsize', 8)
+
         for ii = 1:(length(tids)-2)
-%             yl = get(ax1, 'ylim');
-            xline(ax1, tids(ii), ':', 'color', [.5 .5 .5]); hold on
+            xline(ax(1), tids(ii), ':', 'color', [.5 .5 .5]); hold on
             
             if j == 3 && i == 1
-                text(ax1, mean([tids(ii) tids(ii+1)]), 4.5, phases{ii}, 'Fontsize',7,'HorizontalAlignment','center')
+                text(ax(1), mean([tids(ii) tids(ii+1)]), 4.5, phases{ii}, 'Fontsize',7,'HorizontalAlignment','center')
             end
         end
         
 %         ax2 = subplot(5,1,[2 5])
         for ii = 1:(length(tids)-2)
-            xline(ax2, [tids(ii) tids(ii)], ':', 'color', [.5 .5 .5]); hold on
+            xline(ax(2), [tids(ii) tids(ii)], ':', 'color', [.5 .5 .5]); hold on
         end
         
         
@@ -212,48 +209,45 @@ for j = 1:size(ISIs,1)
 end
 
 %%
-% figure(1)
-% subplot(5,1,[2 5])
+figure(1)
 
 if fig == 4
-    legend('Data','Hill (no SE)','Hill (with SE)', '2-state','location','bestoutside', 'Fontsize', 8)
+    h = legend(ax(2), 'Data','Hill (no SE)','Hill (with SE)', '2-state','location','bestoutside', 'Fontsize', 8);
 elseif fig == 5
-    legend('Data','2-state','2-state coop','3-state coop','4-state coop','location','bestoutside', 'Fontsize', 8)
+    h = legend(ax(2), 'Data','2-state','2-state coop','3-state coop','4-state coop','location','bestoutside', 'Fontsize', 8);
 else
-    legend('Data','2-state','2-state coop','3-state coop','4-state coop','location','bestoutside', 'Fontsize', 8)
+    h = legend(ax(2), 'Data','2-state','2-state coop','3-state coop','4-state coop','location','bestoutside', 'Fontsize', 8);
 end
 
+trange = [-.05 tmax];
+set(gcf,'units','centimeters','position',[10 2 15 15])
 
-
-% legend box off
-
-% subplot(4,1,1)
-% text(-.4, 6, 'A', 'fontsize', 12, 'fontweight', 'bold')
-
-% subplot(4,2,2)
-% text(-.4, 6, 'B', 'fontsize', 12, 'fontweight', 'bold')
+%%
+for k = 1:3
+    set(ax(k+2), 'xlim', [.25 .35], 'ylim', [20 60])
+end
 
 %% size
 figure(1)
 
-trange = [-.05 tmax];
+set(ax(1), 'units','centimeters', 'Position', [2 12 8 2])
+set(ax(2), 'units','centimeters', 'Position', [2 2 8 9])
+set(h, 'units','centimeters', 'Position', [11 12 3 2])
 
+% ax3 = axes();
+% ax4 = axes();
+% ax5 = axes();
 
-set(gcf,'units','centimeters','position',[10 5 diff(trange)*30 15])
-% set(gcf,'units','centimeters','position',[5 2.5 0.2 1.7], 'fontsize', 6)
-% fix both subplots
-pause(0.5)
+%% 
+set(ax(3), 'units','centimeters', 'Position', [11 2 3 2.5], 'xticklabels', {}, 'yticklabels', {});
+set(ax(4), 'units','centimeters', 'Position', [11 5 3 2.5], 'xticklabels', {}, 'yticklabels', {});
+set(ax(5), 'units','centimeters', 'Position', [11 8 3 2.5], 'xticklabels', {}, 'yticklabels', {});
 
-P2 = get(ax2, 'Position');
-w2 = P2(3);
-
-P1 = get(ax1, 'Position');
-
-set(ax1, 'Position', [P1(1) P1(2) w2 P1(4)])
-
-% pause(0.5)
+%%
+plot(ax(3), texp(:,i), Fexp(:,i)*100, 'color', brighten([.5 .5 .5], bf(j)), 'linewidth', 2, 'linestyle',ls{1,j}); 
 
 %% optionally export to PNG
+
 cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
 
 if discretized_model
