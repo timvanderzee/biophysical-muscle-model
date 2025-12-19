@@ -10,10 +10,10 @@ new_version = '';
 % settings
 N = 500;
 % N = 1500;
-save_results = 0;
+save_results = 1;
 visualize = 1;
     
-iFs = 6 %; [2,3,5,6,7,8,11];
+iFs = 11 %; [2,3,5,6,7,8,11];
 n = [3 1]; % ISI number
 m = [7 1]; % AMP number
 % n = [1]; % ISI number
@@ -242,7 +242,7 @@ for iF = iFs
         end
 
         cd(foldername)
-        save(['parms_', filename, new_version,'.mat'], 'newparms', 'optparms', 'out', 'bnds')
+        save(['parms_', filename, new_version,'.mat'], 'newparms', 'out')
     end
     
 end

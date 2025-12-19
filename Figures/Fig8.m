@@ -1,10 +1,11 @@
 clear all; close all; clc
-savefig = 0;
+savefig = 1;
 
 [username, githubfolder] = get_paths();
 
 % selected conditions
 sAMPs = [0, 0.0012, 0.0038, 0.0121, 0.0383];
+sAMPs = [0, 0.0038, 0.0121, 0.0383];
 sISIs = [0.001, 0.1, 0.3160, 1, 10];
 
 % if only 1 condition is selected
@@ -16,20 +17,23 @@ showbar = 0;
 showline = 1;
 % figure(1)
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_alternative_SRS'};
-filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_thin_regular_SRS', 'biophysical_full_regular_SRS','biophysical_full_alternative_SRS'};
+filenames = {'Hill_alternative_SRS', 'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_thin_regular_SRS', 'biophysical_full_regular_SRS','biophysical_full_alternative_SRS'};
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
 % filenames = {'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
-% versions = {'parms_v3', 'parms_v4d', 'parms_v4d', 'parms_v4d', 'parms_v4d'};
-versions = {'parms_v3', 'parms_v4', 'parms_v5', 'parms_v6','parms_v6'};
+versions = {'parms', 'parms_v3', 'parms_v4d', 'parms_v4d', 'parms_v4d', 'parms_v4d'};
+% versions = {'parms', 'parms_v3', 'parms_v4', 'parms_v5', 'parms_v6','parms_v6'};
 
 iFs = [2,3,5,6,7,8,11];
 
-figure(1)
-color = get(gca,'colororder');
-pcolors = flip(parula(7));
-color = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
+acolors = lines(6);
+acolors(1,:) = brighten(acolors(1,:), .2);
+acolors(2,:) = brighten(acolors(2,:), -.7);
+acolors(3,:) = brighten(acolors(3,:), .5);
+acolors(4,:) = brighten(acolors(4,:), .5);
+acolors(5,:) = brighten(acolors(5,:), -.5);
+acolors(6,:) = brighten(acolors(6,:), .7);
 
-color = lines(5);
+color = [acolors(6,:); acolors];
 
 xlims = [0 1; 0 .06; 1e-3 1e1];
 
@@ -145,9 +149,9 @@ AMPid = find(eAMPs==sAMP);
 load('SRS_data_v3.mat', 'SRS_pre', 'F0', 'SRS_post')
 
 % average some pCas
-% iFs = 1:11;
+iFs = 1:11;
 %  iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
-iFs = [2,3,5,6,7,8,11];
+% iFs = [2,3,5,6,7,8,11];
 
 SRSrel = nan(length(eth)-1,7,8,iFs(end));
 F0s = nan(length(eth)-1, 7,8,iFs(end));
@@ -197,8 +201,8 @@ plot(AMPs(AMPid) * ones(1,2), ylim,  ':', 'color', [.7 .7 .7])
 SST(2) = sum((squeeze(mean(SRSrel(Cid,ISIid, maid, :),4,'omitnan')) - mean(mean(SRSrel(Cid,ISIid, maid, :),4,'omitnan'),'omitnan')).^2,'omitnan');
 
 plot(eAMPs(maid), squeeze(SRSrel(Cid,ISIid,maid,:)), '.', 'color', [.5 .5 .5]); hold on
-errorbar(eAMPs(maid(1:4)), squeeze(mean(SRSrel(Cid,ISIid,maid(1:4),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,maid(1:4),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [1 1 1], 'markersize', ms)
-errorbar(eAMPs(maid(5)), squeeze(mean(SRSrel(Cid,ISIid,maid(5),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,maid(5),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5], 'markersize', ms)
+errorbar(eAMPs(maid(1:end-1)), squeeze(mean(SRSrel(Cid,ISIid,maid(1:end-1),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,maid(1:end-1),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [1 1 1], 'markersize', ms)
+errorbar(eAMPs(maid(end)), squeeze(mean(SRSrel(Cid,ISIid,maid(end),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,maid(end),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5], 'markersize', ms)
 set(gca, 'yticklabel', {}, 'yColor', 'none')
     
 subplot(133)
@@ -215,13 +219,13 @@ set(gca, 'yticklabel', {}, 'yColor', 'none')
 %% A, B labels
 figure(1)
 subplot(131)
-text(-.15, 2, 'A', 'fontsize', 12,'fontweight','bold')
+text(-.15, 1.8, 'A', 'fontsize', 12,'fontweight','bold')
 
 subplot(132)
-text(-.008, 2, 'B', 'fontsize', 12,'fontweight','bold')
+text(-.008, 1.8, 'B', 'fontsize', 12,'fontweight','bold')
 
 subplot(133)
-text(1e-4, 2, 'C', 'fontsize', 12,'fontweight','bold')
+text(1e-4, 1.8, 'C', 'fontsize', 12,'fontweight','bold')
 
 
 %% calc and diplay R2
@@ -280,26 +284,23 @@ figure(1)
 subplot(131)
 
 xl = [.42 .5; .001 .005; 1.5e-3 4e-3];
-yl = [1.35; 0.6; 1.35];
-yl = [1.8 1.8 1.8];
+% yl = [1.35; 0.6; 1.35];
+yl = [1.65 0.6 1.65];
 
 r = [5 6 100];
 dy = .1;
 
-modelnames = {'Hill', 'XB', 'XB coop', 'XB coop + FD'};
-modelnames = {'Hill', '2-state', '2-state coop', '3-state coop', '4-state coop'};
+% modelnames = {'Hill', 'XB', 'XB coop', 'XB coop + FD'};
+modelnames = {'Hill (no SE)', 'Hill (with SE)', '2-state XB', '2-state coop', '3-state coop', '4-state coop'};
 
 % if length(filenames) > 2
 for i = 1:3
     subplot(1,3,i)
     
-    plot(xl(i,:), [yl(i) yl(i)], 'color', color(1,:),'linewidth',2)
-    plot(xl(i,:), [yl(i) yl(i)]-dy, 'color', color(2,:),'linewidth',2)
-    plot(xl(i,:), [yl(i) yl(i)]-2*dy, 'color', color(3,:),'linewidth',2)
-    plot(xl(i,:), [yl(i) yl(i)]-3*dy, 'color', color(4,:),'linewidth',2)
-    plot(xl(i,:), [yl(i) yl(i)]-4*dy, 'color', color(5,:),'linewidth',2)
-    
-    
+    for j = 1:length(modelnames)
+        plot(xl(i,:), [yl(i) yl(i)] - (j-1)*dy, 'color', color(j,:),'linewidth',2)
+    end
+  
     text(xl(i,1), yl(i)+dy, 'Model', 'fontsize',8) 
     text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)+dy,'R^2', 'fontsize',8,'horizontalalignment','center')
     
@@ -308,14 +309,6 @@ for i = 1:3
         text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-dy*(j-1), num2str(round(R2(j,i),2),3), 'fontsize',6,'horizontalalignment','center')
     end
 
-%     text(xl(i,2) + diff(xl(i,:)) * .1, yl(i)-dy, 'XB', 'fontsize',6)
-%     text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-dy, num2str(round(R2(2,i),2),3), 'fontsize',6,'horizontalalignment','center')
-%     
-%     text(xl(i,2) + diff(xl(i,:)) * .1, yl(i)-2*dy, 'XB coop', 'fontsize',6)
-%     text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-2*dy, num2str(round(R2(3,i),2),3), 'fontsize',6,'horizontalalignment','center')
-%     
-%     text(xl(i,2) + diff(xl(i,:)) * .1, yl(i)-3*dy, 'XB coop + FD', 'fontsize',6)
-%     text(xl(i,2) + diff(xl(i,:)) * r(i), yl(i)-3*dy, num2str(round(R2(4,i),2),3), 'fontsize',6,'horizontalalignment','center')
 end
 
 subplot(131)
@@ -329,15 +322,15 @@ errorbar(.9, .4, .05, 'o', 'color', [.5 .5 .5], 'markersize', ms, 'markerfacecol
 
 subplot(131)
 xlim([0 1.01])
-ylim([0 2])
+ylim([0 1.8])
 
 subplot(132)
 xlim([0 .06])
-ylim([0 2])
+ylim([0 1.8])
 
 subplot(133)
 xlim([1e-3 1e1])
-ylim([0 2])
+ylim([0 1.8])
 
 %% set size
 figure(1)

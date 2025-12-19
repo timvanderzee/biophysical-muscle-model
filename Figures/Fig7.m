@@ -2,7 +2,7 @@ clear all; close all; clc
 savefig = 1; 
 
 [username, githubfolder] = get_paths();
-mcodes = [2 1 1; 1 1 3; 1 1 2; 1 1 1; 1 2 1];
+mcodes = [2 2 1; 2 1 1; 1 1 3; 1 1 2; 1 1 1; 1 2 1];
 
 % iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
 
@@ -10,12 +10,12 @@ iFs = [2,3,5,6,7,8,11];
 
 th = [0 .07 .25 .7 1.5];
 
-RMSDs = nan(length(th)-1,7,8,11, 7, 5);
-F0s = nan(length(th)-1, 7,8,11, 5);
-RMSDc = nan(length(th)-1,7,8,11, 7, 5);
+RMSDs = nan(length(th)-1,7,8,11, 7, size(mcodes,1));
+F0s = nan(length(th)-1, 7,8,11, size(mcodes,1));
+RMSDc = nan(length(th)-1,7,8,11, 7, size(mcodes,1));
 
 % versions = {'parms_v4', 'parms_v2d', 'parms_v2d', 'parms_v2d'};
-versions = {'parms_v4','parms_v4d', 'parms_v4d', 'parms_v4d', 'parms_v4d'};
+versions = {'parms', 'parms_v4','parms_v4d', 'parms_v4d', 'parms_v4d', 'parms_v4d'};
 % versions = {'parms_v4','parms_v4', 'parms', 'parms_v6', 'parms_v6'};
 
 for p = 1:7
@@ -50,8 +50,9 @@ for p = 1:7
             for i = 1:length(th)-1
                 id = F0(:,ISIs == sISI, AMPs == sAMP,k) > th(i) & F0(:,ISIs == sISI, AMPs == sAMP,k) <= th(i+1);
                 
-                RMSDs(i,:,:,k, p, ii) = mean(RMSD(id,:,:,k,p),1,'omitnan');
                 F0s(i,:,:,k, ii) = mean(F0(id,ismember(ISIs, sISIs),ismember(AMPs, sAMPs),k), 1,'omitnan');
+
+                RMSDs(i,:,:,k, p, ii) = mean(RMSD(id,:,:,k,p),1,'omitnan');
             end
         end
     end
@@ -87,26 +88,39 @@ clc
 % close all
 figure(1)
 
-color = lines(7);
+acolors = lines(6);
+acolors(1,:) = brighten(acolors(1,:), .2);
+acolors(2,:) = brighten(acolors(2,:), -.7);
+acolors(3,:) = brighten(acolors(3,:), .5);
+acolors(4,:) = brighten(acolors(4,:), .5);
+acolors(5,:) = brighten(acolors(5,:), -.5);
+acolors(6,:) = brighten(acolors(6,:), .7);
 
-ms = [7 6 6 5 5];
-sym = {'s','h','v','o', '^'};
+color = [acolors(end,:); acolors];
+ms = [4 4 6 4 5 5];
+sym = {'<','>','h','v','o','s'};
 
-p = 1;
-for kk = 1:size(mcodes,1)
 
-    % effect of activation
+
+%% vertical lines
+yrange = [-.02 .17];
+
+kk = 1;
+for p = 1:3
     AMPid = 7;
-    ISIid = 3;
+    ISIid = 1;
     pCaid = 1:4;
 
-    subplot(3,3,1)
-     plot(mean(F0s(pCaid,ISIid,AMPid,:, kk), 4, 'omitnan'), mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1), kk),4, 'omitnan'), '--', 'color', color(kk,:)); hold on
+    subplot(3,3,1 + (p-1)*3);
+    plot(ones(1,2) * mean(F0s(pCaid(3),ISIid,AMPid,:, kk), 4, 'omitnan'), yrange, 'k--'); hold on
+
+    subplot(3,3,2 + (p-1)*3);
+    plot(ones(1,2) * 0.0383, yrange, 'k--'); hold on
+
+    subplot(3,3,3 + (p-1)*3);
+    plot(ones(1,2) * .001, yrange, 'k--'); hold on
 end
-
-
-%%
-
+         
 figure(1)
 for p = 1:3
     % figure;
@@ -115,26 +129,12 @@ for p = 1:3
         
        % effect of activation
         AMPid = 7;
-        ISIid = 3;
+        ISIid = 1;
         pCaid = 1:4;
         
         subplot(3,3,1 + (p-1)*3);
         plot(mean(F0s(pCaid,ISIid,AMPid,:, kk), 4, 'omitnan'), mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1), kk),4, 'omitnan'), '--', 'color', color(kk,:)); hold on
-         
-        if kk == 1
-%             if (p-1)*3 == 0
-%                 yrange = [-.02 .05];
-%             else
-                yrange = [-.02 .15];
-%             end
-            
-            plot(ones(1,2) * mean(F0s(pCaid(3),ISIid,AMPid,:, kk), 4, 'omitnan'), yrange, 'k--'); hold on
-            
-            for ii = pCaid
-                plot(ones(1,2) * mean(F0s(ii,ISIid,AMPid,:, kk), 4, 'omitnan'), yrange,'k:')
-            end
-        end
-        
+   
         pCaid = 2:3;
         errorbar(mean(F0s(pCaid,ISIid,AMPid,:, kk), 4, 'omitnan'), mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1), kk),4, 'omitnan'), ...
             std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'), std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'),...
@@ -152,9 +152,6 @@ for p = 1:3
         subplot(3,3,2 + (p-1)*3);
            plot(sAMPs(AMPid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),4, 'omitnan')), '--','color', color(kk,:)); hold on
          
-        if kk == 1
-            plot(ones(1,2) * 0.0383, yrange, 'k-.'); hold on
-        end
         
         AMPid = [2, 3, 4];
         errorbar(sAMPs(AMPid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),4, 'omitnan')), ...
@@ -172,10 +169,7 @@ for p = 1:3
         
         subplot(3,3,3 + (p-1)*3);
               plot(sISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), '--','color', color(kk,:)); hold on
-          
-        if kk == 1
-            plot(ones(1,2) * .1, yrange, 'k-.'); hold on
-        end
+         
         
         ISIid = [5,7];
         errorbar(sISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), ...
@@ -234,6 +228,8 @@ end
 for i = 1:9
     subplot(3,3,i)
     yline(0,'k-')
+    
+%     ylim([0 .2])
 end
 
 %%
@@ -298,10 +294,10 @@ ys = .19;
 % end
 
 %%
-text(.1, ys, 'HD', 'fontsize', 7, 'horizontalalignment', 'center')
-text(.8, ys, 'HD', 'fontsize', 7, 'horizontalalignment', 'center')
+% text(.1, ys, 'HD', 'fontsize', 7, 'horizontalalignment', 'center')
+% text(.8, ys, 'HD', 'fontsize', 7, 'horizontalalignment', 'center')
 
-plot(.8, ys, 'rx', 'linewidth', 2)
+% plot(.8, ys, 'rx', 'linewidth', 2)
 
 %%
 figure(1)

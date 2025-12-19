@@ -5,8 +5,8 @@ clear all; close all; clc
 
 % binary inputs
 save_results = 1;
-redo = 1;
-visualize = 1;
+redo = 0;
+visualize = 0;
 discretized_model = 0;
 
 % versions
@@ -14,11 +14,11 @@ output_version = '';
 parms_version = ''; 
 
 % model
-mcodes = [1 1 2];
+mcodes = [2 2 1];
 
 % fibers
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
-iFs = [2,3,5,6,7,8,11];
+iFs = [2,3,5,7,8,11];
 
 % conditions
 AMPs = [0    0.0012    0.0038    0.0121    0.0216    0.0288    0.0383    0.0532    0.0682];
@@ -27,7 +27,7 @@ pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
 Ca = 10.^(-pCas+6);
 
 % % 
-iFs = 5;
+% iFs = 6;
 % pCas = 6.6;
 % Ca = 10.^(-pCas+6);
 % AMPs = 0;
@@ -138,22 +138,34 @@ for iii = 1:size(mcodes,1)
                         
                         % run simulation
                         if contains(modelname, 'Hill')
-                            parms.Fse_func = @(dlse, parms) parms.kse0*(exp(parms.kse*dlse)-1);
                             
-                            % simulate
-                            sol = ode15i(@(t,y,yp) hill_type_implicit_v2(t,y,yp, parms), [0 max(tis)], X0, xp0, odeopt);
-                            
-                            % get SE length
-                            Lse = parms.Lts - interp1(sol.x, sol.y(1,:), tis);
-                            
-                            % get force
-                            if pCas(i) == 9
-                                Fact = 0;
+                            if strcmp(modelname, 'Hill_alternative')
+                                act = parms.actfunc(Cas, parms);
+
+                                Fce = parms.vF_func(parms.vts * parms.gamma, parms) .* act;
+                                Fpe = parms.kpe * log(1+exp((parms.Lts - parms.Lce0)));
+
+                                oFi = (Fce + Fpe) * parms.Fscale;
+
                             else
-                                Fact = parms.Fse_func(Lse, parms) * parms.Fscale;
-                            end
                             
-                            oFi = Fact + parms.Fpe_func(parms.Lts, parms);
+                                parms.Fse_func = @(dlse, parms) parms.kse0*(exp(parms.kse*dlse)-1);
+
+                                % simulate
+                                sol = ode15i(@(t,y,yp) hill_type_implicit_v2(t,y,yp, parms), [0 max(tis)], X0, xp0, odeopt);
+
+                                % get SE length
+                                Lse = parms.Lts - interp1(sol.x, sol.y(1,:), tis);
+
+                                % get force
+                                if pCas(i) == 9
+                                    Fact = 0;
+                                else
+                                    Fact = parms.Fse_func(Lse, parms) * parms.Fscale;
+                                end
+
+                                oFi = Fact + parms.Fpe_func(parms.Lts, parms);
+                            end
                             
                         else
                            
@@ -240,7 +252,7 @@ for iii = 1:size(mcodes,1)
 %                         plot(tall, Fall)
                         %%
                         % steady state
-                        xs = sol.y(:,end);
+%                         xs = sol.y(:,end);
                         
                         if save_results
                             cd(output_foldername);

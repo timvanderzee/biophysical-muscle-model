@@ -1,17 +1,19 @@
 clear all; close all; clc
 [username, githubfolder] = get_paths();
-savefig = 1;
+savefig = 0;
 
-figure(1)
-color = get(gca,'colororder');
-pcolors = flip(parula(7));
-acolors = lines(5);
-% acolors = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
+acolors = lines(6);
+acolors(1,:) = brighten(acolors(1,:), .2);
+acolors(2,:) = brighten(acolors(2,:), -.7);
+acolors(3,:) = brighten(acolors(3,:), .5);
+acolors(4,:) = brighten(acolors(4,:), .5);
+acolors(5,:) = brighten(acolors(5,:), -.5);
+acolors(6,:) = brighten(acolors(6,:), .7);
 
 discretized_model = 1;
 
 %% chose figure number: specify conditions
-fig = 6;
+fig = 4;
 iF = 6;
 
 pCas = [4.5 6.2 9;
@@ -31,7 +33,7 @@ if fig == 4 || fig == 5
     
     titles = {'Maximal activation', 'Submaximal activation'};
     
-    tmax =  0.4;
+    tmaxs =  [0.4; .14; 0.4];
     
 elseif fig == 6
     
@@ -43,25 +45,22 @@ elseif fig == 6
             .0383 .0383 .0383;
             .0383 .0383 .0383];
         
-        tmax = 0.6345;
+    tmaxs = [0.6345 0.32 0.6345];
     
     titles = {'Maximal activation', 'Submaximal activation'};
     
 end
-% 
-% ISIs = flip(ISIs,1);
-% AMPs = flip(AMPs,1);
-% pCas = flip(pCas,1);
+
 
 %% choose fiber: load data and parameters
 if fig == 4
-    mcodes = [2 1 1; 1 1 3];
-    colors = acolors;
+    mcodes = [2 2 1; 2 1 1; 1 1 3];
+    colors = [acolors(end,:); acolors];
     
     %     versions = {'_v3', '_v3', '_v4'};
     
     if discretized_model
-        versions = {'_v3', '_v4d', '_v4d'};
+        versions = {'', '_v3', '_v4d', '_v4d'};
     else
         versions = {'_v3', '_v3', '_v4'};
     end
@@ -120,7 +119,9 @@ for j = 1:size(ISIs,1)
 
     for i = 1:size(ISIs,2)
     
-        id = texp(:,i) < tmax;
+        id = texp(:,i) < tmaxs(j);
+        
+        tmax = max(tmaxs);
         
 %         subplot(5,1,1)
         plot(ax1, texp(id,i), Lexp(id,i)*100, 'color', brighten([.5 .5 .5], bf(j)), 'linewidth', 2, 'linestyle',ls{1,j}); 
@@ -184,9 +185,9 @@ for j = 1:size(ISIs,1)
         
         % add vertical lines
         if ISI > .01
-            phases = {'Isometric','Pre-stretch','Shortening','Recovery','Test stretch','Isometric'};
+            phases = {'Isometric','Pre-stretch','Shortening','Recovery','Test stretch','Isom.'};
         else
-            phases = {'Isometric','Pre-stretch','Shortening','','Test stretch','Isometric'};
+            phases = {'Isometric','Pre-stretch','Shortening','','Test stretch','Isom.'};
         end
         
 %         figure(1)
@@ -215,7 +216,7 @@ end
 % subplot(5,1,[2 5])
 
 if fig == 4
-    legend('Data','Hill','2-state','location','bestoutside', 'Fontsize', 8)
+    legend('Data','Hill (no SE)','Hill (with SE)', '2-state','location','bestoutside', 'Fontsize', 8)
 elseif fig == 5
     legend('Data','2-state','2-state coop','3-state coop','4-state coop','location','bestoutside', 'Fontsize', 8)
 else
