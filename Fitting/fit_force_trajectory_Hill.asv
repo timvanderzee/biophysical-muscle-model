@@ -147,9 +147,6 @@ for iF = iFs
     n       = opti.variable(1);
     kpe     = opti.variable(1);
     Lce0    = opti.variable(1);
-
-%     kse     = opti.variable(1);
-%     Lce0    = opti.variable(1);
     
     % initial values
     opti.set_initial(kappa, parms.kappa);
@@ -158,6 +155,8 @@ for iF = iFs
     opti.set_initial(n, parms.n);
     opti.set_initial(kpe, parms.kpe);
     opti.set_initial(Lce0, parms.Lce0);
+    
+    
     
     % bounds
     opti.subject_to(kappa > 0);
