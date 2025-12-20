@@ -6,15 +6,7 @@ fig = 6;
 savefig = 1;
 iF = 6;
 
-acolors = lines(6);
-acolors(1,:) = brighten(acolors(1,:), .2);
-acolors(2,:) = brighten(acolors(2,:), -.7);
-acolors(3,:) = brighten(acolors(3,:), .5);
-acolors(4,:) = brighten(acolors(4,:), .5);
-acolors(5,:) = brighten(acolors(5,:), -.5);
-acolors(6,:) = brighten(acolors(6,:), .7);
-acolors = [acolors(6,:); acolors(1:end,:)];
-
+acolors = get_colors;
 discretized_model = 1;
 
 % all model codes (corresponding to colors)

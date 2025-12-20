@@ -10,21 +10,16 @@ iFs = [2,3,5,6,7,8,11];
 % iFs = [6,7,8,11];
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 mcodes = [1 1 1; 1 1 2; 1 1 3; 1 2 1];
-mcodes = [2 2 1];
+mcodes = [1 1 2];
 
 visualize = 0;
 
-version = 'parms';
+version = 'parms_v4d';
 
 %% calc RMSD
 AMPs = [0 12 38 121 216 288 383 682]/10000;
 ISIs = [1 10 100 316 1000 3160 10000]/1000;
 pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
-
-% iFs = 5;
-% pCas = 6.1;
-% AMPs = .0383;
-% ISIs = .1;
 Ca = 10.^(-pCas+6);
 
 for iii = 1:size(mcodes,1)
@@ -64,7 +59,7 @@ for iii = 1:size(mcodes,1)
                             
                             mD = AMP == data.AMPs/10000;
                             nD = ISI == data.ISIs/1000;
-                            iD = pCas(i) == data.pCas;
+                            iD = round(pCas(i),1) == round(data.pCas,1);
                             
                             texp = data.texp(:,iD,nD,mD) - .005;
                             Fexp = data.Fexp(:,iD,nD,mD);
@@ -82,14 +77,8 @@ for iii = 1:size(mcodes,1)
                                     id = texp < tids(end) & texp >= tids(1);
                                 end
                                 
-                                                        
-                                
-                                
                                 if sum(id) > 0
                                     % compute RMSD
-                                    %                 id = tm < .16 & tm > (-ISI - 2 * dTc - .1);
-                   
-                                    
                                     RMSDs = sqrt((oFii(id) - Fexp(id)).^2) * 100;
                                     RMSD(i,n,m,iF,ii) = sqrt(mean((oFii(id) - Fexp(id)).^2, 'omitnan'));
                                     
@@ -103,6 +92,7 @@ for iii = 1:size(mcodes,1)
                                     
                                 else
                                     RMSD(i,n,m,iF,ii) = nan;
+%                                     disp('Does not exist')
                                 end
         
                                 
@@ -125,6 +115,8 @@ for iii = 1:size(mcodes,1)
                             disp(['Unable to read: ', filename])
                         end
                         
+                    else
+                        disp('Does not exist')
                     end
                     
                 end
