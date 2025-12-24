@@ -2,9 +2,9 @@ clear all; close all; clc
 [username, githubfolder] = get_paths();
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
-fig = 6;
+fig     = 6O;
 savefig = 1;
-iF = 6;
+iF      = 6;
 
 acolors = get_colors;
 discretized_model = 1;
@@ -18,7 +18,7 @@ else
     all_versions = {'_v3', '_v3', '_v4','','_v6', '_v6'};
 end
 
-modelnames = {'Hill model (no SE)', 'Hill model (with SE)', '2-state XB model', '2-state XB coop model', '3-state XB coop model', '4-state XB coop model'};
+modelnames = {'Hill model (no SE)', 'Hill model (with SE)', '2-state XB model', '2-state XB coop', '3-state XB coop', '4-state XB coop'};
 phases = {'Isom.','Stretch','Shortening','','Stretch','Isom.'};
 
 %% chose figure number: specify conditions
@@ -91,8 +91,6 @@ for j = 1:size(ISIs,1)
 end
 
 %% make axes
-
-
 figure(1)
 set(gcf,'units','centimeters','position',[10 2 20 15])
 
@@ -119,6 +117,10 @@ set(ax(2), 'Ylim', [0 200])
 for kk = 1:2
     for k = 1:3
         set(ax(k+2+(kk-1)*3), 'xlim', zxlim(kk,:), 'ylim', zylim(kk,:))
+        
+        if (k+2+(kk-1)*3) < 6
+            ylabel(ax(k+2+(kk-1)*3), 'Force (%F_0)', 'fontsize', 8)
+        end
     end
 end
 
@@ -132,13 +134,15 @@ fac = 14;
 set(ax(1), 'units','centimeters', 'Position', [2 12.5 tmax*fac 1.5], 'xticklabels', {})
 set(ax(2), 'units','centimeters', 'Position', [2 2 tmax*fac 10])
 
-set(ax(3), 'units','centimeters', 'Position', [tmax*fac + 3 9 2 3], 'xticklabels', {});
-set(ax(4), 'units','centimeters', 'Position', [tmax*fac + 3 5.5 2 3], 'xticklabels', {});
-set(ax(5), 'units','centimeters', 'Position', [tmax*fac + 3 2 2 3]);
+% left-most insets
+set(ax(3), 'units','centimeters', 'Position', [tmax*fac + 3 9 1.5 3], 'xticklabels', {});
+set(ax(4), 'units','centimeters', 'Position', [tmax*fac + 3 5.5 1.5 3], 'xticklabels', {});
+set(ax(5), 'units','centimeters', 'Position', [tmax*fac + 3 2 1.5 3]);
 
-set(ax(6), 'units','centimeters', 'Position', [tmax*fac + 6 9 2 3], 'xticklabels', {});
-set(ax(7), 'units','centimeters', 'Position', [tmax*fac + 6 5.5 2 3], 'xticklabels', {});
-set(ax(8), 'units','centimeters', 'Position', [tmax*fac + 6 2 2 3]);
+% right-most insets
+set(ax(6), 'units','centimeters', 'Position', [tmax*fac + 5 9 1.5 3], 'xticklabels', {});
+set(ax(7), 'units','centimeters', 'Position', [tmax*fac + 5 5.5 1.5 3], 'xticklabels', {});
+set(ax(8), 'units','centimeters', 'Position', [tmax*fac + 5 2 1.5 3]);
 
 for kk = 1:2
     for k = 1:3
@@ -234,7 +238,7 @@ end
 
 % legend
 h = legend(ax(2), 'labels', modelnames(mid),'location','bestoutside', 'Fontsize', 8);
-set(h, 'units','centimeters', 'Position', [tmax*fac + 3 13 5 1])
+set(h, 'units','centimeters', 'Position', [tmax*fac + 3 13 3.5 1])
 
 %% optionally export to PNG
 cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])

@@ -1,5 +1,5 @@
 clear all; close all; clc
-savefig = 0;
+savefig = 1;
 
 [username, githubfolder] = get_paths();
 th = [0 .07 .7 1.5];
@@ -44,11 +44,11 @@ versions = {'parms', 'parms_v3', 'parms_v4d'};
 % versions = {'parms_v3', 'parms_v4', 'parms_v6', 'parms_v4'};
 
 % modelnames =  {'biophysical_full_alternative'};
-color = lines(6);
-color = [color(end,:); color];
+acolors = lines(6);
+acolors = [acolors(end,:); acolors];
 
 id = [1, 2, 6];
-color = color(id,:);
+color = acolors(id,:);
 
 for ii = 1:length(modelnames)
     modelname = modelnames{ii};
@@ -156,7 +156,7 @@ fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18De
 iFsd = 6;
 
 
-mcodes = [2 2 1; 2 1 1; 1 2 1];
+mcodes = [2 2 1; 2 1 1; 1 1 1];
 versions = {'parms', 'parms_v3', 'parms_v4d', 'parms_v4d'};
 
 pCas = [9 6.1 4.5];
@@ -175,33 +175,41 @@ AMPs = .0383;
 
 for k = 1:4
     ISIs = aISIs(k);
+    set(ax(k), 'fontsize', 6);
     
+    if k == 1 || k == 4
+        pCas =  [9 6.1 4.5];
+        mcodes = [2 2 1; 2 1 1; 1 1 1];
+        versions = {'parms', 'parms_v3', 'parms_v4d', 'parms_v4d'};
+        ls = {'--',':','-'};
+        id = [1, 2, 6];
+        color = acolors(id,:);
 
-
-        set(ax(k), 'fontsize', 6);
-
-        if k == 2 || k == 4
-            pCas =  [9 6.1 4.5];
-        else
-            pCas = 6.1;
-        end
-        
-            for i = 1:length(pCas)
+    else
+        pCas = 6.1;
+        mcodes = [2 1 1; 1 1 1];
+        versions = {'parms_v3', 'parms_v4d', 'parms_v4d'};
+        ls = {':','-'};
+        id = [2, 6];
+        color = acolors(id,:);
+    end
+    
+    for i = 1:length(pCas)
         pCa = pCas(i);
         
         cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
-%         load([fibers{iF},'_cor_new.mat'],'data')
+        %         load([fibers{iF},'_cor_new.mat'],'data')
         
-        % iF = 11;
+
         for iF = iFsd
             load([fibers{iF},'_cor_new.mat'],'data');
             [texp, Lexp, Fexp, Tsrel] = get_data(data, ISIs, AMPs, pCa);
             
-            plot(ax(k), texp, Fexp + dy * i,'k-', 'linewidth', 2); 
+            plot(ax(k), texp - .003, Fexp + dy * i,'k-', 'linewidth', 2);
             hold(ax(k), 'on')
         end
         
-
+        
         for j = flip(1:size(mcodes,1))
             mcode = mcodes(j,:);
             
@@ -212,7 +220,7 @@ for k = 1:4
             AMP = AMPs;
             
             %
-%             clc
+            %             clc
             tiso = dTt*3+dTc*2+ISI + 2;
             
             
@@ -228,47 +236,49 @@ for k = 1:4
             xlim(ax(k), [-.2-ISIs .15])
         end
         box(ax(k), 'off')
-%         ylim([0 3])
-
+        %         ylim([0 3])
+        
     end
 end
 
 %% make nice
 
 figure(1)
-for k = 1:4
-    set(ax(k), 'ycolor', [1 1 1])
-end
+
+set(ax(3), 'ycolor', [0 0 0])
+
 
 
 for k = 1:4
     
-ax(k).YLabel.String = 'Force (-)';
-ax(k).YLabel.Color = [0 0 0];
-ax(k).YLabel.FontSize = 8;
-
-ax(k).XLabel.String = 'Time (s)';
-ax(k).XLabel.Color = [0 0 0];
-ax(k).XLabel.FontSize = 8;
-
+    ax(k).YLabel.String = 'Force (-)';
+    ax(k).YLabel.Color = [0 0 0];
+    ax(k).YLabel.FontSize = 8;
+    
+    ax(k).XLabel.String = 'Time (s)';
+    ax(k).XLabel.Color = [0 0 0];
+    ax(k).XLabel.FontSize = 8;
+    
 end
 
-title(ax(1), 'Before shortening', 'fontsize', 8)
-title(ax(2), 'Trial with short recovery', 'fontsize', 8)
+title(ax(2), 'Before shortening', 'fontsize', 8)
+title(ax(1), 'Trial with short recovery', 'fontsize', 8)
 title(ax(3), 'After shortening', 'fontsize', 8)
 title(ax(4), 'Trial with long recovery', 'fontsize', 8)
 
 %% zoom in
-P2 = [.06 .11 .5 1];
-P1 = [-.11 -.06 .5 1];
+P1 = [-.175 -.125 .5 1];
+P2 = [.05 .1 .5 1];
 
 figure(1)
+axis(ax(1), [-.2 .12 0 2])
 axis(ax(3), P2)
-axis(ax(1), P1)
+axis(ax(2), P1)
 
 h1 = rectangle(ax(1), 'position', [P1(1) P1(3) P1(2)-P1(1) P1(4)-P1(3)]);
+h3 = rectangle(ax(1), 'position', [P2(1) P2(3) P2(2)-P2(1) P2(4)-P2(3)]);
+
 h2 = rectangle(ax(2), 'position', [P1(1) P1(3) P1(2)-P1(1) P1(4)-P1(3)]);
-h3 = rectangle(ax(2), 'position', [P2(1) P2(3) P2(2)-P2(1) P2(4)-P2(3)]);
 h4 = rectangle(ax(3), 'position', [P2(1) P2(3) P2(2)-P2(1) P2(4)-P2(3)]);
 
 yline(ax(1), .87, 'k-.')
@@ -279,7 +289,7 @@ yline(ax(4), .87, 'k-.')
 %% size
 figure(1)
 set(gcf,'units','centimeters','position',[10 2 13 20])
-    
+
 %%
 if savefig
     cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
