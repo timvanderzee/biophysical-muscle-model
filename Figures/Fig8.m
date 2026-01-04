@@ -177,7 +177,7 @@ figure(1)
 % make nice
 titles = {'Effect of activation on SRS', 'Effect of amplitude on SRS','Effect of recovery on SRS'};
 xlabels = {'Activation (F_0)', 'Amplitude (L_0)', 'Recovery time (s)'};
-ylabels = 'Relative short-range stiffness (SRS)';
+ylabels = 'Relative short-range stiffness (-)';
 
 for j = 1:3
     set(ax(j),'Fontsize', 6,  'box',  'off')
@@ -275,6 +275,7 @@ for kk = 1:length(filenames)
 
         % average over conditions        
         oRMSD(kk,j) = sqrt(mean((y(:,eiid,eaid) - SRS_model(sACTis,miid,maid)).^2,'all','omitnan'));
+        sRMSD(kk,j) = sqrt(std((y(:,eiid,eaid) - SRS_model(sACTis,miid,maid)).^2,1,'all','omitnan'));
     end
     
 end
@@ -328,7 +329,7 @@ for i = 1:3
         'Xtick', 1:10, 'XTickLabels', {},'fontsize', 6);
     
     title(ax(i+3), 'Model error', 'fontsize', 6)
-    ylabel(ax(i+3), 'RMSD', 'fontsize', 6)
+    ylabel(ax(i+3), 'SRS RMSD', 'fontsize', 6)
 end
 
 for j = 1:3
@@ -348,7 +349,7 @@ end
 
 %
 figure(1)
-ylabel(ax(7), 'SRS error (RMSD)', 'fontsize', 8)
+ylabel(ax(7), 'SRS RMSD (-)', 'fontsize', 8)
 
 titles = {'Model error: high HD trials', 'Model error: low HD trials', 'Model error: all trials'};
 for j = 1:3

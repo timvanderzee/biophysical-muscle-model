@@ -2,8 +2,8 @@ clear all; close all; clc
 [username, githubfolder] = get_paths();
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
-fig     = 6O;
-savefig = 1;
+fig     = 6;
+savefig = 0;
 iF      = 6;
 
 acolors = get_colors;
@@ -18,25 +18,25 @@ else
     all_versions = {'_v3', '_v3', '_v4','','_v6', '_v6'};
 end
 
-modelnames = {'Hill model (no SE)', 'Hill model (with SE)', '2-state XB model', '2-state XB coop', '3-state XB coop', '4-state XB coop'};
+modelnames = {'Hill (no SE)', 'Hill (with SE)', '2-state XB', '2-state XB coop', '3-state XB coop', '4-state XB coop'};
 phases = {'Isom.','Stretch','Shortening','','Stretch','Isom.'};
 
 %% chose figure number: specify conditions
-pCas = [4.5 6.2 9; 4.5 6.2 9; 4.5 6.2 9];
+pCas = [4.5 6.1 9; 4.5 6.1 9; 4.5 6.1 9];
 
 % chosen ISIs, AMPs and pCas
 if fig == 4 || fig == 5
     ISIs = [.1 .1 .1; .001 .001 .001; .1 .1 .1;]; 
     AMPs = [.0383 .0383 .0383; 0 0 0; .0383 .0383 .0383];
     tmaxs =  [0.4; .14; 0.4];
-    zylim = [30 60; 15 45];
+    zylim = [45 75; 30 60];
     jid = 1;
     
 elseif fig == 6
     ISIs = [ .001 .001 .001; .316 .316 .316; .001 .001 .001];
     AMPs = [.0383 .0383 .0383; .0383 .0383 .0383; .0383 .0383 .0383]; 
     tmaxs = [0.32 0.6345 0.32];
-    zylim = [30 60; 5 35];
+    zylim = [45 75; 15 45];
     jid = 1;
 end
 
@@ -58,7 +58,7 @@ elseif fig == 5
     mid = [3 4 5];
 
 elseif fig == 6
-    mid = [4 5 6];
+    mid = [2 5 6];
 end
 
 colors      = acolors(mid,:);
@@ -124,9 +124,6 @@ for kk = 1:2
     end
 end
 
-stretches = {'Cond.', 'Test'};
-title(ax(3), stretches{1}, 'fontsize', 8)
-title(ax(6), stretches{2}, 'fontsize', 8)
 
 % width should depend on time range
 fac = 14;
@@ -135,15 +132,24 @@ set(ax(1), 'units','centimeters', 'Position', [2 12.5 tmax*fac 1.5], 'xticklabel
 set(ax(2), 'units','centimeters', 'Position', [2 2 tmax*fac 10])
 
 % left-most insets
-set(ax(3), 'units','centimeters', 'Position', [tmax*fac + 3 9 1.5 3], 'xticklabels', {});
-set(ax(4), 'units','centimeters', 'Position', [tmax*fac + 3 5.5 1.5 3], 'xticklabels', {});
-set(ax(5), 'units','centimeters', 'Position', [tmax*fac + 3 2 1.5 3]);
+set(ax(3), 'units','centimeters', 'Position', [4 + tmax*fac 9 1.5 2.7], 'xticklabels', {});
+set(ax(4), 'units','centimeters', 'Position', [4 + tmax*fac 5.5 1.5 2.7], 'xticklabels', {});
+set(ax(5), 'units','centimeters', 'Position', [4 + tmax*fac 2 1.5 2.7]);
 
 % right-most insets
-set(ax(6), 'units','centimeters', 'Position', [tmax*fac + 5 9 1.5 3], 'xticklabels', {});
-set(ax(7), 'units','centimeters', 'Position', [tmax*fac + 5 5.5 1.5 3], 'xticklabels', {});
-set(ax(8), 'units','centimeters', 'Position', [tmax*fac + 5 2 1.5 3]);
+set(ax(6), 'units','centimeters', 'Position', [6 + tmax*fac 9 1.5 2.7], 'xticklabels', {});
+set(ax(7), 'units','centimeters', 'Position', [6 + tmax*fac 5.5 1.5 2.7], 'xticklabels', {});
+set(ax(8), 'units','centimeters', 'Position', [6 + tmax*fac 2 1.5 2.7]);
 
+text(ax(1), -.13, 5.5, 'A', 'fontsize', 16) 
+
+if fig < 6
+    text(ax(1), .5, 5.5, 'B', 'fontsize', 16) 
+else
+    text(ax(1), .7, 5.5, 'B', 'fontsize', 16) 
+end
+
+stretches = {'Cond.', 'Test'};
 for kk = 1:2
     for k = 1:3
         rectangle(ax(k+2+(kk-1)*3), 'Position', [zxlim(kk,1) zylim(kk,1) diff(zxlim(kk,:)) diff(zylim(kk,:))])
@@ -152,6 +158,14 @@ for kk = 1:2
     text(ax(2), mean(zxlim(kk,:)), zylim(kk,2)+5, stretches{kk}, 'fontsize', 6, 'HorizontalAlignment', 'center', 'fontweight', 'bold');
     rectangle(ax(2), 'Position', [zxlim(kk,1) zylim(kk,1) diff(zxlim(kk,:)) diff(zylim(kk,:))])
 end
+
+
+
+for i = 1:3
+    title(ax(i+2), stretches{1}, 'fontsize', 8)
+    title(ax(i+5), stretches{2}, 'fontsize', 8)
+end
+
 
 %% plot model
 % brigthen factor
@@ -238,7 +252,7 @@ end
 
 % legend
 h = legend(ax(2), 'labels', modelnames(mid),'location','bestoutside', 'Fontsize', 8);
-set(h, 'units','centimeters', 'Position', [tmax*fac + 3 13 3.5 1])
+set(h, 'units','centimeters', 'Position', [4 + tmax*fac 12.5 3.5 1.5])
 
 %% optionally export to PNG
 cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])

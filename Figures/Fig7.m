@@ -225,7 +225,7 @@ for p = 1:3
 
     for i = 1:size(dRMSDc,6)
         y = dRMSDc(:,:,:,:,1,i);
-        [h(p,i),pval(p,i)] = ttest(y(:));
+        [h(p,i),pval(p,i)] = ttest(y(:), zeros(size(y(:))), 'alpha' , .05/15);
     end
 end
 
@@ -267,67 +267,31 @@ for j = 1:12
         set(gca,'Yticklabel', [])
         set(gca, 'Ycolor', 'none')
     else
-        ylabel('RMSD (F_{0})',  'Fontsize', 8)
+        ylabel('Force RMSD (F_{0})',  'Fontsize', 8)
 %         xlim([0 1.02])
     end
     
 end
 
 %% titles
-subtitles = {'Overall', 'Pre-stretch', 'Test stretch'};
-
-figure(1)
-subplot(341)
-title('Effect of activation', 'fontsize', 8)
-subtitle(subtitles{1}, 'fontsize', 8)
-
-subplot(342)
-subtitle(subtitles{1}, 'fontsize', 8)
-title('Effect of amplitude', 'fontsize', 8)
-
-subplot(343)
-subtitle(subtitles{1}, 'fontsize', 8)
-title('Effect of recovery', 'fontsize', 8)
-
-subplot(344)
-subtitle(subtitles{1}, 'fontsize', 8)
-title('Averaged over all trials', 'fontsize', 8)
-
-subplot(345)
-% subtitle('Effect of activation', 'fontsize', 8)
-subtitle(subtitles{2}, 'fontsize', 8)
-
-subplot(346)
-% subtitle('Effect of amplitude', 'fontsize', 8)
-subtitle(subtitles{2}, 'fontsize', 8)
-
-subplot(347)
-% subtitle('Effect of recovery', 'fontsize', 8)
-subtitle(subtitles{2}, 'fontsize', 8)
-
-subplot(348)
-% subtitle('Effect of recovery', 'fontsize', 8)
-subtitle(subtitles{2}, 'fontsize', 8)
-
-subplot(3,4,9)
-% subtitle('Effect of activation', 'fontsize', 8)
-subtitle(subtitles{3}, 'fontsize', 8)
-
-subplot(3,4,10)
-% subtitle('Effect of amplitude', 'fontsize', 8)
-subtitle(subtitles{3}, 'fontsize', 8)
-
-subplot(3,4,11)
-% subtitle('Effect of recovery', 'fontsize', 8)
-subtitle(subtitles{3}, 'fontsize', 8)
-
-subplot(3,4,12)
-% subtitle('Effect of recovery', 'fontsize', 8)
-subtitle(subtitles{3}, 'fontsize', 8)
+subtitles = {'Entire protocol', 'Conditioning stretch', 'Test stretch'};
+titles = {'Effect of activation', 'Effect of amplitude', 'Effect of recovery', 'All trials'};
 
 
+for j = 1:3
+    for i = 1:4
+        subplot(3,4,i + (j-1)*4)
+        subtitle(titles{i}, 'fontsize', 8)
+        
+        if i == 1
+            title(subtitles{j}, 'fontsize', 8)
+        else
+            title('')
+        end
+    end
+end
 
-%%
+
 
 
 

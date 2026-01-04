@@ -1,5 +1,5 @@
 clear all; close all; clc
-savefig = 1;
+savefig = 0;
 
 [username, githubfolder] = get_paths();
 th = [0 .07 .7 1.5];
@@ -157,9 +157,9 @@ iFsd = 6;
 
 
 mcodes = [2 2 1; 2 1 1; 1 1 1];
-versions = {'parms', 'parms_v3', 'parms_v4d', 'parms_v4d'};
+versions = {'parms', 'parms_v3', 'parms_v4d'};
 
-pCas = [9 6.1 4.5];
+pCas = [9 6.2 4.5];
 
 dy = 0;
 
@@ -170,29 +170,13 @@ ax(2) = subplot(3,3,5);
 ax(3) = subplot(3,3,6);
 ax(4) = subplot(3,3,[7 9]);
 
-aISIs = [.001 .001 .001 1];
+aISIs = [.1 .1 .1 1];
 AMPs = .0383;
 
 for k = 1:4
     ISIs = aISIs(k);
     set(ax(k), 'fontsize', 6);
-    
-    if k == 1 || k == 4
-        pCas =  [9 6.1 4.5];
-        mcodes = [2 2 1; 2 1 1; 1 1 1];
-        versions = {'parms', 'parms_v3', 'parms_v4d', 'parms_v4d'};
-        ls = {'--',':','-'};
-        id = [1, 2, 6];
-        color = acolors(id,:);
 
-    else
-        pCas = 6.1;
-        mcodes = [2 1 1; 1 1 1];
-        versions = {'parms_v3', 'parms_v4d', 'parms_v4d'};
-        ls = {':','-'};
-        id = [2, 6];
-        color = acolors(id,:);
-    end
     
     for i = 1:length(pCas)
         pCa = pCas(i);
@@ -210,7 +194,7 @@ for k = 1:4
         end
         
         
-        for j = flip(1:size(mcodes,1))
+        for j = 1:size(mcodes,1)
             mcode = mcodes(j,:);
             
             [output_mainfolder, modelfilename, ~, ~] = get_folder_and_model(mcode);
@@ -223,17 +207,19 @@ for k = 1:4
             %             clc
             tiso = dTt*3+dTc*2+ISI + 2;
             
-            
-            filename = [output_mainfolder{2}, '\', versions{j},'\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCa*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
-            disp(filename)
-            
-            
-            load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts')
-            
-            t = tis + 3*dTt - tiso;
-            plot(ax(k), t, oFi + dy * i, 'linewidth', 2, 'color', color(j,:), 'linestyle', ls{j})
-            
-            xlim(ax(k), [-.2-ISIs .15])
+             for iF = iFsd
+                filename = [output_mainfolder{2}, '\', versions{j},'\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCa*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
+                disp(filename)
+
+
+                load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts')
+
+                t = tis + 3*dTt - tiso;
+                plot(ax(k), t, oFi + dy * i, 'linewidth', 2, 'color', color(j,:), 'linestyle', ls{j})
+
+                xlim(ax(k), [-.2-ISIs .15])
+             end
+             
         end
         box(ax(k), 'off')
         %         ylim([0 3])

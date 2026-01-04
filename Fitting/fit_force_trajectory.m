@@ -3,8 +3,8 @@ clear all; close all; clc
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
 % model to be fitted
-mcode = [1 1 2];
-old_version = '';
+mcode = [1 1 1];
+old_version = '_v4';
 new_version = '';
 
 % settings
@@ -13,7 +13,7 @@ N = 500;
 save_results = 0;
 visualize = 1;
     
-iFs = 5 %; [2,3,5,6,7,8,11];
+iFs = 6 %; [2,3,5,6,7,8,11];
 n = [3 1]; % ISI number
 m = [7 1]; % AMP number
 % n = [1]; % ISI number
