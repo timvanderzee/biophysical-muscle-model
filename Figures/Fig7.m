@@ -212,8 +212,12 @@ for j = 1:12
 end
 
 figure(1)
-set(gcf,'units','centimeters','position',[10 5 15 19])
+set(gcf,'units','centimeters','position',[10 5 18 12])
 
+%% get mean RMSD
+for kk = 1:6
+    sigma(kk) = mean(RMSDc(:,:,:,:,ps(p,3),kk), 'all', 'omitnan');
+end
 %% quick stats
 pval = nan(3, 5);
 h = nan(3, 5);

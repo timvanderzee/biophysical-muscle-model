@@ -2,7 +2,7 @@ clear all; close all; clc
 savefig = 0;
 
 [username, githubfolder] = get_paths();
-th = [0 .07 .7 1.5];
+th = [0 .3 .7 1.5];
 tid = [3 1 7];
 
 %% Data
@@ -38,8 +38,8 @@ aeAMPs = repmat(eAMPs, 7, 1);
 aeISIs = repmat(eISIs(:), 1, 8);
 
 % model
-modelnames = {'Hill_alternative', 'Hill_regular', 'biophysical_full_alternative'};
-titles = {'Hill model (no SE)', 'Hill model (with SE)', '4-state XB coop model'};
+modelnames = {'Hill_alternative', 'Hill_regular', 'biophysical_full_regular'};
+titles = {'Hill-type model (no SE)', 'Hill-type model (with SE)', '3-state XB coop model'};
 versions = {'parms', 'parms_v3', 'parms_v4d'};
 % versions = {'parms_v3', 'parms_v4', 'parms_v6', 'parms_v4'};
 
@@ -47,7 +47,7 @@ versions = {'parms', 'parms_v3', 'parms_v4d'};
 acolors = lines(6);
 acolors = [acolors(end,:); acolors];
 
-id = [1, 2, 6];
+id = [1, 2, 5];
 color = acolors(id,:);
 
 for ii = 1:length(modelnames)
@@ -85,32 +85,32 @@ for ii = 1:length(modelnames)
     
     fig = figure(1)
     subplot(3,3,ii)
-    surf(amAMPs, amISIs, squeeze(mean(SRSrel_m(k,:,:,iFsm), 4, 'omitnan')),'edgecolor',[.8 .8 .8],'linestyle','-','Facealpha',.7,'linewidth',.5); hold on
-    surf(aeAMPs,aeISIs, 0*ones(size(squeeze(aeISIs))),'facecolor', [1 1 1],'edgecolor', 'none'); hold on
-    surf(aeAMPs(1:4,7:8),aeISIs(1:4,7:8), 0*ones(size(squeeze(aeISIs(1:4,7:8)))),'facecolor', [.9 .9 .9],'edgecolor', 'none'); hold on
+    surf(amAMPs*100, amISIs, squeeze(mean(SRSrel_m(k,:,:,iFsm), 4, 'omitnan')),'edgecolor',[.8 .8 .8],'linestyle','-','Facealpha',.7,'linewidth',.5); hold on
+    surf(aeAMPs*100,aeISIs, 0*ones(size(squeeze(aeISIs))),'facecolor', [1 1 1],'edgecolor', 'none'); hold on
+    surf(aeAMPs(1:4,7:8)*100,aeISIs(1:4,7:8), 0*ones(size(squeeze(aeISIs(1:4,7:8)))),'facecolor', [.9 .9 .9],'edgecolor', 'none'); hold on
     
     colors = color(ii,:) .* repmat(linspace(0,1,100)', 1, 3);
     set(gca, 'colormap', colors)
     
-    plot3(aeAMPs(:,[5:6, 8]), aeISIs(:,[5:6, 8]), 0*ones(size(aeAMPs(:,[5:6, 8]))), 'color', [.8 .8 .8],'linewidth',2)
-    plot3(aeAMPs([2 6],:)', aeISIs([2 6],:)', 0*ones(size(aeAMPs([2 6],:)))', 'color', [.8 .8 .8],'linewidth',2)
+    plot3(aeAMPs(:,[5:6, 8])*100, aeISIs(:,[5:6, 8]), 0*ones(size(aeAMPs(:,[5:6, 8]))), 'color', [.8 .8 .8],'linewidth',2)
+    plot3(aeAMPs([2 6],:)'*100, aeISIs([2 6],:)', 0*ones(size(aeAMPs([2 6],:)))', 'color', [.8 .8 .8],'linewidth',2)
     
-    plot3(aeAMPs(:,[2:4, 7]), aeISIs(:,[2:4, 7]), 0*ones(size(aeAMPs(:,[2:4, 7]))), 'color', [.6 .6 .6],'linewidth',2)
-    plot3(aeAMPs([1 3:5 7],:)', aeISIs([1 3:5 7],:)', 0*ones(size(aeAMPs([1 3:5 7],:)))', 'color', [.6 .6 .6],'linewidth',2)
+    plot3(aeAMPs(:,[2:4, 7])*100, aeISIs(:,[2:4, 7]), 0*ones(size(aeAMPs(:,[2:4, 7]))), 'color', [.6 .6 .6],'linewidth',2)
+    plot3(aeAMPs([1 3:5 7],:)'*100, aeISIs([1 3:5 7],:)', 0*ones(size(aeAMPs([1 3:5 7],:)))', 'color', [.6 .6 .6],'linewidth',2)
     
-    plot3([aeAMPs(3,7) aeAMPs(3,7)], [aeISIs(3,7) aeISIs(3,7)], [0 squeeze(mean(SRSrel(k,3,7,iFsd), 4, 'omitnan'))], '-', 'linewidth',1.5, 'color', [.6 .6 .6])
-    plot3([aeAMPs(1,1) aeAMPs(1,1)], [aeISIs(1,1) aeISIs(1,1)], [0 squeeze(mean(SRSrel(k,1,1,iFsd), 4, 'omitnan'))], '-', 'linewidth',1.5, 'color', [.6 .6 .6])
+    plot3([aeAMPs(3,7) aeAMPs(3,7)]*100, [aeISIs(3,7) aeISIs(3,7)], [0 squeeze(mean(SRSrel(k,3,7,iFsd), 4, 'omitnan'))], '-', 'linewidth',1.5, 'color', [.6 .6 .6])
+    plot3([aeAMPs(1,1) aeAMPs(1,1)]*100, [aeISIs(1,1) aeISIs(1,1)], [0 squeeze(mean(SRSrel(k,1,1,iFsd), 4, 'omitnan'))], '-', 'linewidth',1.5, 'color', [.6 .6 .6])
     
-    set(gca,'YScale','log', 'Clim', [.6 1.1], 'xtick', 0:.02:.1, 'ytick', [1e-3 1e-1 1e1]);
+    set(gca,'YScale','log', 'Clim', [.6 1.1], 'xtick', (0:.02:.1)*100, 'ytick', [1e-3 1e-1 1e1]);
     zlim([0 1.1])
-    axis([0 .07 8e-4 1.5e1 0 1.1])
+    axis([0 .07*100 8e-4 1.5e1 0 1.1])
     
-    plot3(aeAMPs, aeISIs, squeeze(mean(SRSrel(k,:,:,iFsd), 4, 'omitnan')),'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5],'markersize',3); hold on
+    plot3(aeAMPs*100, aeISIs, squeeze(mean(SRSrel(k,:,:,iFsd), 4, 'omitnan')),'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5],'markersize',3); hold on
     
-    plot3(amAMPs(1,:), amISIs(1,:), squeeze(mean(SRSrel_m(k,1,:,iFsm), 4, 'omitnan')),'-','linewidth',1.5, 'color', color(ii,:))
-    plot3(amAMPs(:,1), amISIs(:,1), squeeze(mean(SRSrel_m(k,:,1,iFsm), 4, 'omitnan')),'-','linewidth',1.5, 'color', color(ii,:))
-    plot3(amAMPs(end,:), amISIs(end,:), squeeze(mean(SRSrel_m(k,end,:,iFsm), 4, 'omitnan')),'-','linewidth',1.5, 'color', color(ii,:))
-    plot3(amAMPs(:,end), amISIs(:,end), squeeze(mean(SRSrel_m(k,:,end,iFsm), 4, 'omitnan')),'-','linewidth',1.5, 'color', color(ii,:))
+    plot3(amAMPs(1,:)*100, amISIs(1,:), squeeze(mean(SRSrel_m(k,1,:,iFsm), 4, 'omitnan')),'-','linewidth',1.5, 'color', color(ii,:))
+    plot3(amAMPs(:,1)*100, amISIs(:,1), squeeze(mean(SRSrel_m(k,:,1,iFsm), 4, 'omitnan')),'-','linewidth',1.5, 'color', color(ii,:))
+    plot3(amAMPs(end,:)*100, amISIs(end,:), squeeze(mean(SRSrel_m(k,end,:,iFsm), 4, 'omitnan')),'-','linewidth',1.5, 'color', color(ii,:))
+    plot3(amAMPs(:,end)*100, amISIs(:,end), squeeze(mean(SRSrel_m(k,:,end,iFsm), 4, 'omitnan')),'-','linewidth',1.5, 'color', color(ii,:))
     
     set(gca,'YScale','log')
     
@@ -121,7 +121,7 @@ for ii = 1:length(modelnames)
     R2 = 1 - SSE./SST
     
     set(gca,'fontsize',6)
-    title(titles{ii}, 'fontsize', 8)
+    subtitle(titles{ii}, 'fontsize', 8, 'color', color(ii,:))
     if ii == 1
         zlabel('Relative short-range stiffness','Fontsize',8)
     else
@@ -130,7 +130,7 @@ for ii = 1:length(modelnames)
     
     view(230-180,20)
     
-    text(.07, 1e0, 1.4, ['R^2 = ',num2str(round(R2, 2), 3)], 'fontsize', 6, 'horizontalalignment', 'center')
+%     text(.07, 1e0, 1.4, ['R^2 = ',num2str(round(R2, 2), 3)], 'fontsize', 6, 'horizontalalignment', 'center')
     
     
 end
@@ -146,135 +146,195 @@ set(h, 'Clim', [.6 1.1])
 % set(g,'units','centimeters','position',[6 2.5+11 0.2 1.7], 'fontsize', 6)
 
 %% plot force traces
-% close all
-
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
-% cd([output_mainfolder{2},'\data'])
+cd('C:\Users\u0167448\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data')
+iFsm = [2,3,5,6,7,8,11];
+AMP = .0383;
 
-% if ishandle(2), close(2); end
-% figure(2)
-iFsd = 6;
+tlin = -2:.001:1;
+Fexps = nan(length(tlin), max(iFsm),3, 2);
 
+pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
+pCai = nan(11,4);
 
-mcodes = [2 2 1; 2 1 1; 1 1 1];
-versions = {'parms', 'parms_v3', 'parms_v4d'};
+tiso = 2;
+dTt = .0383/.4545; % test stretch (= constant);
+% t0 = 2*dTt + tiso + ISI;
 
-pCas = [9 6.2 4.5];
+% eth = [0 .05 .3 .7 1.2];
+thmin = [.7 .3 .05];
+thmax = [2 .7 .3];
 
-dy = 0;
+ISIs = [.001 1];
 
-ls = {'--',':','-'};
-
-ax(1) = subplot(3,3,4);
-ax(2) = subplot(3,3,5);
-ax(3) = subplot(3,3,6);
-ax(4) = subplot(3,3,[7 9]);
-
-aISIs = [.1 .1 .1 1];
-AMPs = .0383;
-
-for k = 1:4
-    ISIs = aISIs(k);
-    set(ax(k), 'fontsize', 6);
-
+for k = 1:2
+    ISI = ISIs(k);
     
-    for i = 1:length(pCas)
-        pCa = pCas(i);
-        
-        cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
-        %         load([fibers{iF},'_cor_new.mat'],'data')
-        
+for iF = iFsm
+    load([fibers{iF},'_cor_new.mat'],'data');
+    
+%     figure(k+10)
+%     nexttile
 
-        for iF = iFsd
-            load([fibers{iF},'_cor_new.mat'],'data');
-            [texp, Lexp, Fexp, Tsrel] = get_data(data, ISIs, AMPs, pCa);
+    for j = 1:length(thmin)
+        
+        for i = 1:length(pCas)
+            pCa = pCas(i);
+            [texp, Lexp, Fexp, Tsrel] = get_data(data, ISI, AMP, pCa);
             
-            plot(ax(k), texp - .003, Fexp + dy * i,'k-', 'linewidth', 2);
-            hold(ax(k), 'on')
+            Fiso = mean(Fexp(texp<-.5), 'omitnan');
+            
+            if Fiso < thmax(j) && Fiso > thmin(j)
+                
+                Fexps(:,iF,j,k) = interp1(texp(isfinite(Fexp)), Fexp(isfinite(Fexp)), tlin);
+                pCai(iF,j) = pCa;
+       
+%                 plot(texp, Fexp,'-', tlin, Fexps(:,iF,j),'.'); hold on
+%                 xlim([-1 1])
+                break
+            end
         end
-        
-        
-        for j = 1:size(mcodes,1)
-            mcode = mcodes(j,:);
-            
-            [output_mainfolder, modelfilename, ~, ~] = get_folder_and_model(mcode);
-            dTt = .0383/.4545; % test stretch (= constant)
-            dTc = AMPs / .4545; % conditioning stretch
-            ISI = ISIs;
-            AMP = AMPs;
-            
-            %
-            %             clc
-            tiso = dTt*3+dTc*2+ISI + 2;
-            
-             for iF = iFsd
-                filename = [output_mainfolder{2}, '\', versions{j},'\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCa*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
-                disp(filename)
-
-
-                load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts')
-
-                t = tis + 3*dTt - tiso;
-                plot(ax(k), t, oFi + dy * i, 'linewidth', 2, 'color', color(j,:), 'linestyle', ls{j})
-
-                xlim(ax(k), [-.2-ISIs .15])
-             end
-             
-        end
-        box(ax(k), 'off')
-        %         ylim([0 3])
-        
     end
 end
 
-%% make nice
-
+%
 figure(1)
 
-set(ax(3), 'ycolor', [0 0 0])
+% pCai(:,end) = 9;
+% t0 = 0;
+t0 = 2*dTt + tiso + ISI;
 
+% ISI = 1;
+oFis = nan(max(iFsm), 4000);
 
+% close all
+% figure(1)
 
-for k = 1:4
-    
-    ax(k).YLabel.String = 'Force (-)';
-    ax(k).YLabel.Color = [0 0 0];
-    ax(k).YLabel.FontSize = 8;
-    
-    ax(k).XLabel.String = 'Time (s)';
-    ax(k).XLabel.Color = [0 0 0];
-    ax(k).XLabel.FontSize = 8;
-    
+if k == 1
+    mcodes = [2 2 1; 2 1 1; 1 1 1];
+    versions = {'parms', 'parms_v3', 'parms_v4d'};
+    id = [1, 2, 5];
+
+else
+    mcodes = [1 1 1];
+    versions = {'parms_v4d'};
+    id = 5;
 end
 
-title(ax(2), 'Before shortening', 'fontsize', 8)
-title(ax(1), 'Trial with short recovery', 'fontsize', 8)
-title(ax(3), 'After shortening', 'fontsize', 8)
-title(ax(4), 'Trial with long recovery', 'fontsize', 8)
+color = acolors(id,:);
 
-%% zoom in
-P1 = [-.175 -.125 .5 1];
-P2 = [.05 .1 .5 1];
+for j = 1:size(mcodes,1)
+    if k == 1
+        subplot(3,3,j+3)
+        xlim([-.2 .15])
+        box off
+        
+    else
+        subplot(3,3,[7 9])
+        xlim([-1.2 .15])
+        box off
+    end
+    
+    hold(gca, 'on')
+    
+    set(gca, 'Fontsize', 6)
+    xlabel(gca,'Time (s)', 'Fontsize', 8)
 
-figure(1)
-axis(ax(1), [-.2 .12 0 2])
-axis(ax(3), P2)
-axis(ax(2), P1)
+    if j == 1
+        ylabel(gca, 'Force (-)', 'Fontsize', 8)
+     
+    end
+    
+    for jj = 1:3
+        %     subplot(1,3,jj)
+        % plot(tlin, Fexps, 'k-', 'linewidth', 1); hold on
+        plot(tlin, mean(Fexps(:,:,jj,k), 2, 'omitnan'), 'k-', 'linewidth', 2); hold on
+     
+        
+        % 2. Calculate Upper and Lower Bounds
+        sd = std(Fexps(:,:,jj,k), 1,2, 'omitnan');
+        upper_bound = mean(Fexps(:,:,jj,k), 2, 'omitnan') + sd;
+        lower_bound = mean(Fexps(:,:,jj,k), 2, 'omitnan') - sd;
 
-h1 = rectangle(ax(1), 'position', [P1(1) P1(3) P1(2)-P1(1) P1(4)-P1(3)]);
-h3 = rectangle(ax(1), 'position', [P2(1) P2(3) P2(2)-P2(1) P2(4)-P2(3)]);
+        % 3. Create Coordinates for the Shaded Area
+        % Concatenate x with its flipped version, and y bounds similarly
+        x_shaded = [tlin(:); flipud(tlin(:))]; % For column vectors use [x; flipud(x)] [1, 3, 6]
+        y_shaded = [upper_bound(:); flipud(lower_bound(:))]; % For column vectors [upper_bound; flipud(lower_bound)]
 
-h2 = rectangle(ax(2), 'position', [P1(1) P1(3) P1(2)-P1(1) P1(4)-P1(3)]);
-h4 = rectangle(ax(3), 'position', [P2(1) P2(3) P2(2)-P2(1) P2(4)-P2(3)]);
+        % Shade the area
+        fill(x_shaded, y_shaded, 'k', 'FaceAlpha', 0.1, 'EdgeColor', 'none'); % Green, semi-transparent, no edge [3, 11, 12]
 
-yline(ax(1), .87, 'k-.')
-yline(ax(2), .87, 'k-.')
-yline(ax(3), .87, 'k-.')
-yline(ax(4), .87, 'k-.')
+
+%         plot(tlin, Fexps(:,:,jj,k), 'k:', 'linewidth', 1); hold on
+ 
+
+        mcode = mcodes(j,:);
+        
+        [output_mainfolder, modelfilename, ~, ~] = get_folder_and_model(mcode);
+        
+        for iF = iFsm
+            pCa = pCai(iF,jj);
+            
+            if ~isnan(pCa)
+                filename = [output_mainfolder{2}, '\', versions{j},'\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCa*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
+                disp(filename)
+                
+                load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts')
+                
+                oFis(iF, 1:length(oFi)) = oFi;
+            end
+            
+            %         figure(1)
+            %         plot(tis, oFi, 'color', color(j,:)); hold on
+            
+            
+        end
+        
+        plot(tis - t0, mean(oFis(:,1:length(oFi)), 1, 'omitnan'), 'color', color(j,:), 'linewidth', 2); hold on
+        
+        if k == 1
+            subplot(3,3,j+3)
+            xlim([-.2 .15])
+            box off
+
+        else
+            subplot(3,3,[7 9])
+            xlim([-1.2 .15])
+            box off
+
+        end
+
+        
+    end
+end
+end
 
 %% size
 figure(1)
-set(gcf,'units','centimeters','position',[10 2 13 20])
+
+for i = 1:3
+subplot(3,3,i)
+xlabel(gca, '     Amplitude (%L_0)      ', 'Rotation', -23, 'Position', [7 1e-5 .1])
+ylabel(gca, 'Recovery time (s)', 'Rotation', 18, 'Position', [10 1e-4 0])
+end
+%%
+
+subplot(334)
+text(-.3, 5.2, 'A', 'Fontsize', 16)
+text(-.3, 2.2, 'B', 'Fontsize', 16)
+text(-.3, -.6, 'C', 'Fontsize', 16)
+
+subplot(332)
+title('Submaximal activation: large amplitude stretch-shortening + short recovery \rightarrow reduced short-range stiffness ', 'fontsize', 8)
+
+subplot(335)
+title('Stretch-shortening + short recovery \rightarrow reduced short-range stiffness (at submaximal activation)', 'fontsize', 8)
+
+subplot(3,3,[7 9])
+title('Stretch-shortening + long recovery \rightarrow no stiffness reduction', 'fontsize', 8, 'HorizontalAlignment', 'center')
+%%
+figure(1)
+set(gcf,'units','centimeters','position',[10 1 18 18])
 
 %%
 if savefig

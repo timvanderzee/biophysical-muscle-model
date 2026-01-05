@@ -363,6 +363,17 @@ for j = 1:3
     xticklabels(ax(j+6), legendnames(1:length(filenames)))
 end
 
+%% compute AIC
+n = sum(isfinite(y(:,eiid,eaid)),'all');
+
+k = [5 7 10 10 11 12]';
+
+% AIC = 2*k + n.*log(oSSE(:,id)./oSST(id))
+AIC = 2*k + n.*log((oRMSD(:,3).^2)./n)
+
+AIC = AIC - AIC(1)
+
+
 %%
 figure(1)
 text(ax(7), -1, .38, 'D', 'fontsize', 12,'fontweight','bold')

@@ -56,7 +56,7 @@ N       = round(tiso / dt);
 % discretization parameters
 bw = .05; % standard bin width
 % Ns = [logspace(1.5,2.5,10) 1e4]; % bin#
-Ns = [30:30:330, 1e3];
+Ns = logspace(1, 4, 10);
 
 % experiment
 tlin = linspace(0,Ts(end-1),1000);
@@ -78,7 +78,7 @@ Lts = interp1(tis, Lis*parms.gamma, tvec);
 % parms.vts = interp1(tis, vis, t2(ii-1));
 moc = [0 1 0];
 
-for r = 1 % repetitions
+for r = 1:3 % repetitions
     for f = 1:3 % methods   
         
         parms.method_of_characteristics = moc(f);
@@ -202,7 +202,9 @@ color = parula(4);
 
 Ntot = 1 * ones(size(tsim));
 
-Fint = interp1(data.tvec, data.Fi(:,1), tvec);
+% Fint = interp1(data.tvec, data.Fi(:,1), tvec);
+
+Fint = Fi(:,end,1,1);
 error = nan(size(Fi));
 
 for f = 1:3
@@ -231,7 +233,7 @@ for j = 1:2 % tests
         title(titles{j})
         subtitle('Processing time')
         
-        xlim([0 Ns(end-1)*1.1])
+        xlim([0 Ns(end)*1.1])
         
 %         ylim([0 max(tsim(:,:,:,:),[],'all')/mean(Ntot(:), 'omitnan')])
 %         yticks([0:.1:.4])
@@ -244,7 +246,7 @@ for j = 1:2 % tests
         xlabel('# bins')
         ylabel('Force error (%F_0)')
         
-        xlim([0 Ns(end-1)*1.1])
+        xlim([0 Ns(end)*1.1])
         ylim([0 .3]*100)
                         
         subplot(3,2,j+4)
@@ -286,7 +288,7 @@ for j = 1:2
     
     yyaxis left
     ylim([0 2])
-    xlim([0 330])
+    xlim([0 1e3])
     
     yl = get(gca, 'ylim');
     
@@ -299,7 +301,7 @@ for j = 1:2
     yline(thill*1e3,'--', 'color', color(4,:), 'linewidth', 2)
     
     subplot(3,2,j+2)
-    xlim([0 330])
+    xlim([0 1e3])
 end
 
 subplot(325)
