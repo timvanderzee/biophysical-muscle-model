@@ -1,5 +1,5 @@
 clear all; close all; clc
-savefig = 1;
+savefig = 0;
 
 [username, githubfolder] = get_paths();
 
@@ -12,15 +12,24 @@ sISIs = [0.001, 0.1, 0.3160, 1, 10];
 sISI = .001;
 sAMP = .0383;
 
+discretized_model = 0;
+
 %% Model
 showbar = 0;
 showline = 1;
+
+if discretized_model
+    versions = {'parms', 'parms_v3','parms_v4d', 'parms_v4d', 'parms_v4d', 'parms_v4d'};
+else
+    versions = {'parms', 'parms_v3', 'parms_v4','parms','parms_v6', 'parms_v6'};
+end
+
 % figure(1)
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_alternative_SRS'};
 filenames = {'Hill_alternative_SRS', 'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_thin_regular_SRS', 'biophysical_full_regular_SRS','biophysical_full_alternative_SRS'};
 % filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
 % filenames = {'biophysical_full_regular_SRS', 'biophysical_full_regular_SRS'};
-versions = {'parms', 'parms_v3', 'parms_v4d', 'parms_v4d', 'parms_v4d', 'parms_v4d'};
+% versions = {'parms', 'parms_v3', 'parms_v4d', 'parms_v4d', 'parms_v4d', 'parms_v4d'};
 % versions = {'parms', 'parms_v3', 'parms_v4', 'parms_v5', 'parms_v6','parms_v6'};
 
 iFs = [2,3,5,6,7,8,11];
@@ -329,7 +338,7 @@ for i = 1:3
         'Xtick', 1:10, 'XTickLabels', {},'fontsize', 6);
     
     title(ax(i+3), 'Model error', 'fontsize', 6)
-    ylabel(ax(i+3), 'SRS RMSD', 'fontsize', 6)
+    ylabel(ax(i+3), '\sigma_{SRS}', 'fontsize', 6)
 end
 
 for j = 1:3
@@ -349,7 +358,7 @@ end
 
 %
 figure(1)
-ylabel(ax(7), 'SRS RMSD (-)', 'fontsize', 8)
+ylabel(ax(7), 'SRS RMSD \sigma_{SRS} (-)', 'fontsize', 8)
 
 titles = {'Model error: high HD trials', 'Model error: low HD trials', 'Model error: all trials'};
 for j = 1:3
@@ -385,13 +394,19 @@ figure(1)
 set(gcf,'units','centimeters','position',[10 5 19 15])
 
 %% save and export
-if savefig
-    cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
-    
-    figure(1)
-    exportgraphics(gcf,'Fig8.png')
+fig = 8;
+if discretized_model
+    figname = ['Fig',num2str(fig),'.png'];
+else
+    figname = ['FigS',num2str(fig-3),'.png'];
 end
 
+if savefig
+cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
+       
+figure(1)
+exportgraphics(gcf,figname, 'Resolution', 500)
+end
 
 
 

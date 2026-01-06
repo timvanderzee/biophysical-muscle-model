@@ -31,7 +31,7 @@ for j = 1:2 % tests
         subplot(2,3,(j-1)*3+1)
         set(gca, 'fontsize', 6)
         
-        loglog(Ns, median(tsim(:,j,f,:),4,'omitnan') ./ Ntot(:,j,f,r),'o--', 'color', color(f,:), ...
+        semilogx(Ns, median(tsim(:,j,f,:),4,'omitnan') ./ Ntot(:,j,f,r),'o--', 'color', color(f,:), ...
             'markerfacecolor', color(f,:), 'markersize', 4); hold on
         box off
         xlabel('Number of strain bins', 'fontsize', 8)
@@ -41,11 +41,11 @@ for j = 1:2 % tests
         subtitle('Processing time', 'fontsize', 8)
         
         xlim([10 1.001e4])
-        ylim([.2 100])
+        ylim([0 5])
         
         subplot(2,3,(j-1)*3+2)
         set(gca, 'fontsize', 6)
-        loglog(Ns, median(eps(:,j,f,:),4),'o--', 'color', color(f,:), ...
+        semilogx(Ns, median(eps(:,j,f,:),4),'o--', 'color', color(f,:), ...
             'markerfacecolor', color(f,:), 'markersize', 4); hold on
         box off
         subtitle('Force error', 'fontsize', 8)
@@ -53,11 +53,11 @@ for j = 1:2 % tests
         ylabel('Force error (F_0)', 'fontsize', 8)
         
         xlim([10 1.001e4])
-        ylim([.99e-6 1])
+        ylim([0 .1])
                         
         subplot(2,3,(j-1)*3+3)
         set(gca, 'fontsize', 6)
-        loglog(median(tsim(:,j,f,:),4,'omitnan') ./ Ntot(:,j,f), median(eps(:,j,f,:),4),'o--', 'color', color(f,:), ...
+        plot(median(tsim(:,j,f,:),4,'omitnan') ./ Ntot(:,j,f), median(eps(:,j,f,:),4),'o--', 'color', color(f,:), ...
             'markerfacecolor', color(f,:), 'markersize', 4); hold on
         
         box off
@@ -65,16 +65,16 @@ for j = 1:2 % tests
         xlabel('Time per simulation (s)', 'fontsize', 8)
         ylabel('Force error (F_0)', 'fontsize', 8)
         
-        ylim([.99e-6 1])
-        xlim([.2 100])
+        ylim([0 .1])
+        xlim([0 2])
         %         xlim([Ns(1) Ns(end-1)])
         
     end
 end
 
-for i = 1:6
+for i = [1,2,4,5]
     subplot(2,3,i)
-    yticks(10.^(-6:4));
+%     yticks(10.^(-6:4));
     xticks(10.^(-6:4));
 end
 
@@ -124,7 +124,6 @@ set(gcf,'units','centimeters','position',[5 2 19 10])
 
 subplot(231)
 legend('Traditional method', 'Method of charac.', 'Gaussian approx.', 'location', 'best', 'fontsize', 6)
-legend boxoff
 
 
 % subplot(326)

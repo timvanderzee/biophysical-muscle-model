@@ -14,7 +14,7 @@ mcodes = [1 1 2];
 
 visualize = 0;
 
-version = 'parms_v4d';
+version = 'parms';
 
 %% calc RMSD
 AMPs = [0 12 38 121 216 288 383 682]/10000;

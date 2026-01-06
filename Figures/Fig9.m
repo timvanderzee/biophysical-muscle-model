@@ -1,5 +1,5 @@
 clear all; close all; clc
-savefig = 0;
+savefig = 1;
 
 [username, githubfolder] = get_paths();
 th = [0 .3 .7 1.5];
@@ -40,7 +40,15 @@ aeISIs = repmat(eISIs(:), 1, 8);
 % model
 modelnames = {'Hill_alternative', 'Hill_regular', 'biophysical_full_regular'};
 titles = {'Hill-type model (no SE)', 'Hill-type model (with SE)', '3-state XB coop model'};
-versions = {'parms', 'parms_v3', 'parms_v4d'};
+
+discretized_model = 0;
+if discretized_model
+    versions = {'parms', 'parms_v3','parms_v4d'};
+else
+    versions = {'parms', 'parms_v3', 'parms_v6'};
+end
+
+% versions = {'parms', 'parms_v3', 'parms_v4d'};
 % versions = {'parms_v3', 'parms_v4', 'parms_v6', 'parms_v4'};
 
 % modelnames =  {'biophysical_full_alternative'};
@@ -337,9 +345,17 @@ figure(1)
 set(gcf,'units','centimeters','position',[10 1 18 18])
 
 %%
+fig = 9;
+if discretized_model
+    figname = ['Fig',num2str(fig),'.png'];
+else
+    figname = ['FigS',num2str(fig-3),'.png'];
+end
+
 if savefig
-    cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
-    figure(1)
-    exportgraphics(gcf,['Fig9.png'])
+cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
+       
+figure(1)
+exportgraphics(gcf,figname, 'Resolution', 500)
 end
 

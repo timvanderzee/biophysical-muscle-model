@@ -3,11 +3,11 @@ clear all; close all; clc
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
 fig     = 6;
-savefig = 0;
+savefig = 1;
 iF      = 6;
 
 acolors = get_colors;
-discretized_model = 1;
+discretized_model = 0;
 
 % all model codes (corresponding to colors)
 all_mcodes = [2 2 1; 2 1 1; 1 1 3; 1 1 2; 1 1 1; 1 2 1];
@@ -15,7 +15,7 @@ all_mcodes = [2 2 1; 2 1 1; 1 1 3; 1 1 2; 1 1 1; 1 2 1];
 if discretized_model
     all_versions = {'', '_v3', '_v4d', '_v4d','_v4d', '_v4d'};
 else
-    all_versions = {'_v3', '_v3', '_v4','','_v6', '_v6'};
+    all_versions = {'', '_v3', '_v3',''      ,'_v6', '_v6'};
 end
 
 modelnames = {'Hill (no SE)', 'Hill (with SE)', '2-state XB', '2-state XB coop', '3-state XB coop', '4-state XB coop'};
