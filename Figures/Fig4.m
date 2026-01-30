@@ -171,6 +171,11 @@ end
 % brigthen factor
 bf = [0 .5 0];
 
+% load data
+[output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(1,:));
+cd([output_mainfolder{2},'\data'])
+load([fibers{iF},'_cor_new.mat'],'data');
+
 for j = 1:size(ISIs,1)
     for i = 1:size(ISIs,2) 
         
@@ -180,18 +185,36 @@ for j = 1:size(ISIs,1)
         Ts = [tiso dTc dTc ISIs(j,i)];
         dt = tiso - sum(Ts);
         
+        % plot data
+        [texp, Lexp, Fexp, Tsrel] = get_data(data, ISIs(j,:), AMPs(j,:), pCas(j,:));
+
+        dtexp = Tsrel(1,2);
+
+        texp = texp - dtexp - .003;
+        id = texp(:,i) < tmaxs(j);
+        
+
+        plot(ax(2), texp(id,i), Fexp(id,i)*100, 'color', brighten([.5 .5 .5], bf(j)), 'linewidth', 2, 'linestyle',ls{j}); 
+
+
         for kk = 1:size(mcodes,1)
         
+            if isequal(mcodes(kk,:), [1 2 1])
+                lsm = {'--',':','--'};
+            else
+                lsm = {'-',':','-'};
+            end
+            
             t = Mdata(j,i,kk).tis + 3*dTt - tiso;
            
             t = t - dt;
             tmax2 = .15 - dt;
 
-            plot(ax(2), t(t<tmax2), Mdata(j,i,kk).oFi(t<tmax2)*100, 'linestyle', ls{j}, 'linewidth',2, 'color', brighten(colors(kk,:), bf(j))); hold on
+            plot(ax(2), t(t<tmax2), Mdata(j,i,kk).oFi(t<tmax2)*100, 'linestyle', lsm{j}, 'linewidth',2, 'color', brighten(colors(kk,:), bf(j))); hold on
             
             if j == 1
                 for k = 1:2
-                    plot(ax(kk+2 + (k-1)*3), t(t<tmax2), Mdata(j,i,kk).oFi(t<tmax2)*100, 'linestyle', ls{j}, 'linewidth',2, 'color', brighten(colors(kk,:), bf(j))); hold on
+                    plot(ax(kk+2 + (k-1)*3), t(t<tmax2), Mdata(j,i,kk).oFi(t<tmax2)*100, 'linestyle', lsm{j}, 'linewidth',2, 'color', brighten(colors(kk,:), bf(j))); hold on
                 end
             end
         end       
@@ -200,10 +223,7 @@ end
 
 
 %% plot data
-% load data
-[output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(1,:));
-cd([output_mainfolder{2},'\data'])
-load([fibers{iF},'_cor_new.mat'],'data');
+
 
 for j = 1:size(ISIs,1)
 
@@ -251,7 +271,7 @@ for j = 1:size(ISIs,1)
 end
 
 % legend
-h = legend(ax(2), 'labels', modelnames(mid),'location','bestoutside', 'Fontsize', 8);
+h = legend(ax(2), 'labels', [{'Data'} modelnames(mid)],'location','bestoutside', 'Fontsize', 8);
 set(h, 'units','centimeters', 'Position', [4 + tmax*fac 12.5 3.5 1.5])
 
 %% optionally export to PNG
