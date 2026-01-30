@@ -1,4 +1,4 @@
-function[parms, out, opti] = fit_model_parameters_v2(optparms, w, data, parms, IG, bnds)
+function[parms, out, opti] = fit_model_parameters_v2(optparms, w, data, parms, IG, bnds, mcode)
 
 import casadi.*
 
@@ -26,8 +26,9 @@ if ~isempty(optparms)
     end
     
     if (sum(nv > 1) + sum(nv < 0)) > 0
-        disp('Warning: initial guess out of bounds')
-        keyboard
+        disp('Warning: initial guess out of bounds. Adjusting ...')
+        nv(nv > 1) = .9;
+        nv(nv < 0) = .1;
     end
     
     % create opti variable for normalized parameters that are fitted
@@ -55,43 +56,28 @@ toc = data.t;
 Lts = data.L;
 idF = data.idF;
 idC = [1:300 data.idC];
+idA = data.idA;
+idP = data.idP;
+idFP = data.idFP;
 
-N = length(toc);
+% N = length(toc);
+N = length(idA);
 dt = mean(diff(toc));
 
 %% define opti variables, specify constraints and initial guesses
 % define opti states (defined as above)
-Q0  = opti.variable(1,N); % derivative constraint
-Q2  = opti.variable(1,N); % derivative constraint
-% Fse = opti.variable(1,N); % derivative constraint
-Q1  = opti.variable(1,N);
-Non = opti.variable(1,N);  % derivative constraint
-DRX = opti.variable(1,N);  % derivative constraint
+Q0  = opti.variable(1,N); % XBs attached
+Q1  = opti.variable(1,N); % XB force
+Q2  = opti.variable(1,N); % XB elastic strain energy
+Fse = opti.variable(1,N); % SE force
 
+% fiber velocity
 Ld = opti.variable(1,N);  % derivative constraint
-opti.set_initial(Ld, IG.Ldi);
+opti.set_initial(Ld, IG.Ldi(idA));
 
-% p and q
+% introduce p and q
 p   = opti.variable(1,N); % mean strain of the distribution
 q   = opti.variable(1,N); % standard deviation strain of the distribution
-% 
-% y   = opti.variable(1); % standard deviation strain of the distribution
-% opti.set_initial(y, 1);
-
-% compute other things from force
-% dlse = log(Fse/kse0+1)/kse;
-% L = Lts - dlse;
-% Fpe = kpe * L + Fpe0;
-Fpe = 0;
-
-Fce = Q0 + Q1;
-Fse = Fce;
-Kse = kse * (Fse + kse0);
-% Kpe = kpe;
-% Kpe = 0;
-
-% extra constraints
-% opti.subject_to(Q1 + Q0 + Fpe == Fse);
 opti.subject_to(Q1 - Q0 .* p == 0);
 opti.subject_to(Q2 - Q0 .* (p.^2 + q) == 0);
 
@@ -99,43 +85,84 @@ opti.subject_to(Q2 - Q0 .* (p.^2 + q) == 0);
 opti.subject_to(q > 0);
 opti.subject_to(p > -5);
 opti.subject_to(p < 5);
-opti.subject_to(Q0 > 0);
+opti.subject_to(Q0 > 1e-6);
 opti.subject_to(Fse > 0);
 
 % initial guess states
-opti.set_initial(Q0, IG.Q0i);
-opti.set_initial(Q1, IG.Q1i);
-opti.set_initial(Q2, IG.Q2i);
+opti.set_initial(Q0, IG.Q0i(idA));
+opti.set_initial(Q1, IG.Q1i(idA));
+opti.set_initial(Q2, IG.Q2i(idA));
 
 % initial guess extra variables
-opti.set_initial(p, IG.pi);
-opti.set_initial(q, IG.qi);
-% opti.set_initial(Fse, IG.Fsei);
+opti.set_initial(p, IG.pi(idA));
+opti.set_initial(q, IG.qi(idA));
+opti.set_initial(Fse, IG.Fsei(idA));
 
-opti.subject_to(Non > 0);
-opti.set_initial(Non, IG.Noni);
+% thin filament activation
+if isequal(mcode, [1 1 1]) || isequal(mcode, [1 1 2]) || isequal(mcode, [1 2 1])
+    Non = opti.variable(1,N);  % derivative constraint
+    opti.subject_to(Non > 0);
+    opti.set_initial(Non, IG.Noni(idA));
+else
+    Non = Cas(idA).^n ./ (kappa^n + Cas(idA).^n); 
+end
 
-opti.subject_to(DRX > 0);
-opti.set_initial(DRX, IG.DRXi);
+% thick filament activation
+if isequal(mcode, [1 1 1]) || isequal(mcode, [1 2 1])
+    DRX = opti.variable(1,N);  % derivative constraint
+    opti.subject_to(DRX > 0);
+    opti.set_initial(DRX, IG.DRXi(idA));
+else
+    DRX = 1 - Q0;
+end
 
-R = 0;
-dRdt = 0;
+if isequal(mcode, [1 2 1])
+   R = opti.variable(1,N);  % derivative constraint
+%    opti.subject_to(R > 0);
+   opti.set_initial(R, IG.Ri(idA));
+else
+    R = 0;
+end
 
-%% Passive force
-% low risk: only add Fpe at the end
+%% Forces
+% calculate parallel force
 dlse = log(Fse/kse0+1)/kse;
-L = Lts - dlse;
+L = Lts(idA) - dlse;
 dLce = L - Lce0;
 K = 1;
-% Lcor = log(1+exp(dLce*K))/K;
+Fpe = kpe * log(1+exp(dLce*K))/K;
 
-% passive force
-% Fp = Kpe * Lcor;
-% Kpe = kpe;
+% XB force
+Fce = Q0 + Q1;
 
-% version 2
+% stiffneses
+Kse = kse * (Fse + kse0);
 Kpe = kpe .* (1 - 1./(exp(K*dLce)+1));
-Fp = kpe * log(1+exp(dLce*K))/K;
+
+% force constraint
+opti.subject_to(Fse == Fce + Fpe);
+
+%% Passive force during pCa 9
+N9 = length(idP);
+
+Fse9 = opti.variable(1,N9);
+opti.set_initial(Fse9, IG.F9(idP));
+opti.subject_to(Fse9 > 0);
+
+% lengths
+dlse9 = log(Fse9/kse0+1)/kse;
+L9 = data.L(idP) - dlse9;
+dLce9 = L9 - Lce0;
+
+% parallel force
+Fpe9 = kpe * dLce9;
+
+% constraint (assume Fce = 0)
+opti.subject_to(Fse9 == Fpe9);
+
+% cost
+Frel9 = Fse9 * parms.Fscale;
+Fcost9 = (Frel9(idFP - N) - Fts(idFP)).^2;
 
 %% cross-bridge dynamics
 % points where integrals is evaluated
@@ -146,23 +173,18 @@ k2 = [k21 -k22];
 [IG, IGef] = get_IG_IGEf(parms.approx);
 
 % Compute Qdot
-[Q0dot, Q1dot, Q2dot] = CrossBridge_Dynamics(Q0, p, q, f, parms.w, k1, k2, IGef, Non, DRX, IG, b, k, R, dLcrit, ps2);
+[Q0dot, Q1dot, Q2dot, Rdot] = CrossBridge_Dynamics(Q0, p, q, f, parms.w, k1, k2, IGef, Non, DRX, IG, b, k, R, dLcrit, ps2);
 
 % velocity - independent derivative
 F0dot  = Q1dot + Q0dot;
 
 % velocity
-opti.subject_to(Ld .* (Q0 + Kse + Kpe) == (vts .* parms.gamma .* Kse - F0dot));
+opti.subject_to(Ld .* (Q0 + Kse + Kpe) == (vts(idA) .* parms.gamma .* Kse - F0dot));
 
 % cross-bridge derivatives
 dQ0dt = Q0dot;
 dQ1dt = Q1dot + 1 * Ld .* Q0;
 dQ2dt = Q2dot + 2 * Ld .* Q1;
-
-% force-rate
-% dFcedt = dQ1dt + dQ0dt;
-% dFpedt = Ld * Kpe;
-% dFsedt = dFcedt + dFpedt;
 
 % enforce dynamic constraints
 opti.subject_to((dQ0dt(1:N-1) + dQ0dt(2:N))*dt/2 + Q0(1:N-1) == Q0(2:N));
@@ -171,16 +193,29 @@ opti.subject_to((dQ2dt(1:N-1) + dQ2dt(2:N))*dt/2 + Q2(1:N-1) == Q2(2:N));
 % opti.subject_to((dFsedt(1:N-1) + dFsedt(2:N))*dt/2 + Fse(1:N-1) == Fse(2:N));
 
 %% cooperativity
-[Jon, Joff] = ThinFilament_Dynamics(Cas, Q0, Non, kon, koff, koop, parms.Noverlap);
-dNondt = Jon - Joff;
-opti.subject_to((dNondt(1:N-1) + dNondt(2:N))*dt/2 + Non(1:N-1) == Non(2:N));
+if isequal(mcode, [1 2 1])
+%     dRdt = Rdot;
+    opti.subject_to((Rdot(1:N-1) + Rdot(2:N))*dt/2 + R(1:N-1) == R(2:N));
+else
+    dRdt = 0;
+end
 
-[k1, k2] = ThickFilament_Dynamics(Q0, Fce, DRX, J1, J2, JF, parms.Noverlap, R);
-dDRXdt = k1 - k2 - (dQ0dt + dRdt);
-opti.subject_to((dDRXdt(1:N-1) + dDRXdt(2:N))*dt/2 + DRX(1:N-1) == DRX(2:N));
+if isequal(mcode, [1 1 1]) || isequal(mcode, [1 1 2])  || isequal(mcode, [1 2 1])
+    [Jon, Joff] = ThinFilament_Dynamics(Cas(idA), Q0, Non, kon, koff, koop, parms.Noverlap);
+    dNondt = Jon - Joff;
+    opti.subject_to((dNondt(1:N-1) + dNondt(2:N))*dt/2 + Non(1:N-1) == Non(2:N));
+end
+
+if isequal(mcode, [1 1 1]) || isequal(mcode, [1 2 1])
+    [k1, k2] = ThickFilament_Dynamics(Q0, Fce, DRX, J1, J2, JF, parms.Noverlap, R);
+    dDRXdt = k1 - k2 - (dQ0dt + Rdot);
+    opti.subject_to((dDRXdt(1:N-1) + dDRXdt(2:N))*dt/2 + DRX(1:N-1) == DRX(2:N));
+end
+
 
 %% cost
-Frel = (Fse + Fp) * parms.Fscale;
+% Frel = (Fse + Fp) * parms.Fscale;
+Frel = Fse * parms.Fscale;
 
 % not needed for Hill-type, because already enforced by dynamics
 opti.subject_to(Frel(1) == 1);
@@ -189,7 +224,8 @@ Fcost = (Frel(idF) - Fts(idF)).^2;
 
 % cost function
 J = 0;
-J = J + w(1) * sum(Fcost); % force-velocity fitting
+J = J + w(1) * sum(Fcost);
+J = J + w(2) * sum(Fcost9); 
 J = J + w(3) * (sum(dQ0dt(idC).^2) + sum(dQ1dt(idC).^2) + sum(dQ2dt(idC).^2)); % regularization term
 
 % optimize
@@ -203,7 +239,7 @@ options.ipopt.linear_solver = 'mumps';
 options.ipopt.mu_strategy           = 'adaptive';
 options.detect_simple_bounds           = true;
 
-options.ipopt.max_iter           = 500;
+options.ipopt.max_iter = 1e3;
 
 opti.solver('ipopt',options);
 
@@ -215,6 +251,7 @@ try
     out.F     = sol.value(Frel);
     out.J     = sol.value(J);
     out.Fcost = sol.value(Fcost);
+    out.Fcost9 = sol.value(Fcost9);
     
     if exist('s')
         out.s = sol.value(s);
@@ -234,14 +271,23 @@ try
         
         out.Lts = sol.value(Lts);
         
-        out.dDRXdt = sol.value(dDRXdt);
-        out.dNondt = sol.value(dNondt);
+        if isequal(mcode, [1 2 1])
+            out.R = sol.value(R);
+        end
+        
+        if isequal(mcode, [1 1 1])  || isequal(mcode, [1 2 1])
+            out.dDRXdt = sol.value(dDRXdt);
+        end
+        
+        if isequal(mcode, [1 1 1]) || isequal(mcode, [1 1 2])  || isequal(mcode, [1 2 1])
+            out.dNondt = sol.value(dNondt);
+        end
         
         out.F0dot = sol.value(F0dot);
         out.p = sol.value(p);
         out.q = sol.value(q);
         %         out.L = sol.value(L);
-        %         out.Ld = sol.value(Ld);
+        out.Ld = sol.value(Ld);
         out.Fce = sol.value(Fce);
         out.Fse = sol.value(Fse);
         out.Fpe = sol.value(Fpe);
@@ -260,6 +306,10 @@ catch
     out.J     = opti.debug.value(J);
     out.Fcost = opti.debug.value(Fcost);
     out.Lts = sol.value(Lts);
+        
+    if exist('s')
+        out.s = sol.value(s);
+    end
     
     if parms.f > 0
         % Extract the result

@@ -1,294 +1,360 @@
-clear all; close all; clc
-savefig = 1; 
+function[] = Fig7(datafolder, modelfolder, githubfolder)
 
-[username, githubfolder] = get_paths();
-mcodes = [2 1 1; 1 1 3; 1 1 1; 1 2 1];
+% [username, githubfolder] = get_paths();
+th = [0 .3 .7 1.5];
+tid = [3 1 7];
 
-% iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
+%% Data
+Cid = tid(1);
+ISIid = tid(2);
+AMPid = tid(3);
 
-iFs = [2,3,5,6,7,8,11];
+% [username, githubfolder] = get_paths();
+cd([githubfolder, '\biophysical-muscle-model\Data'])
+load('SRS_data_v3.mat', 'SRS_pre', 'F0', 'SRS_post')
 
-th = [0 .07 .25 .7 1.5];
+% average some pCas
+iFs = 1:11;
+%  iFs = [1 2 3, 5, 6, 7, 8, 10, 11];
+SRSrel = nan(length(th)-1,7,8,length(iFs));
+F0s = nan(length(th)-1, 7,8,length(iFs));
 
-RMSDs = nan(length(th)-1,7,8,11, 7, 4);
-F0s = nan(length(th)-1, 7,8,11, 4);
-RMSDc = nan(length(th)-1,7,8,11, 7, 4);
+for k = iFs
+    for i = 1:length(th)-1
+        id = F0(:,1,7,k) > th(i) & F0(:,1,7,k) <= th(i+1);
+        
+        %         SRSrel(i,:,:,k) = mean(SRS_post(id,:,:,k),1,'omitnan') ./ mean(SRS_pre(id,:,7,k),'all', 'omitnan');
+        SRSrel(i,:,:,k) = mean(SRS_post(id,:,:,k),1,'omitnan') ./ mean(SRS_post(id,1,1,k),'all', 'omitnan');
+        F0s(i,:,:,k) = mean(F0(id,:,:,k), 1,'omitnan');
+    end
+end
 
-versions = {'parms_v4', 'parms_v2d', 'parms_v2d', 'parms_v2d'};
+%%
+% summary plot
+eAMPs = [0 12 38 121 216 288 383 682]/10000;
+eISIs = [1 10 100 316 1000 3160 10000]/1000;
+aeAMPs = repmat(eAMPs, 7, 1);
+aeISIs = repmat(eISIs(:), 1, 8);
 
-for p = 1:7
+% model
+modelnames = {'Hill_alternative', 'Hill_regular', 'biophysical_full_regular'};
+titles = {'Hill-type model (no SE)', 'Hill-type model (with SE)', '3-state XB coop model'};
+
+discretized_model = 0;
+if discretized_model
+    versions = {'parms', 'parms_v3','parms_v4d'};
+else
+    versions = {'parms', 'parms_v3', 'parms_v6'};
+end
+
+% versions = {'parms', 'parms_v3', 'parms_v4d'};
+% versions = {'parms_v3', 'parms_v4', 'parms_v6', 'parms_v4'};
+
+% modelnames =  {'biophysical_full_alternative'};
+acolors = lines(6);
+acolors = [acolors(end,:); acolors];
+
+id = [1, 2, 5];
+color = acolors(id,:);
+
+for ii = 1:length(modelnames)
+    modelname = modelnames{ii};
     
+    cd([githubfolder, '\biophysical-muscle-model\Model output\SRS\', versions{ii}]);
+    load([modelname,'_SRS.mat'],'Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
     
-    for ii = 1:size(mcodes,1)
-        
-        [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(ii,:));
-        
-            cd(['C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Model output\RMSD\', versions{ii}])
-        load([filename, '_RMSD.mat'], 'RMSD', 'AMPs', 'ISIs')
-        
-        sAMPs = AMPs;
-        sISIs = ISIs;
-        
-        %% remove some trials
-        RMSD(1,:,sAMPs < .03,2,:) = nan;
-        RMSD(1,sISIs > 1,:,2,:) = nan;
-        
-        %% average over identified force levels
-        sISI = .001;
-        sAMP = .0383;
-        
-            cd(['C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Model output\SRS\', versions{ii}])
-        load([filename, '_SRS.mat'],'F0', 'AMPs', 'ISIs')
-        
-%         sACTis,ISIs==sISI, AMPs==sAMP
-        
-        % average
-        for k = iFs
-            for i = 1:length(th)-1
-                id = F0(:,ISIs == sISI, AMPs == sAMP,k) > th(i) & F0(:,ISIs == sISI, AMPs == sAMP,k) <= th(i+1);
-                
-                RMSDs(i,:,:,k, p, ii) = mean(RMSD(id,:,:,k,p),1,'omitnan');
-                F0s(i,:,:,k, ii) = mean(F0(id,ismember(ISIs, sISIs),ismember(AMPs, sAMPs),k), 1,'omitnan');
-            end
+    amAMPs = repmat(AMPs, length(ISIs), 1);
+    amISIs = repmat(ISIs(:), 1, length(AMPs));
+    
+    % average
+    % iFsm = 9:11;
+    iFsm = [2,3,5,6,7,8,11];
+    iFsd = 1:11;
+    
+    SRSrel_m = nan(length(th)-1,length(ISIs),length(AMPs),iFs(end));
+    F0s_m = nan(length(th)-1, length(ISIs),length(AMPs),iFs(end));
+    
+    miid = ismember(ISIs,  eISIs);
+    maid = ismember(AMPs,  eAMPs);
+    
+    for k = iFsm
+        for i = 1:length(th)-1
+            id = F0(:,1,7,k) > th(i) & F0(:,1,7,k) <= th(i+1);
+            
+            %         SRSrel_m(i,:,:,k) = mean(Stest(id,:,:,k),1,'omitnan') ./ mean(Scond(id,1,7,k),'all', 'omitnan');
+            SRSrel_m(i,:,:,k) = mean(Stest(id,:,:,k),1,'omitnan') ./ mean(Stest(id,1,1,k),'all', 'omitnan');
+            F0s_m(i,:,:,k) = mean(F0(id,:,:,k), 1,'omitnan');
         end
     end
     
-    %% correct for individual offsets
-    % correct for individual offset
-    for ii = 1:size(mcodes,1)
-        for k = iFs
-            RMSDc(:,:,:,k,p,ii) = RMSDs(:,:,:,k,p,ii) - mean(RMSDs(:,:,:,k,p,ii),'all','omitnan') + mean(RMSDs(:,:,:,:,p,ii),'all','omitnan');
+    % activation
+    k = 2;
+    
+    fig = figure(1)
+    subplot(3,3,ii)
+    surf(amAMPs*100, amISIs, squeeze(mean(SRSrel_m(k,:,:,iFsm), 4, 'omitnan')),'edgecolor',[.8 .8 .8],'linestyle','-','Facealpha',.7,'linewidth',.5); hold on
+    surf(aeAMPs*100,aeISIs, 0*ones(size(squeeze(aeISIs))),'facecolor', [1 1 1],'edgecolor', 'none'); hold on
+    surf(aeAMPs(1:4,7:8)*100,aeISIs(1:4,7:8), 0*ones(size(squeeze(aeISIs(1:4,7:8)))),'facecolor', [.9 .9 .9],'edgecolor', 'none'); hold on
+    
+    colors = color(ii,:) .* repmat(linspace(0,1,100)', 1, 3);
+    set(gca, 'colormap', colors)
+    
+    plot3(aeAMPs(:,[5:6, 8])*100, aeISIs(:,[5:6, 8]), 0*ones(size(aeAMPs(:,[5:6, 8]))), 'color', [.8 .8 .8],'linewidth',2)
+    plot3(aeAMPs([2 6],:)'*100, aeISIs([2 6],:)', 0*ones(size(aeAMPs([2 6],:)))', 'color', [.8 .8 .8],'linewidth',2)
+    
+    plot3(aeAMPs(:,[2:4, 7])*100, aeISIs(:,[2:4, 7]), 0*ones(size(aeAMPs(:,[2:4, 7]))), 'color', [.6 .6 .6],'linewidth',2)
+    plot3(aeAMPs([1 3:5 7],:)'*100, aeISIs([1 3:5 7],:)', 0*ones(size(aeAMPs([1 3:5 7],:)))', 'color', [.6 .6 .6],'linewidth',2)
+    
+    plot3([aeAMPs(3,7) aeAMPs(3,7)]*100, [aeISIs(3,7) aeISIs(3,7)], [0 squeeze(mean(SRSrel(k,3,7,iFsd), 4, 'omitnan'))], '-', 'linewidth',1.5, 'color', [.6 .6 .6])
+    plot3([aeAMPs(1,1) aeAMPs(1,1)]*100, [aeISIs(1,1) aeISIs(1,1)], [0 squeeze(mean(SRSrel(k,1,1,iFsd), 4, 'omitnan'))], '-', 'linewidth',1.5, 'color', [.6 .6 .6])
+    
+    set(gca,'YScale','log', 'Clim', [.6 1.1], 'xtick', (0:.02:.1)*100, 'ytick', [1e-3 1e-1 1e1]);
+    zlim([0 1.1])
+    axis([0 .07*100 8e-4 1.5e1 0 1.1])
+    
+    plot3(aeAMPs*100, aeISIs, squeeze(mean(SRSrel(k,:,:,iFsd), 4, 'omitnan')),'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5],'markersize',3); hold on
+    
+    plot3(amAMPs(1,:)*100, amISIs(1,:), squeeze(mean(SRSrel_m(k,1,:,iFsm), 4, 'omitnan')),'-','linewidth',1.5, 'color', color(ii,:))
+    plot3(amAMPs(:,1)*100, amISIs(:,1), squeeze(mean(SRSrel_m(k,:,1,iFsm), 4, 'omitnan')),'-','linewidth',1.5, 'color', color(ii,:))
+    plot3(amAMPs(end,:)*100, amISIs(end,:), squeeze(mean(SRSrel_m(k,end,:,iFsm), 4, 'omitnan')),'-','linewidth',1.5, 'color', color(ii,:))
+    plot3(amAMPs(:,end)*100, amISIs(:,end), squeeze(mean(SRSrel_m(k,:,end,iFsm), 4, 'omitnan')),'-','linewidth',1.5, 'color', color(ii,:))
+    
+    set(gca,'YScale','log')
+    
+    %% compute R2
+    SSE = sum((mean(SRSrel_m(k,miid,maid,iFsm), 4, 'omitnan') - mean(SRSrel(k,:,:,iFsd), 4, 'omitnan')).^2,'all', 'omitnan')
+    SST = sum((mean(SRSrel(k,:,:,iFsd), 'all','omitnan') - mean(SRSrel(k,:,:,iFsd), 4, 'omitnan')).^2,'all', 'omitnan')
+    
+    R2 = 1 - SSE./SST
+    
+    set(gca,'fontsize',6)
+    subtitle(titles{ii}, 'fontsize', 8, 'color', color(ii,:))
+    if ii == 1
+        zlabel('Relative short-range stiffness','Fontsize',8)
+    else
+        set(gca, 'zticklabel', {}, 'ZColor', 'none')
+    end
+    
+    view(230-180,20)
+    
+    %     text(.07, 1e0, 1.4, ['R^2 = ',num2str(round(R2, 2), 3)], 'fontsize', 6, 'horizontalalignment', 'center')
+    
+    
+end
+
+%%
+figure(1)
+
+subplot(331)
+h = axes(fig,'visible','off');
+set(h, 'Clim', [.6 1.1])
+% g = colorbar(h, 'location', 'WestOutside')
+
+% set(g,'units','centimeters','position',[6 2.5+11 0.2 1.7], 'fontsize', 6)
+
+%% plot force traces
+fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
+% cd('C:\Users\u0167448\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data')
+
+iFsm = [2,3,5,6,7,8,11];
+AMP = .0383;
+
+tlin = -2:.001:1;
+Fexps = nan(length(tlin), max(iFsm),3, 2);
+
+pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
+pCai = nan(11,4);
+
+tiso = 2;
+dTt = .0383/.4545; % test stretch (= constant);
+% t0 = 2*dTt + tiso + ISI;
+
+% eth = [0 .05 .3 .7 1.2];
+thmin = [.7 .3 .05];
+thmax = [2 .7 .3];
+
+ISIs = [.001 1];
+
+
+
+for k = 1:2
+    ISI = ISIs(k);
+    
+    for iF = iFsm
+        years = {'2017', '2018'};
+        for m = 1:length(years)
+            if contains(fibers{iF}, years{m})
+                fullfolder = [datafolder, '\', years{m}];
+            end
+        end
+        
+        cd(fullfolder)
+        load([fibers{iF},'.mat'],'data');
+        
+        %     figure(k+10)
+        %     nexttile
+        
+        for j = 1:length(thmin)
+            
+            for i = 1:length(pCas)
+                pCa = pCas(i);
+                cd([githubfolder, 'biophysical-muscle-model\Figures'])
+                [texp, Lexp, Fexp, Tsrel] = get_data(data, ISI, AMP, pCa);
+                
+                Fiso = mean(Fexp(texp<-.5), 'omitnan');
+                
+                if Fiso < thmax(j) && Fiso > thmin(j)
+                    
+                    Fexps(:,iF,j,k) = interp1(texp(isfinite(Fexp)), Fexp(isfinite(Fexp)), tlin);
+                    pCai(iF,j) = pCa;
+                    
+                    %                 plot(texp, Fexp,'-', tlin, Fexps(:,iF,j),'.'); hold on
+                    %                 xlim([-1 1])
+                    break
+                end
+            end
         end
     end
     
     %%
-end
-
-
-%% make figure
-ps = [7 7 7;
-      2 2 2;
-      5 5 5];
-
-close all
-clc
-
-% yrange = [-.05 .15];
-
-color = get(gca,'colororder');
-pcolors = flip(parula(7));
-color = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
-
-
-%%
-figure(1)
-
-ms = [7 6 6 5];
-sym = {'s','h','v','o'};
-
-for p = 1:3
-    % figure;
-    for kk = 1:size(mcodes,1)
-%         color = get(gca,'colororder');
-        
-        
-        % effect of activation
-        AMPid = 7;
-        ISIid = 3;
-        pCaid = 1:4;
-        
-        subplot(3,3,1 + (p-1)*3);
-         plot(mean(F0s(pCaid,ISIid,AMPid,:, kk), 4, 'omitnan'), mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1), kk),4, 'omitnan'), '--', 'color', color(kk,:)); hold on
-     
-        if kk == 1
-            if (p-1)*3 == 0
-                yrange = [-.02 .05];
-            else
-                yrange = [-.02 .2];
-            end
-            
-            plot(ones(1,2) * mean(F0s(pCaid(3),ISIid,AMPid,:, kk), 4, 'omitnan'), yrange, 'k--'); hold on
-            
-            for ii = pCaid
-                plot(ones(1,2) * mean(F0s(ii,ISIid,AMPid,:, kk), 4, 'omitnan'), yrange,'k:')
-            end
-        end
-        
-        pCaid = 2:3;
-        errorbar(mean(F0s(pCaid,ISIid,AMPid,:, kk), 4, 'omitnan'), mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1), kk),4, 'omitnan'), ...
-            std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'), std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'),...
-            std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'), std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'),sym{kk}, 'color', color(kk,:),'markerfacecolor', color(kk,:), 'markersize',  ms(kk), 'Capsize',3); hold on
-       
-        pCaid = [1 4];
-        errorbar(mean(F0s(pCaid,ISIid,AMPid,:, kk), 4, 'omitnan'), mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1), kk),4, 'omitnan'), ...
-            std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'), std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,1),kk),1,4, 'omitnan'),...
-            std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'), std(F0s(pCaid,ISIid,AMPid,:,kk),1,4, 'omitnan'),sym{kk}, 'color', color(kk,:),'markerfacecolor', [1 1 1], 'markersize', ms(kk), 'Capsize',3); hold on
-        
-        % effect of amplitude
-        AMPid = [2, 3, 4, 7];
-        pCaid = 3;
-        
-        subplot(3,3,2 + (p-1)*3);
-           plot(sAMPs(AMPid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),4, 'omitnan')), '--','color', color(kk,:)); hold on
-         
-        if kk == 1
-            plot(ones(1,2) * 0.0383, yrange, 'k-.'); hold on
-        end
-        
-        AMPid = [2, 3, 4];
-        errorbar(sAMPs(AMPid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),4, 'omitnan')), ...
-            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),1,4, 'omitnan')),sym{kk}, 'color', color(kk,:),'markerfacecolor', [1 1 1], 'markersize', ms(kk), 'Capsize',3); hold on
-        
-        AMPid = 7;
-        errorbar(sAMPs(AMPid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),4, 'omitnan')), ...
-            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,2),kk),1,4, 'omitnan')),sym{kk}, 'color', color(kk,:),'markerfacecolor', color(kk,:), 'markersize', ms(kk), 'Capsize',3); hold on
-        
-        xlim([0 .0383])
-        
-        % effect of ISI
-        ISIid = [1, 3:5, 7];
-        AMPid = 7;
-        
-        subplot(3,3,3 + (p-1)*3);
-              plot(sISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), '--','color', color(kk,:)); hold on
-          
-        if kk == 1
-            plot(ones(1,2) * .1, yrange, 'k-.'); hold on
-        end
-        
-        ISIid = [5,7];
-        errorbar(sISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), ...
-            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),1,4, 'omitnan')),sym{kk}, 'color', color(kk,:),'markerfacecolor', [1 1 1], 'markersize',ms(kk), 'Capsize',3); hold on
-        
-        ISIid = [1, 3, 4];
-        errorbar(sISIs(ISIid), squeeze(mean(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),4, 'omitnan')), ...
-            squeeze(std(RMSDc(pCaid,ISIid,AMPid,:,ps(p,3),kk),1,4, 'omitnan')),sym{kk}, 'color', color(kk,:),'markerfacecolor', color(kk,:), 'markersize', ms(kk), 'Capsize',3); hold on
-        
-        set(gca, 'XScale', 'log', 'Xlim', [1e-3 1e1])
-        
-        
-    end
-end
-
-
-% make nice
-figure(1)
-
-for j = 1:9
-    subplot(3,3,j)
-      set(gca, 'Fontsize', 6)
+    figure(1)
     
-    box off
-    %     title(titles{j})
-    %     xlabel(xlabels{j})
-    %     ylabel(ylabels)
-    ylim(yrange)
-
-    if j < 7
-        set(gca,'Xticklabel', [])
-    end
+    % pCai(:,end) = 9;
+    % t0 = 0;
+    t0 = 2*dTt + tiso + ISI;
     
-    if j ~= 1 && j ~= 4 && j ~= 7
-        set(gca,'Yticklabel', [])
-        set(gca, 'Ycolor', 'none')
+    % ISI = 1;
+    oFis = nan(max(iFsm), 4000);
+    
+    % close all
+    % figure(1)
+    
+    if k == 1
+        mcodes = [2 2 1; 2 1 1; 1 1 1];
+        versions = {'parms', 'parms_v3', 'parms_v4d'};
+        id = [1, 2, 5];
+        
     else
-        ylabel('RMSD (F_{0})',  'Fontsize', 8)
-        xlim([0 1.02])
+        mcodes = [1 1 1];
+        versions = {'parms_v4d'};
+        id = 5;
     end
     
-    if j == 7
-        %         title('Overall')
-        xlabel('Activation (F_{0})',  'Fontsize', 8)
-    elseif j == 8
-        xlabel('Amplitude (L_0)',  'Fontsize', 8)
-    elseif j == 9
-        xlabel('Recovery time (s)',  'Fontsize', 8)
+    color = acolors(id,:);
+    
+    for j = 1:size(mcodes,1)
+        if k == 1
+            subplot(3,3,j+3)
+            xlim([-.2 .15])
+            box off
+            
+        else
+            subplot(3,3,[7 9])
+            xlim([-1.2 .15])
+            box off
+        end
+        
+        hold(gca, 'on')
+        
+        set(gca, 'Fontsize', 6)
+        xlabel(gca,'Time (s)', 'Fontsize', 8)
+        
+        if j == 1
+            ylabel(gca, 'Force (-)', 'Fontsize', 8)
+            
+        end
+        
+        for jj = 1:3
+            %     subplot(1,3,jj)
+            % plot(tlin, Fexps, 'k-', 'linewidth', 1); hold on
+            plot(tlin, mean(Fexps(:,:,jj,k), 2, 'omitnan'), 'k-', 'linewidth', 2); hold on
+            
+            
+            % 2. Calculate Upper and Lower Bounds
+            sd = std(Fexps(:,:,jj,k), 1,2, 'omitnan');
+            upper_bound = mean(Fexps(:,:,jj,k), 2, 'omitnan') + sd;
+            lower_bound = mean(Fexps(:,:,jj,k), 2, 'omitnan') - sd;
+            
+            % 3. Create Coordinates for the Shaded Area
+            % Concatenate x with its flipped version, and y bounds similarly
+            x_shaded = [tlin(:); flipud(tlin(:))]; % For column vectors use [x; flipud(x)] [1, 3, 6]
+            y_shaded = [upper_bound(:); flipud(lower_bound(:))]; % For column vectors [upper_bound; flipud(lower_bound)]
+            
+            % Shade the area
+            fill(x_shaded, y_shaded, 'k', 'FaceAlpha', 0.1, 'EdgeColor', 'none'); % Green, semi-transparent, no edge [3, 11, 12]
+            
+            
+            %         plot(tlin, Fexps(:,:,jj,k), 'k:', 'linewidth', 1); hold on
+            
+            
+            mcode = mcodes(j,:);
+            
+            [~, modelfilename, ~, ~] = get_folder_and_model(mcode);
+            
+            for iF = iFsm
+                pCa = pCai(iF,jj);
+                
+                if ~isnan(pCa)
+                    filename = [modelfolder, '\', versions{j},'\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCa*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
+                    disp(filename)
+                    
+                    load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts')
+                    
+                    oFis(iF, 1:length(oFi)) = oFi;
+                end
+                
+                %         figure(1)
+                %         plot(tis, oFi, 'color', color(j,:)); hold on
+                
+                
+            end
+            
+            plot(tis - t0, mean(oFis(:,1:length(oFi)), 1, 'omitnan'), 'color', color(j,:), 'linewidth', 2); hold on
+            
+            if k == 1
+                subplot(3,3,j+3)
+                xlim([-.2 .15])
+                box off
+                
+            else
+                subplot(3,3,[7 9])
+                xlim([-1.2 .15])
+                box off
+                
+            end
+            
+            
+        end
     end
-    
-%     if 
-    
 end
 
-%% titles
-subtitles = {'Overall', 'Pre-stretch', 'Test stretch'};
-
+%% size
 figure(1)
-subplot(331)
-title('Effect of activation', 'fontsize', 8)
-subtitle(subtitles{1}, 'fontsize', 8)
+
+for i = 1:3
+    subplot(3,3,i)
+    xlabel(gca, '     Amplitude (%L_0)      ', 'Rotation', -23, 'Position', [7 1e-5 .1])
+    ylabel(gca, 'Recovery time (s)', 'Rotation', 18, 'Position', [10 1e-4 0])
+end
+%%
+
+subplot(334)
+text(-.3, 5.2, 'A', 'Fontsize', 16)
+text(-.3, 2.2, 'B', 'Fontsize', 16)
+text(-.3, -.6, 'C', 'Fontsize', 16)
 
 subplot(332)
-subtitle(subtitles{1}, 'fontsize', 8)
-title('Effect of amplitude', 'fontsize', 8)
-
-subplot(333)
-subtitle(subtitles{1}, 'fontsize', 8)
-title('Effect of recovery', 'fontsize', 8)
-
-subplot(334)
-% subtitle('Effect of activation', 'fontsize', 8)
-subtitle(subtitles{2}, 'fontsize', 8)
+title('Submaximal activation: large amplitude stretch-shortening + short recovery \rightarrow reduced short-range stiffness ', 'fontsize', 8)
 
 subplot(335)
-% subtitle('Effect of amplitude', 'fontsize', 8)
-subtitle(subtitles{2}, 'fontsize', 8)
+title('Stretch-shortening + short recovery \rightarrow reduced short-range stiffness (at submaximal activation)', 'fontsize', 8)
 
-subplot(336)
-% subtitle('Effect of recovery', 'fontsize', 8)
-subtitle(subtitles{2}, 'fontsize', 8)
-
-subplot(337)
-% subtitle('Effect of activation', 'fontsize', 8)
-subtitle(subtitles{3}, 'fontsize', 8)
-
-subplot(338)
-% subtitle('Effect of amplitude', 'fontsize', 8)
-subtitle(subtitles{3}, 'fontsize', 8)
-
-subplot(339)
-% subtitle('Effect of recovery', 'fontsize', 8)
-subtitle(subtitles{3}, 'fontsize', 8)
-
-%% make manual legend
-% if ishandle(2), close(2); end; figure(2)
-modelnames = {'Hill model','XB model','XB coop','XB coop + FD'};
+subplot(3,3,[7 9])
+title('Stretch-shortening + long recovery \rightarrow no stiffness reduction', 'fontsize', 8, 'HorizontalAlignment', 'center')
+%%
 figure(1)
-ys = .19;
+set(gcf,'units','centimeters','position',[10 1 18 18])
 
-subplot(331)
-for i = 1:4
-    fake_data = -i * .02  + ys * [.95 1 1.05];
-    errorbar(.1, mean(fake_data, 2), std(fake_data,1,2),sym{i}, 'color', color(i,:),'markerfacecolor', color(i,:),'markersize', ms(i)*.5, 'Capsize',3); hold on
-    errorbar(.8, mean(fake_data, 2), std(fake_data,1,2),sym{i}, 'color', color(i,:), 'markerfacecolor', [1 1 1],'markersize', ms(i)*.5, 'Capsize',3); hold on
-
-    text(.45, ys - i * .02, modelnames{i}, 'fontsize', 7, 'horizontalalignment', 'center')
 
 end
 
-%%
-text(.1, ys, 'HD', 'fontsize', 7, 'horizontalalignment', 'center')
-text(.8, ys, 'HD', 'fontsize', 7, 'horizontalalignment', 'center')
-
-plot(.8, ys, 'rx', 'linewidth', 2)
-
-%%
-figure(1)
-set(gcf,'units','centimeters','position',[10 10 19 11])
-
-
-%% A, B labels
-subplot(331)
-text(-.1, yrange(2)*1.15, 'A', 'fontsize', 12,'fontweight', 'bold')
-subplot(334)
-text(-.1, yrange(2)*1.15, 'B', 'fontsize', 12,'fontweight', 'bold')
-subplot(337)
-text(-.1, yrange(2)*1.15, 'C', 'fontsize', 12,'fontweight', 'bold')
-
-%% optionally export to PNG
-
-if savefig
-cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
-       
-figure(1)
-exportgraphics(gcf,['Fig7.png'])
-end

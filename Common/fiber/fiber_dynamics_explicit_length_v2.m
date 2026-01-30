@@ -30,6 +30,8 @@ Non = y(4);
 DRX = y(5);
 R = y(6);
 
+R(R<0) = 0;
+
 if length(y) > 6
     Lts = y(7);
 %     dLdt = yp(7);
@@ -42,6 +44,7 @@ else
 end
 
 % SE
+Fse(Fse<1e-6) = 1e-6;
 dLse = max(parms.Lse_func(Fse, parms), 0); % can't be negative
 kse = parms.kse * (Fse + parms.kse0);
 
@@ -56,6 +59,7 @@ Fpe = 0;
 %         Fpe = parms.Fpe_func(Lce, parms);
 %     end
 % end
+
 if isfield(parms, 'PE_isw_SE') % PE in series with SE
     dLce = Lce - parms.Lce0;
 
@@ -76,11 +80,15 @@ Fce = max(Fce, 0);
 % k   = parms.K;
 % Q00 = log(1+exp(Q0*k))/k; % note: goes to inf for large k, may need another function
 Q00 = max(Q0, 1e-6);
-Q1 = Fce - Q00;
+Q1 = Fce - Q0;
 p = Q1./Q00; 
 q = Q2./Q00 - p.^2;  
 % q = log(1+exp(q*k))/k;
-q = max(q, 1e-6);
+q = max(q, 0);
+
+if sum(~isreal(q)) > 0
+    keyboard
+end
 
 if isfield(parms, 'FL_overlap')
     if parms.FL_overlap
@@ -144,4 +152,8 @@ end
 
 dx = [dQ0dt; dQ2dt; dFsedt; dNondt; dDRXdt; Rdot; Ldot];
 
+
+% if sum(isnan(dx(:))) > 0
+%     keyboard
+% end
 end

@@ -54,13 +54,13 @@ N       = round(tiso / dt);
 
 %% simulate entire protocol
 % discretization parameters
-bw = .1; % standard bin width
+bw = .05; % standard bin width
 % Ns = [logspace(1.5,2.5,10) 1e4]; % bin#
-Ns = [30:30:300, 1e4];
+Ns = logspace(1, 4, 10);
 
 % experiment
 tlin = linspace(0,Ts(end-1),1000);
-dt = 1e-3;
+dt = 1e-4;
 
 parms.Cas = mean(Cas);
 
@@ -68,7 +68,7 @@ parms.Cas = mean(Cas);
 tsim = nan(length(Ns),2,3, 3);
 
 tvec = 0:dt:Ts(end);
-Fi = nan(length(tvec), length(Ns));
+Fi = nan(length(tvec), length(Ns), 2, 3, 1);
 
 % tvec = 0:dt:Ts(end);
 % N = length(tvec);
@@ -76,9 +76,13 @@ vts = interp1(tis, vis, tvec);
 Lts = interp1(tis, Lis*parms.gamma, tvec);
 
 % parms.vts = interp1(tis, vis, t2(ii-1));
+moc = [0 1 0];
 
-for r = 1 % repetitions
-    for f = 1:3 % methods       
+for r = 1:3 % repetitions
+    for f = 1:3 % methods   
+        
+        parms.method_of_characteristics = moc(f);
+        
         for j = 1:2 % ways to change strain vector
             for id = randperm(length(Ns))
                 disp(id)
@@ -113,70 +117,80 @@ for r = 1 % repetitions
     end
 end
 
-N = ii;
+% N = ii;
 
-%% test the effect of dt
-% approximated model
-
-dts = linspace(1e-4, 3e-3, 5);
-
-close all
-clc
-figure(10)
-fs = [2 3];
-ls = {'-','--'};
-color = lines(5);
-for i = 1:length(fs)
-    f = fs(i); % methods
-       % get X0
-    if f < 3
-        parms.xi = linspace(-15,15, 90);
-        n0 = zeros(size(parms.xi));
-        X0 = [n0'; parms.x0(4:end)'];
-
-    else
-        Q0 = 0;
-        p0 = 0;
-        q0 = .1;
-
-        [Q00, Q20, lce0, Q10, Fse] = find_steady_state(Q0, p0, q0, parms, 'adjusted');
-        X0 = [Q00 Q20 Fse 0 0 0]';
-
-    end
-                
-    for j = 1:length(dts)
-
-        tvec2 = 0:dts(j):Ts(end);
-        vts = interp1(tis, vis, tvec2);
-        Lts = interp1(tis, Lis*parms.gamma, tvec2);
-
-        % evaluate model                   
-        [tsim2(j), Fi2] = evaluate_model(X0, vts, Lts, dts(j), f, parms);
-
-%         subplot(1,2,i)
-        plot(tvec2, Fi2, 'color', color(j,:), 'linestyle', ls{i}); hold on
-        ylim([0 1])
-    end
-end
-
-%%
-legendCell = eval(['{' sprintf('''dt=%d'' ',dts) '}'])
-legend(legendCell)
+% %% test the effect of dt
+% % approximated model
+% 
+% dts = linspace(1e-4, 3e-3, 5);
+% 
+% close all
+% clc
+% figure(10)
+% fs = [2 3];
+% ls = {'-','--'};
+% color = lines(5);
+% for i = 1:length(fs)
+%     f = fs(i); % methods
+%        % get X0
+%     if f < 3
+%         parms.xi = linspace(-15,15, 90);
+%         n0 = zeros(size(parms.xi));
+%         X0 = [n0'; parms.x0(4:end)'];
+% 
+%     else
+%         Q0 = 0;
+%         p0 = 0;
+%         q0 = .1;
+% 
+%         [Q00, Q20, lce0, Q10, Fse] = find_steady_state(Q0, p0, q0, parms, 'adjusted');
+%         X0 = [Q00 Q20 Fse 0 0 0]';
+% 
+%     end
+%                 
+%     for j = 1:length(dts)
+% 
+%         tvec2 = 0:dts(j):Ts(end);
+%         vts = interp1(tis, vis, tvec2);
+%         Lts = interp1(tis, Lis*parms.gamma, tvec2);
+% 
+%         % evaluate model                   
+%         [tsim2(j), Fi2] = evaluate_model(X0, vts, Lts, dts(j), f, parms);
+% 
+% %         subplot(1,2,i)
+%         plot(tvec2, Fi2, 'color', color(j,:), 'linestyle', ls{i}); hold on
+%         ylim([0 1])
+%     end
+% end
+% 
+% %%
+% legendCell = eval(['{' sprintf('''dt=%d'' ',dts) '}'])
+% legend(legendCell)
 
 %% forces
 if ishandle(2), close(2); end; figure(2)
 %
+j = 1;
+
+
+data = load('gold_standard_v2.mat');
+plot(data.tvec, data.Fi(:,1), 'k--', 'linewidth', 2); hold on
+plot(data.tvec, data.Fi(:,2), 'k:', 'linewidth', 2)
 
 % % subplot(221)
-plot(tvec,Fi(:,end,1,2,r)); hold on
-plot(tvec,Fi(:,end,2,2,r),'--')
-plot(tvec,Fi(:,end,1,3,r),':')
+plot(tvec,Fi(:,id,j,1,r), 'linewidth', 2); hold on
+plot(tvec,Fi(:,id,j,2,r),'--', 'linewidth', 2)
+plot(tvec,Fi(:,id,j,3,r),':', 'linewidth', 2)
+
+
+
 
 % plot(tlin, Fapi,':')
 
 % subplot(222)
 % semilogy(tlin, abs(Fi - Fi(:,end)));
 
+% return
 %%
 close all
 titles = {'Fixed strain range (± 15 \epsilon_{ps})', 'Fixed bin width (0.1 \epsilon_{ps})'};
@@ -188,6 +202,9 @@ color = parula(4);
 
 Ntot = 1 * ones(size(tsim));
 
+% Fint = interp1(data.tvec, data.Fi(:,1), tvec);
+
+Fint = Fi(:,end,1,1);
 error = nan(size(Fi));
 
 for f = 1:3
@@ -197,7 +214,8 @@ for f = 1:3
         m = 2;
     end
     
-    error(:,:,:,f,:) = abs(Fi(:,:,:,f,:) - Fi(:,end,1,m,:));
+    
+    error(:,:,:,f,:) = abs(Fi(:,:,:,f,:) - Fint(:));
 end
 
 % error = deviation wrt largest bin count
@@ -207,7 +225,7 @@ for j = 1:2 % tests
     for f = 1:2 % methods
         
         subplot(3,2,j)
-        plot(Ns(1:end-1), median(tsim(1:end-1,j,f,:),4,'omitnan') ./ Ntot((1:end-1),j,f,r),'ko--', 'markerfacecolor', color(f,:)); hold on
+        plot(Ns, median(tsim(:,j,f,:),4,'omitnan') ./ Ntot(:,j,f,r),'ko--', 'markerfacecolor', color(f,:)); hold on
         box off
         xlabel('# bins')
         ylabel('Time per simulation (s)')
@@ -215,31 +233,31 @@ for j = 1:2 % tests
         title(titles{j})
         subtitle('Processing time')
         
-        xlim([Ns(1) Ns(end-1)])
+        xlim([0 Ns(end)*1.1])
         
-        ylim([0 max(tsim(1:end-1,:,:,:),[],'all')/mean(Ntot(:), 'omitnan')])
-        yticks([0:.1:.4])
+%         ylim([0 max(tsim(:,:,:,:),[],'all')/mean(Ntot(:), 'omitnan')])
+%         yticks([0:.1:.4])
 
         
         subplot(3,2,j+2)
-        plot(Ns(1:end-1), median(eps(1:end-1,j,f,:),4)*100,'ko--', 'markerfacecolor', color(f,:)); hold on
+        plot(Ns, median(eps(:,j,f,:),4)*100,'ko--', 'markerfacecolor', color(f,:)); hold on
         box off
         subtitle('Force error')
         xlabel('# bins')
         ylabel('Force error (%F_0)')
         
-        xlim([Ns(1) Ns(end-1)])
+        xlim([0 Ns(end)*1.1])
         ylim([0 .3]*100)
                         
         subplot(3,2,j+4)
-        plot(median(tsim(1:end-1,j,f,:),4,'omitnan') ./ Ntot(1:end-1,j,f), median(eps(1:end-1,j,f,:),4)*100,'ko--', 'markerfacecolor', color(f,:)); hold on
+        plot(median(tsim(:,j,f,:),4,'omitnan') ./ Ntot(:,j,f), median(eps(:,j,f,:),4)*100,'ko--', 'markerfacecolor', color(f,:)); hold on
         box off
         subtitle('Error - processing time trade-off')
         xlabel('Time per simulation (s)')
         ylabel('Force error (%F_0)')
         
         ylim([0 1e-2*100])
-        xlim([0 max(tsim(1:end-1,:,:,:),[],'all')/mean(Ntot(:), 'omitnan')])
+        xlim([1e-1 max(tsim(:,:,:,:),[],'all')/mean(Ntot(:), 'omitnan')])
         %         xlim([Ns(1) Ns(end-1)])
         
     end
@@ -269,8 +287,8 @@ for j = 1:2
     subplot(3,2,j)
     
     yyaxis left
-    ylim([0 .31])
-    xlim([0 330])
+    ylim([0 2])
+    xlim([0 1e3])
     
     yl = get(gca, 'ylim');
     
@@ -283,7 +301,7 @@ for j = 1:2
     yline(thill*1e3,'--', 'color', color(4,:), 'linewidth', 2)
     
     subplot(3,2,j+2)
-    xlim([0 330])
+    xlim([0 1e3])
 end
 
 subplot(325)
@@ -305,6 +323,7 @@ legend boxoff
 % legend('Tradit.', 'Charac.', 'Approx.', 'location', 'best')
 % legend boxon
 
+return
 %% figure size
 cd('C:\Users\u0167448\OneDrive\9. Short-range stiffness\figures\MAT')
 figname = 'Fig11.png';
@@ -313,8 +332,6 @@ if savefig
     figure(3)
     exportgraphics(gcf,figname)
 end
-
-
 
 
 return
@@ -495,7 +512,7 @@ function[tsim, F] = evaluate_model(X0, vts, Lts, dt, f, parms)
 
         for ii = 2:length(vts)
 
-            parms.F = F(ii-1);
+%             parms.F = F(ii-1);
             parms.vts = vts(ii);
             parms.Lts = Lts(ii);
 
@@ -525,7 +542,7 @@ function[tsim, F] = evaluate_model(X0, vts, Lts, dt, f, parms)
 
                 y(1:length(parms.xi),ii) = nshift;
 
-                F(ii) = F(ii) + dx * Q0;
+%                 F(ii) = F(ii) + dx * Q0;
             end
         end
 

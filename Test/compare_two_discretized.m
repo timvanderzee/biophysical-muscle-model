@@ -1,0 +1,143 @@
+clear all; close all ;clc
+[username, githubfolder] = get_paths();
+fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
+
+
+%% define parameters
+iFs = 7;
+parms_version = '_v3';
+
+% load parameters
+mcode = [1 1 1];
+[output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
+
+input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iFs}];
+cd(input_foldername)
+load(['parms_',modelname, parms_version, '.mat'], 'newparms')
+parms = update_parms(newparms);
+
+
+pCa     = 6.1;
+Ca      = 10.^(-pCa+6);
+AMP     = .0383;
+ISI     = .001;
+dTt     = .0383/.4545; % test stretch (= constant)
+dTc     = AMP / .4545; % conditioning stretch
+tiso    = dTt*3+dTc*2+ISI + 2;
+dt      = .001; % gives 10 points in SRS zone
+N       = round(tiso / dt);
+[tis, Cas, Lis, vis, ts, Ts] = create_input(tiso, dTt, dTc, ISI, Ca, N);
+
+%% simulate entire protocol
+close all
+
+parms.Cas = mean(Cas);
+parms.xi = linspace(-15,15,1e4);
+
+% experiment
+dt = 1e-4;
+tvec = 0:dt:Ts(end);
+
+Fi = nan(length(tvec),2);
+% yi = nan(length(parms.xi)+4, length(tvec), 2);
+vts = interp1(tis, vis, tvec);
+Lts = interp1(tis, Lis*parms.gamma, tvec);
+
+moc = [0 1];
+
+for f = 1:2 % methods       
+
+    parms.method_of_characteristics = moc(f);
+    
+    n0 = zeros(size(parms.xi));
+    X0 = [n0'; parms.x0(4:end)'];
+
+    % evaluate model                   
+    [~, Fi(:,f), ~] = evaluate_model(X0, vts, Lts, dt, f, parms);
+
+      
+end
+
+%% plot
+figure(1)
+subplot(211)
+plot(tvec, Fi); 
+ylim([0 1])
+
+subplot(212)
+plot(tvec, Fi(:,1) - Fi(:,2))
+
+%%
+Fdiff = abs(diff(Fi, [], 2));
+error = mean(Fdiff) * 100; % percentage F0
+disp(error)
+
+return
+
+%% find max error and plot distributions there
+[~, id] = max(Fdiff);
+
+L = yi(end-3,:,2);
+
+if ishandle(2), close(2); end
+figure(2)
+
+for id = 1:1000:length(L)
+    plot(parms.xi, yi(1:length(parms.xi), id, 1), '-', parms.xi + L(id), yi(1:length(parms.xi), id, 2),'--', 'linewidth', 2)
+    axis([-2 5 0 1])
+%     drawnow
+    pause
+end
+
+%% functions
+function[tsim, F, y] = evaluate_model(X0, vts, Lts, dt, f, parms)
+    
+        % pre-allocate
+        F = zeros(length(vts)-1, 1);
+        t2 = zeros(1, length(vts)-1);
+%         y = repmat(X0, 1, length(vts)-1);
+        
+        y = X0;
+
+        tic
+
+        for ii = 2:length(vts)
+
+%             parms.F = F(ii-1);
+            parms.vts = vts(ii);
+            parms.Lts = Lts(ii);
+
+   
+%             [yp, F(ii), Q0] = fiber_dynamics_explicit_no_tendon_full(t2(ii-1),y(:,ii-1), parms);
+            [yp, F(ii), Q0] = fiber_dynamics_explicit_no_tendon_full(t2(ii-1),y, parms);
+
+            % update y
+            y = y + yp * dt;
+            t2(ii) = t2(ii-1) + dt;
+
+            if f == 1 % shift XB distribution
+                % for n, also need to shift
+                dx = yp(end-3) * dt;
+                xi = parms.xi - dx;
+                n = y(1:length(parms.xi));
+
+                nshift = interp1(parms.xi(:), n, xi(:),'linear');
+                nshift(isnan(nshift)) = 0;
+                nshift(nshift<0) = 0;
+
+                y(1:length(parms.xi)) = nshift;
+                
+%                 Q0 = trapz(parms.xi(:), nshift);
+%                 Q1 = trapz(parms.xi(:), nshift.*parms.xi(:));
+%                 F(ii) = Q0 + Q1;
+
+            
+%                 F(ii) = F(ii) + dx * Q0;
+            end
+        end
+
+        tsim = toc;
+
+        % compute force
+%         Fi = interp1(t2, F, tlin);
+end

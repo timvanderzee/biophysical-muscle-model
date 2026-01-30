@@ -21,11 +21,29 @@ if b > 0
 %     phiR0 = -k * (IG{1}(inf, c1) -IG{1}(dLcrit, c1)) + gamma(1) * R;
 %     phiR1 = -k * (IG{2}(inf, c1) -IG{2}(dLcrit, c1)) + gamma(2) * R;
 %     phiR2 = -k * (IG{3}(inf, c1) -IG{3}(dLcrit, c1)) + gamma(3) * R;
+
+% make nan  because erf cannot handle imaginary numbers
+% c1(~isreal(c1)) = nan;
     
+%     if length(c1) == 3
+%         if sum(isnan(c1)) > 0 || sum(isinf(c1)) > 0 || sum(~isreal(c1)) > 0
+%             keyboard
+%         end
+%     end
+    
+try
+%     disp('Imagine')
     phiR0 = -k * (IG{1}(10, c1) -IG{1}(dLcrit, c1)) + gamma(1) * R;
     phiR1 = -k * (IG{2}(10, c1) -IG{2}(dLcrit, c1)) + gamma(2) * R;
     phiR2 = -k * (IG{3}(10, c1) -IG{3}(dLcrit, c1)) + gamma(3) * R;
     
+catch % make nan  because erf cannot handle imaginary numbers
+    c1(~isreal(c1)) = nan;
+    phiR0 = -k * (IG{1}(10, c1) -IG{1}(dLcrit, c1)) + gamma(1) * R;
+    phiR1 = -k * (IG{2}(10, c1) -IG{2}(dLcrit, c1)) + gamma(2) * R;
+    phiR2 = -k * (IG{3}(10, c1) -IG{3}(dLcrit, c1)) + gamma(3) * R;
+end
+
     Rdot = -phiR0;
 
 else

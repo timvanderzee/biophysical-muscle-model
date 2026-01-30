@@ -37,14 +37,15 @@ eISIs = [1 10 100 316 1000 3160 10000]/1000;
 %% Model
 th = [0 .07 .15 .3 .5 .7 1.5];
 sACTis = [1 2 4 6];
-filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_alternative_SRS'};
+filenames = {'Hill_regular_SRS', 'biophysical_no_regular_SRS',  'biophysical_thin_regular_SRS', 'biophysical_full_regular_SRS', 'biophysical_full_alternative_SRS'};
 % versions = {'parms_v3', 'parms_v2d', 'parms_v3d', 'parms_v3d'};
 
 for jj = 1:2
     if jj == 1
-        versions = {'parms_v3', 'parms_v4', 'parms_v5', 'parms_v5'};
+        versions = {'parms_v3', 'parms_v4', 'parms', 'parms_v6', 'parms_v6'};
     else
-        versions = {'parms_v3', 'parms_v2d', 'parms_v3d', 'parms_v3d'};
+%         versions = {'parms_v3', 'parms_v2d', 'parms_v3d', 'parms_v3d'};
+        versions = {'parms_v3', 'parms_v4d', 'parms_v4d', 'parms_v4d', 'parms_v4d'};
     end
     
 for kk = 1:length(filenames)
@@ -112,28 +113,28 @@ for kk = 1:length(filenames)
     
     atitles = {'Passive', 'Low activation', 'Medium activation', 'Max. activation'};
     
-    for iii = 1:4
-        figure(1)
-        subplot(4,4,iii + (kk-1)*4)
-        surf(repmat(sAMPs, length(sISIs), 1)*100, repmat(sISIs(:), 1, length(sISIs)), squeeze((mSRSrel(iii,eiid,eaid) - mSRSrel_m(sACTis(iii),miid,maid)).^2))
-        set(gca,'YScale','log', 'Clim', [0 .1])
-        zlim([0 .2])
-        
-        yt = get(gca,'Ytick');
-        set(gca,'Yticklabel',yt);
-        
-        if kk == 1
-            title(atitles{iii})
-        end
-        
-        if iii > 1
-            set(gca,'Zticklabel', [])
-        end
-        
-        if kk < 4
-            set(gca,'Xticklabel', [], 'Yticklabel', [])
-        end
-    end
+%     for iii = 1:4
+%         figure(1)
+%         subplot(4,4,iii + (kk-1)*4)
+%         surf(repmat(sAMPs, length(sISIs), 1)*100, repmat(sISIs(:), 1, length(sISIs)), squeeze((mSRSrel(iii,eiid,eaid) - mSRSrel_m(sACTis(iii),miid,maid)).^2))
+%         set(gca,'YScale','log', 'Clim', [0 .1])
+%         zlim([0 .2])
+%         
+%         yt = get(gca,'Ytick');
+%         set(gca,'Yticklabel',yt);
+%         
+%         if kk == 1
+%             title(atitles{iii})
+%         end
+%         
+%         if iii > 1
+%             set(gca,'Zticklabel', [])
+%         end
+%         
+%         if kk < 4
+%             set(gca,'Xticklabel', [], 'Yticklabel', [])
+%         end
+%     end
 end
 
 
@@ -145,7 +146,7 @@ R2 = 1 - oSSE(:,id) ./ oSST(id);
 % n = numel(mSRSrel_m);
 n = N(1,id);
 
-k = [5 8 9 11]';
+k = [5 8 8 9 11]';
 
 % AIC = 2*k + n.*log(oSSE(:,id)./oSST(id))
 AIC = 2*k + n.*log(oSSE(:,id)./n)
@@ -156,16 +157,18 @@ moSSE(:,:,jj) = oSSE ./ N
 
 end
 
-return
+
 %% visualize
 
 close all
 figure(2)
    
 
-color = get(gca,'colororder');
-pcolors = flip(parula(7));
-color = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
+% color = get(gca,'colororder');
+% pcolors = flip(parula(7));
+% color = [color(2,:); pcolors(4:end-1,:);pcolors(4:end-1,:)];
+
+color = lines(6);
 
 bw = .25;
 titles =  {'History-dependent trials', 'History-independent trials', 'All trials'};
@@ -176,7 +179,7 @@ js = [3 2 1];
 for j = 1:3
     subplot(1,3,j)
     
-    for i = 1:4
+    for i = 1:size(moSSE,1)
         bar(i, moSSE(i,js(j),2)', bw, 'FaceColor', color(i,:), 'Edgecolor', color(i,:)); hold on
     end
     
@@ -185,7 +188,7 @@ end
 for j = 1:3
     subplot(1,3,j)
 
-    for i = 1:4
+    for i = 1:size(moSSE,1)
         if i > 1
             fcolor = [1 1 1];
         else
@@ -216,27 +219,27 @@ subplot(131)
 % legend boxoff
 
 %
-models = {'Hill', 'XB', 'XB coop', 'XB coop + FD'};
+models = {'Hill', '2-state XB', '2-state XB coop', '3-state XB coop','4-state XB coop'};
 
 figure(2)
-for i = 1:4
-    h1(i) = rectangle('Position', [2 .12-i/60 1 .01], 'facecolor', color(i,:), 'edgecolor', color(i,:))
+for i = 1:size(moSSE,1)
+    h1(i) = rectangle('Position', [2.2 .12-i/60 1 .01], 'facecolor', color(i,:), 'edgecolor', color(i,:))
     
-    text(3.2,  .12-i/60 + .006, models{i}, 'fontsize', 6);
+    text(3.3,  .12-i/60 + .006, models{i}, 'fontsize', 6);
 
     
     if i > 1
-        h2(i) = rectangle('Position', [2 .12-i/60 1 .005], 'facecolor', [1 1 1], 'edgecolor', color(i,:))
+        h2(i) = rectangle('Position', [2.2 .12-i/60 1 .005], 'facecolor', [1 1 1], 'edgecolor', color(i,:))
    
-        text(1.9,  .12-i/60 + .009, 'Original', 'fontsize', 6, 'horizontalalignment', 'right');
-        text(1.9,  .12-i/60 + .003, 'Approximated', 'fontsize', 6, 'horizontalalignment', 'right');
+        text(2.1,  .12-i/60 + .009, 'Original', 'fontsize', 6, 'horizontalalignment', 'right');
+        text(2.1,  .12-i/60 + .003, 'Approximated', 'fontsize', 6, 'horizontalalignment', 'right');
     end
 end
 
 figure(2)
 set(gcf,'units','centimeters','position',[10 10 19 5])
 
-
+return
 %%
 if savefig
 cd(['C:\Users\',username,'\OneDrive\9. Short-range stiffness\figures\MAT'])
