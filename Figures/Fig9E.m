@@ -1,4 +1,5 @@
 clear all; close all; clc
+% creates the plot 9E (stack of pCas)
 
 ISIs = repmat(1:7,8,1);
 AMPs = repmat((1:8)',1,7);
