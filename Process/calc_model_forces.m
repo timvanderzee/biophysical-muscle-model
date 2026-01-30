@@ -1,7 +1,6 @@
-clear all; close all; clc
-
+function[] = calc_model_forces(githubfolder, modelfolder, type)
 % paths
-[username, githubfolder] = get_paths();
+% [username, githubfolder] = get_paths();
 
 % binary inputs
 save_results = 1;
@@ -9,12 +8,24 @@ redo = 0;
 visualize = 0;
 discretized_model = 0;
 
+% model
+mcodes = [2 2 1];
+all_mcodes = [2 2 1; 2 1 1; 1 1 3; 1 1 2; 1 1 1; 1 2 1];
+
+
+% for i = 1:size(all_mcodes
+
+if discretized_model
+%     if 
+    all_versions = {'', '_v3', '_v4d', '_v4d','_v4d', '_v4d'};
+else
+    all_versions = {'', '_v3', '_v3',''      ,'_v6', '_v6'};
+end
+
 % versions
 output_version = '';
 parms_version = ''; 
 
-% model
-mcodes = [2 2 1];
 
 % fibers
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
@@ -37,7 +48,7 @@ for iii = 1:size(mcodes,1)
     
     % load parameters
     mcode = mcodes(iii,:);
-    [output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
+    [~, modelname, ~, ~] = get_folder_and_model(mcode);
     
     for iF = iFs
         
@@ -94,7 +105,7 @@ for iii = 1:size(mcodes,1)
         for i = 1:length(Ca)
             X0 = x0;
             
-            output_foldername = [output_mainfolder{2}, '\parms', output_version, '\', modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)];
+            output_foldername = [modelfolder, '\parms', output_version, '\', modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)];
             
             if ~isfolder(output_foldername)
                 mkdir(output_foldername)
@@ -256,8 +267,8 @@ for iii = 1:size(mcodes,1)
                         
                         if save_results
                             cd(output_foldername);
-%                             save(filename, 'tis','Cas','vis','Lis','oFi','parms','ts')
-                            save_model_forces(filename, tis,Cas,vis,Lis,oFi,parms,ts)
+                            save(filename, 'tis','Cas','vis','Lis','oFi','parms','ts')
+%                             save_model_forces(filename, tis,Cas,vis,Lis,oFi,parms,ts)
                         end
                         
                         if visualize
