@@ -1,5 +1,21 @@
 function[] = calc_model_SRS(githubfolder, modelfolder, iii, discretized_model)
+visualize = 0;
 
+% fibers
+iFs = [2,3,5,6,7,8,11];
+fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
+
+% models
+mcodes = [2 2 1; 2 1 1; 1 1 3; 1 1 2; 1 1 1; 1 2 1];
+mcode = mcodes(iii,:);
+
+% conditions
+AMPs = [0 12 38 121 216 288 383 532 682]/10000;
+ISIs = [1 10 50 100 200 316 500 1000 3160 10000]/1000;
+pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
+Ca = 10.^(-pCas+6);
+
+%% folders
 % save folder
 if iii > 2 % biophysical model
     if discretized_model 
@@ -11,24 +27,6 @@ else % Hill-type model
     subfolder = '\Hill\';
 end
 
-model_time_series_folder = [modelfolder, subfolder];
-
-% mcodes = [2 1 1; 1 1 1; 1 1 3; 1 2 1];
-% mcodes = [2 2 1];
-iFs = [2,3,5,6,7,8,11];
-
-mcodes = [2 2 1; 2 1 1; 1 1 3; 1 1 2; 1 1 1; 1 2 1];
-
-AMPs = [0 12 38 121 216 288 383 532 682]/10000;
-ISIs = [1 10 50 100 200 316 500 1000 3160 10000]/1000;
-pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
-Ca = 10.^(-pCas+6);
-fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
-
-% version = 'parms';
-% visualize = 0;
-
-mcode = mcodes(iii,:);
 % models
 models = {'biophysical','Hill', 'PE'};
 
@@ -44,19 +42,22 @@ mvar = mvars{mcode(2)};
 cvar = cvars{mcode(3)};
 
 if strcmp(model,'biophysical')
-    modelname = [model,'_',cvar,'_',mvar];
+    modelname = [model,'_',cvar,'_',mvar];    
 else
     modelname = [model,'_',mvar];
 end
 
-% [output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
+% folder containing the .mat files
+fullmodelfolder = [modelfolder, subfolder];
 
-% outputs
+% folder where output is saved
+outputfolder = [githubfolder, '/biophysical-muscle-model/Model output/SRS/', subfolder];
+
+%% loop over fibers, pCas, AMPs, ISIs
+% pre-allocate
 F0      = nan(length(pCas), length(ISIs),length(AMPs), 11);
 Scond   = nan(length(pCas), length(ISIs),length(AMPs), 11);
 Stest   = nan(length(pCas), length(ISIs),length(AMPs), 11);
-
-visualize = 0;
 
 for iF = iFs
     for i = 1:length(Ca)
@@ -71,9 +72,8 @@ for iF = iFs
                 ISI = ISIs(jj);
                 
                 tiso = dTt*3+dTc*2+ISI + 2;
-                
-                
-                filename = [model_time_series_folder, '\', modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10), '\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
+
+                filename = [fullmodelfolder, '\', modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10), '\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
                 disp(filename)
                 
                 if exist(filename, 'file')
@@ -124,8 +124,6 @@ for iF = iFs
                 else
                     disp('File does not exist')
                 end
-                
-                
             end
         end
     end
@@ -133,16 +131,11 @@ end
 
 
 %% save
-model_time_series_folder = [githubfolder, '\biophysical-muscle-model\Model output\SRS\', subfolder];
-
-if ~isfolder(model_time_series_folder)
-    mkdir(model_time_series_folder)
+if ~isfolder(outputfolder)
+    mkdir(outputfolder)
 end
 
-cd(model_time_series_folder)
+cd(outputfolder)
 save([modelname, '_SRS.mat'])
-
-
-
 
 

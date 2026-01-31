@@ -18,4 +18,7 @@ modelfolder = 'C:\Users\u0167448\Desktop\Model fits';
 % this folder should contain the biophysical-muscle-model repository
 githubfolder = 'C:\Users\u0167448\Documents\GitHub\';
 
+% add the model functions to the path
+addpath(genpath([githubfolder, '\biophysical-muscle-model\Common\']))
+
 end

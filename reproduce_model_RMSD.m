@@ -18,6 +18,6 @@ model = 5;
 % note: only applicable if a biophysical model has been selected
 discretized = 0;
 
-%% Reproduce model SRS
+%% Reproduce model RMSD
 cd([githubfolder, '\biophysical-muscle-model\Process'])
 calc_RMSD(githubfolder, datafolder, modelfolder, model, discretized)

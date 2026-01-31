@@ -1,5 +1,21 @@
 function[] = calc_RMSD(githubfolder, datafolder, modelfolder, iii, discretized_model)
+visualize = 0;
 
+% fibers
+iFs = [2,3,5,6,7,8,11];
+fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
+
+% models
+mcodes = [2 2 1; 2 1 1; 1 1 3; 1 1 2; 1 1 1; 1 2 1];
+mcode = mcodes(iii,:);
+
+% conditions
+AMPs = [0 12 38 121 216 288 383 682]/10000;
+ISIs = [1 10 100 316 1000 3160 10000]/1000;
+pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
+Ca = 10.^(-pCas+6);
+
+%% folders
 % save folder
 if iii > 2 % biophysical model
     if discretized_model 
@@ -10,30 +26,6 @@ if iii > 2 % biophysical model
 else % Hill-type model
     subfolder = '\Hill\';
 end
-
-save_output = 1;
-
-Kss = 1:7;
-tiso = 3;
-
-iFs = [2,3,5,6,7,8,11];
-fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
-mcodes = [2 2 1; 2 1 1; 1 1 3; 1 1 2; 1 1 1; 1 2 1];
-
-visualize = 0;
-
-version = 'parms';
-
-%% calc RMSD
-AMPs = [0 12 38 121 216 288 383 682]/10000;
-ISIs = [1 10 100 316 1000 3160 10000]/1000;
-pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
-Ca = 10.^(-pCas+6);
-
-
-RMSD = nan(length(pCas), length(ISIs), length(AMPs), iFs(end), 7);
-
-mcode = mcodes(iii,:);
 
 % models
 models = {'biophysical','Hill', 'PE'};
@@ -50,18 +42,20 @@ mvar = mvars{mcode(2)};
 cvar = cvars{mcode(3)};
 
 if strcmp(model,'biophysical')
-    modelname = [model,'_',cvar,'_',mvar];
-    
-    if discretized_model
-        fullmodelfolder = [modelfolder, '\Discretized\'];
-    else
-        fullmodelfolder = [modelfolder, '\Approximated\'];
-    end
-    
+    modelname = [model,'_',cvar,'_',mvar];    
 else
     modelname = [model,'_',mvar];
-    fullmodelfolder = [modelfolder, '\Hill\'];
 end
+
+% folder containing the .mat files
+fullmodelfolder = [modelfolder, subfolder];
+
+% folder where output is saved
+outputfolder = [githubfolder, '/biophysical-muscle-model/Model output/RMSD/', subfolder];
+
+%% loop over fibers, pCas, AMPs, ISIs and phases
+% pre-allocate
+RMSD = nan(length(pCas), length(ISIs), length(AMPs), iFs(end), 7);
 
 for iF = iFs
     
@@ -72,6 +66,7 @@ for iF = iFs
         end
     end
     
+    % load data
     cd(fullfolder)
     load([fibers{iF},'.mat'],'data')
     
@@ -96,7 +91,6 @@ for iF = iFs
                     try
                         load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts')
                         
-                        tiso = dTt*3+dTc*2+ISI;
                         
                         mD = AMP == data.AMPs/10000;
                         nD = ISI == data.ISIs/1000;
@@ -167,17 +161,11 @@ end
 
 
 %% save
-
-if save_output
-    fullmodelfolder = [githubfolder, '/biophysical-muscle-model/Model output/RMSD/', subfolder];
-    
-    if ~isfolder(fullmodelfolder)
-        mkdir(fullmodelfolder)
-    end
-    
-    cd(fullmodelfolder)
-    
-    save([modelname, '_RMSD.mat'])
+if ~isfolder(outputfolder)
+    mkdir(outputfolder)
 end
+
+cd(outputfolder)
+save([modelname, '_RMSD.mat'])
 
 

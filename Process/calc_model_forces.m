@@ -1,40 +1,37 @@
 function[] = calc_model_forces(githubfolder, modelfolder, iii, iFs, discretized_model, visualize)
-
-% save folder
-if iii > 2 % biophysical model
-    if discretized_model 
-        savefolder = [modelfolder, '\Discretized\'];
-    else
-        savefolder = [modelfolder, '\Approximated\'];
-    end
-else % Hill-type model
-    savefolder = [modelfolder, '\Hill\'];
-end
-
-addpath(genpath([githubfolder, '\biophysical-muscle-model\Common\']))
-
-% binary inputs
 save_results = 1;
-redo = 0;
-% visualize = 1;
-
-mcodes = [2 2 1; 2 1 1; 1 1 3; 1 1 2; 1 1 1; 1 2 1];
-parms_versions = {'', '', '_v2', '' ,'_v4', '_v4'};
-
-% choose the correct parameters for the model
-parms_version = parms_versions{iii};
+redo = 1;
+% visualize = 0;
 
 % fibers
+% iFs = [2,3,5,6,7,8,11];
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
+% models
+mcodes = [2 2 1; 2 1 1; 1 1 3; 1 1 2; 1 1 1; 1 2 1];
+mcode = mcodes(iii,:);
+
+% choose the correct parameters for the model
+parms_versions = {'', '', '_v2', '' ,'_v4', '_v4'};
+parms_version = parms_versions{iii};
+
 % conditions
-AMPs = [0    0.0012    0.0038    0.0121    0.0216    0.0288    0.0383    0.0532    0.0682];
-ISIs = [ 0.0010    0.0100    0.0500    0.1000    0.2000    0.3160    0.5000    1.0000    3.1600   10.0000];
+AMPs = [0 12 38 121 216 288 383 532 682]/10000;
+ISIs = [1 10 50 100 200 316 500 1000 3160 10000]/1000;
 pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
 Ca = 10.^(-pCas+6);
 
-% load parameters
-mcode = mcodes(iii,:);
+%% folders
+% save folder
+if iii > 2 % biophysical model
+    if discretized_model 
+        subfolder =  '\Discretized\';
+    else
+        subfolder = '\Approximated\';
+    end
+else % Hill-type model
+    subfolder = '\Hill\';
+end
 
 % models
 models = {'biophysical','Hill', 'PE'};
@@ -51,13 +48,15 @@ mvar = mvars{mcode(2)};
 cvar = cvars{mcode(3)};
 
 if strcmp(model,'biophysical')
-    modelname = [model,'_',cvar,'_',mvar];
+    modelname = [model,'_',cvar,'_',mvar];    
 else
     modelname = [model,'_',mvar];
 end
 
-% [~, modelname, ~, ~] = get_folder_and_model(mcode);
+% folder containing the .mat files
+savefolder = [modelfolder, subfolder];
 
+%% loop over fibers, pCas, AMPs, ISIs
 for iF = iFs
     
     % disp(filename)
