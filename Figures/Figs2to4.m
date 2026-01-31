@@ -78,18 +78,18 @@ for j = 1:size(ISIs,1)
             
             % models
             models = {'biophysical','Hill', 'PE'};
-
+            
             % model variations
             mvars = {'regular','alternative'};
-
+            
             % type of cooperativity
             cvars = {'full','thin','no'};
-
+            
             % choose the model version
             model = models{mcode(1)};
             mvar = mvars{mcode(2)};
             cvar = cvars{mcode(3)};
-
+            
             if strcmp(model,'biophysical')
                 modelfilename = [model,'_',cvar,'_',mvar];
                 
@@ -98,13 +98,13 @@ for j = 1:size(ISIs,1)
                 else
                     savefolder = [modelfolder, '\Approximated\'];
                 end
-
+                
             else
-               modelfilename = [model,'_',mvar];
-               savefolder = [modelfolder, '\Hill\'];
+                modelfilename = [model,'_',mvar];
+                savefolder = [modelfolder, '\Hill\'];
             end
-
-%             [~, modelfilename, ~, ~] = get_folder_and_model(mcodes(kk,:));
+            
+            %             [~, modelfilename, ~, ~] = get_folder_and_model(mcodes(kk,:));
             
             filename = [savefolder,'\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
             disp(filename)
@@ -209,8 +209,10 @@ for m = 1:length(years)
     end
 end
 
-cd(fullfolder)
-load([fibers{iF},'.mat'],'data');
+if isfolder(fullfolder)
+    cd(fullfolder)
+    load([fibers{iF},'.mat'],'data');
+end
 
 for j = 1:size(ISIs,1)
     for i = 1:size(ISIs,2)
@@ -222,17 +224,18 @@ for j = 1:size(ISIs,1)
         dt = tiso - sum(Ts);
         
         % plot data
-        cd([githubfolder, 'biophysical-muscle-model\Figures'])
-        [texp, Lexp, Fexp, Tsrel] = get_data(data, ISIs(j,:), AMPs(j,:), pCas(j,:));
-        
-        dtexp = Tsrel(1,2);
-        
-        texp = texp - dtexp - .003;
-        id = texp(:,i) < tmaxs(j);
-        
-        
-        plot(ax(2), texp(id,i), Fexp(id,i)*100, 'color', brighten([.5 .5 .5], bf(j)), 'linewidth', 2, 'linestyle',ls{j});
-        
+        if isfolder(fullfolder)
+            cd([githubfolder, 'biophysical-muscle-model\Figures'])
+            [texp, Lexp, Fexp, Tsrel] = get_data(data, ISIs(j,:), AMPs(j,:), pCas(j,:));
+            
+            dtexp = Tsrel(1,2);
+            
+            texp = texp - dtexp - .003;
+            id = texp(:,i) < tmaxs(j);
+            
+            
+            plot(ax(2), texp(id,i), Fexp(id,i)*100, 'color', brighten([.5 .5 .5], bf(j)), 'linewidth', 2, 'linestyle',ls{j});
+        end
         
         for kk = 1:size(mcodes,1)
             
@@ -260,60 +263,60 @@ end
 
 
 %% plot data
-
-
-for j = 1:size(ISIs,1)
+if isfolder(fullfolder)
     
-    % extra data
-    [texp, Lexp, Fexp, Tsrel] = get_data(data, ISIs(j,:), AMPs(j,:), pCas(j,:));
-    
-    dt(j) = Tsrel(1,2);
-    
-    texp = texp - dt(j) - .003;
-    
-    % add vertical lines
-    if j == jid
-        tids = sort([Tsrel(1,:) .15]) - Tsrel(1,2);
+    for j = 1:size(ISIs,1)
         
-        for ii = 1:(length(tids)-2)
-            for k = 1:8
-                xline(ax(k), tids(ii), ':', 'color', [.5 .5 .5]); hold on
-            end
+        % extra data
+        [texp, Lexp, Fexp, Tsrel] = get_data(data, ISIs(j,:), AMPs(j,:), pCas(j,:));
+        
+        dt(j) = Tsrel(1,2);
+        
+        texp = texp - dt(j) - .003;
+        
+        % add vertical lines
+        if j == jid
+            tids = sort([Tsrel(1,:) .15]) - Tsrel(1,2);
             
-            text(ax(1), mean([tids(ii) tids(ii+1)]), 4.5, phases{ii}, 'Fontsize',7,'HorizontalAlignment','center')
+            for ii = 1:(length(tids)-2)
+                for k = 1:8
+                    xline(ax(k), tids(ii), ':', 'color', [.5 .5 .5]); hold on
+                end
+                
+                text(ax(1), mean([tids(ii) tids(ii+1)]), 4.5, phases{ii}, 'Fontsize',7,'HorizontalAlignment','center')
+            end
         end
-    end
-    
-    % add data
-    for i = 1:size(ISIs,2)
         
-        % only certain samples
-        id = texp(:,i) < tmaxs(j);
-        
-        tmax = max(tmaxs);
-        
-        % length
-        plot(ax(1), texp(id,i), Lexp(id,i)*100, 'color', brighten([.5 .5 .5], bf(j)), 'linewidth', 2, 'linestyle',ls{j});
-        plot(ax(2), texp(id,i), Fexp(id,i)*100, 'color', brighten([.5 .5 .5], bf(j)), 'linewidth', 2, 'linestyle',ls{j});
-        
-        % extra panels
-        if j == 1
-            for k = 1:2
-                for kk = 1:3
-                    plot(ax(kk+2 + (k-1)*3), texp(id,i), Fexp(id,i)*100, 'color', brighten([.5 .5 .5], bf(j)), 'linewidth', 2, 'linestyle',ls{j});
+        % add data
+        for i = 1:size(ISIs,2)
+            
+            % only certain samples
+            id = texp(:,i) < tmaxs(j);
+            
+            tmax = max(tmaxs);
+            
+            % length
+            plot(ax(1), texp(id,i), Lexp(id,i)*100, 'color', brighten([.5 .5 .5], bf(j)), 'linewidth', 2, 'linestyle',ls{j});
+            plot(ax(2), texp(id,i), Fexp(id,i)*100, 'color', brighten([.5 .5 .5], bf(j)), 'linewidth', 2, 'linestyle',ls{j});
+            
+            % extra panels
+            if j == 1
+                for k = 1:2
+                    for kk = 1:3
+                        plot(ax(kk+2 + (k-1)*3), texp(id,i), Fexp(id,i)*100, 'color', brighten([.5 .5 .5], bf(j)), 'linewidth', 2, 'linestyle',ls{j});
+                    end
                 end
             end
         end
     end
+    
+    % legend
+    h = legend(ax(2), 'labels', [{'Data'} modelnames(mid)],'location','bestoutside', 'Fontsize', 8);
+    set(h, 'units','centimeters', 'Position', [4 + tmax*fac 12.5 3.5 1.5])
+    
+    
+    
 end
 
-% legend
-h = legend(ax(2), 'labels', [{'Data'} modelnames(mid)],'location','bestoutside', 'Fontsize', 8);
-set(h, 'units','centimeters', 'Position', [4 + tmax*fac 12.5 3.5 1.5])
-
 end
-
-
-
-
 

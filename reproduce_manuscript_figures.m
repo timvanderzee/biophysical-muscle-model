@@ -1,16 +1,16 @@
 clear all; close all; clc
 
 % this datafolder should contain the subfolders 2017 and 2018
-datafolder = 'C:\Users\u0167448\Desktop\PLOSONE_data';
+datafolder = '';
 
 % this folder should contain model fits
-modelfolder = 'C:\Users\u0167448\Desktop\Model fits 2';
+modelfolder = '';
 
 % this folder should the biophysical-muscle-model repository
-githubfolder = 'C:\Users\u0167448\Documents\GitHub\';
+githubfolder = '';
 
 %% Figures 2-4
-for fig = 2:4
+for fig = 2
     cd([githubfolder, 'biophysical-muscle-model\Figures'])
     Figs2to4(datafolder, modelfolder, githubfolder, fig)
 end
