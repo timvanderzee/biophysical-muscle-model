@@ -5,7 +5,7 @@ fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18De
 iF = 6;
 
 acolors = get_colors;
-discretized_model = 1;
+discretized_model = 0;
 
 % all model codes (corresponding to colors)
 all_mcodes = [2 2 1; 2 1 1; 1 1 3; 1 1 2; 1 1 1; 1 2 1];
@@ -63,6 +63,7 @@ colors      = acolors(mid,:);
 versions    = all_versions(mid);
 mcodes      = all_mcodes(mid,:);
 
+
 %% load model
 
 for j = 1:size(ISIs,1)
@@ -72,10 +73,40 @@ for j = 1:size(ISIs,1)
         AMP = AMPs(j,i);
         
         for kk = 1:size(mcodes,1)
-%             mcode = mcodes(kk,:);
-            [~, modelfilename, ~, ~] = get_folder_and_model(mcodes(kk,:));
-              
-            filename = [modelfolder, '\parms', versions{kk},'\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
+            
+            mcode = mcodes(kk,:);
+            
+            % models
+            models = {'biophysical','Hill', 'PE'};
+
+            % model variations
+            mvars = {'regular','alternative'};
+
+            % type of cooperativity
+            cvars = {'full','thin','no'};
+
+            % choose the model version
+            model = models{mcode(1)};
+            mvar = mvars{mcode(2)};
+            cvar = cvars{mcode(3)};
+
+            if strcmp(model,'biophysical')
+                modelfilename = [model,'_',cvar,'_',mvar];
+                
+                if discretized_model
+                    savefolder = [modelfolder, '\Discretized\'];
+                else
+                    savefolder = [modelfolder, '\Approximated\'];
+                end
+
+            else
+               modelfilename = [model,'_',mvar];
+               savefolder = [modelfolder, '\Hill\'];
+            end
+
+%             [~, modelfilename, ~, ~] = get_folder_and_model(mcodes(kk,:));
+            
+            filename = [savefolder,'\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
             disp(filename)
             
             Mdata(j,i,kk) = load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts');
@@ -83,8 +114,8 @@ for j = 1:size(ISIs,1)
     end
 end
 
-            
- 
+
+
 %% make axes
 figure(fig)
 set(gcf,'units','centimeters','position',[10 2 20 15])

@@ -4,7 +4,7 @@ clear all; close all; clc
 datafolder = 'C:\Users\u0167448\Desktop\PLOSONE_data';
 
 % this folder should contain model fits
-modelfolder = 'C:\Users\u0167448\Desktop\Model fits';
+modelfolder = 'C:\Users\u0167448\Desktop\Model fits 2';
 
 % this folder should the biophysical-muscle-model repository
 githubfolder = 'C:\Users\u0167448\Documents\GitHub\';

@@ -27,8 +27,28 @@ RMSDc = nan(7,7,8,11, 7, size(mcodes,1));
 for p = 1:7 % phases
     for ii = 1:size(mcodes,1)
         
-        [~, filename, ~, ~] = get_folder_and_model(mcodes(ii,:));
+        mcode = mcodes(ii,:);
         
+        % models
+        models = {'biophysical','Hill', 'PE'};
+
+        % model variations
+        mvars = {'regular','alternative'};
+
+        % type of cooperativity
+        cvars = {'full','thin','no'};
+
+        % choose the model version
+        model = models{mcode(1)};
+        mvar = mvars{mcode(2)};
+        cvar = cvars{mcode(3)};
+        
+        if strcmp(model,'biophysical')
+            filename = [model,'_',cvar,'_',mvar];
+        else
+           filename = [model,'_',mvar];
+        end
+
         cd([githubfolder, '\biophysical-muscle-model\Model output\RMSD\', versions{ii}])
         load([filename, '_RMSD.mat'], 'RMSD', 'AMPs', 'ISIs', 'pCas')
         

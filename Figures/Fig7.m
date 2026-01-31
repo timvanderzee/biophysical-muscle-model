@@ -47,10 +47,6 @@ else
     versions = {'parms', 'parms_v3', 'parms_v6'};
 end
 
-% versions = {'parms', 'parms_v3', 'parms_v4d'};
-% versions = {'parms_v3', 'parms_v4', 'parms_v6', 'parms_v4'};
-
-% modelnames =  {'biophysical_full_alternative'};
 acolors = lines(6);
 acolors = [acolors(end,:); acolors];
 
@@ -231,12 +227,10 @@ for k = 1:2
     
     if k == 1
         mcodes = [2 2 1; 2 1 1; 1 1 1];
-        versions = {'parms', 'parms_v3', 'parms_v4d'};
         id = [1, 2, 5];
         
     else
         mcodes = [1 1 1];
-        versions = {'parms_v4d'};
         id = 5;
     end
     
@@ -289,13 +283,39 @@ for k = 1:2
             
             mcode = mcodes(j,:);
             
-            [~, modelfilename, ~, ~] = get_folder_and_model(mcode);
-            
+            % models
+            models = {'biophysical','Hill', 'PE'};
+
+            % model variations
+            mvars = {'regular','alternative'};
+
+            % type of cooperativity
+            cvars = {'full','thin','no'};
+
+            % choose the model version
+            model = models{mcode(1)};
+            mvar = mvars{mcode(2)};
+            cvar = cvars{mcode(3)};
+
+            if strcmp(model,'biophysical')
+                modelfilename = [model,'_',cvar,'_',mvar];
+
+                if discretized_model
+                    savefolder = [modelfolder, '\Discretized\'];
+                else
+                    savefolder = [modelfolder, '\Approximated\'];
+                end
+
+            else
+                modelfilename = [model,'_',mvar];
+                savefolder = [modelfolder, '\Hill\'];
+            end
+                        
             for iF = iFsm
                 pCa = pCai(iF,jj);
                 
                 if ~isnan(pCa)
-                    filename = [modelfolder, '\', versions{j},'\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCa*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
+                    filename = [savefolder, '\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCa*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
                     disp(filename)
                     
                     load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts')
