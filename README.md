@@ -4,13 +4,13 @@ Welcome to this repository!
 
 This repository allows you to use a range of biophysical muscle models and evaluate their predictions of short-range stiffness against experimental data. The models and data are described in detail in our [preprint](https://www.biorxiv.org/content/10.1101/2025.10.31.685881v1). 
 
-There are three types of things you could use this code for:
+There are at least four types of things you could use this code for:
 1. Reproduce the [preprint's](https://www.biorxiv.org/content/10.1101/2025.10.31.685881v1) figures.
 2. Evaluate model predictions
 3. Refit model parameters
 4. Adapt the model(s) to fit your own needs
 
-We recommend that you follow the order shown above. Next, we will provide detail on each of these steps.
+Next, we will provide detail on each of these steps.
 
 ## 0. Set up paths
 Before you get started, you need to set up some paths. Please edit the following lines of code in `get_paths.m`:
