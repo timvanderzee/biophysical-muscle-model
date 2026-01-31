@@ -1,13 +1,7 @@
 clear all; close all; clc
 
-% this datafolder should contain the subfolders 2017 and 2018
-datafolder = '';
-
-% this folder should contain model fits
-modelfolder = '';
-
-% this folder should contain the biophysical-muscle-model repository
-githubfolder = '';
+% get folders
+[datafolder, modelfolder, githubfolder] = get_paths();
 
 %% Figures 2-4: Force traces
 for fig = 2:4

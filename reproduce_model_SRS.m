@@ -1,10 +1,7 @@
 clear all; close all; clc
 
-% this folder should contain model fits
-modelfolder = '';
-
-% this folder should contain the biophysical-muscle-model repository
-githubfolder = '';
+% get folders
+[~, modelfolder, githubfolder] = get_paths();
 
 %% Choose the model
 % 1. Hill-type without SEE

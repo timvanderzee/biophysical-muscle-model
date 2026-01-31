@@ -1,10 +1,7 @@
 clear all; close all; clc
 
-% in this folder the forces will be saved (user's choice)
-outputfolder = '';
-
-% this folder should contain the biophysical-muscle-model repository
-githubfolder = '';
+% get folders
+[~, modelfolder, githubfolder] = get_paths();
 
 %% Choose the fiber
 % valid options: (2,3,5,6,7,8,11);
@@ -31,5 +28,5 @@ discretized = 0;
 % here to obtain all model predictions
 cd([githubfolder, '\biophysical-muscle-model\Process'])
 visualize = 0;
-calc_model_forces(githubfolder, outputfolder, model, fiber, discretized, visualize)
+calc_model_forces(githubfolder, modelfolder, model, fiber, discretized, visualize)
 
