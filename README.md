@@ -19,7 +19,7 @@ Before you get started, you need to set up some paths. Please edit the following
 % this datafolder should contain the subfolders 2017 and 2018
 datafolder = '';
 
-% this folder should contain model fits
+% this folder is where the model fits are or will be saved
 modelfolder = '';
 
 % this folder should contain the biophysical-muscle-model repository
