@@ -56,7 +56,18 @@ color = acolors(id,:);
 for ii = 1:length(modelnames)
     modelname = modelnames{ii};
     
-    cd([githubfolder, '\biophysical-muscle-model\Model output\SRS\', versions{ii}]);
+    if contains(modelname, 'biophysical') % biophysical model
+    if discretized_model 
+        subfolder =  '\Discretized\';
+    else
+        subfolder = '\Approximated\';
+    end
+    
+    else % Hill-type model
+        subfolder = '\Hill\';
+    end
+    
+    cd([githubfolder, '\biophysical-muscle-model\Model output\SRS', subfolder]);
     load([modelname,'_SRS.mat'],'Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
     
     amAMPs = repmat(AMPs, length(ISIs), 1);

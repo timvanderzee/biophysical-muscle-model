@@ -64,7 +64,7 @@ for p = 1:7 % phases
         sISI = .001;
         sAMP = .0383;
         
-        cd([githubfolder, '\biophysical-muscle-model\Model output\SRS\', versions{ii}])
+        cd([githubfolder, '\biophysical-muscle-model\Model output\SRS\Miscellaneous\', versions{ii}])
         load([filename, '_SRS.mat'],'F0', 'AMPs', 'ISIs')
         
         % average

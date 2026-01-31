@@ -144,7 +144,18 @@ type = 'interp';
 
 for kk = 1:length(filenames)
     
-    cd([githubfolder, '\biophysical-muscle-model\Model output\SRS\', versions{kk}])
+    if contains(filenames(kk), 'biophysical') % biophysical model
+    if discretized_model 
+        subfolder =  '\Discretized\';
+    else
+        subfolder = '\Approximated\';
+    end
+    
+    else % Hill-type model
+        subfolder = '\Hill\';
+    end
+    
+    cd([githubfolder, '\biophysical-muscle-model\Model output\SRS', subfolder])
     load(filenames{kk},'Stest', 'Scond', 'AMPs', 'pCas', 'ISIs', 'F0')
  
         % interpolate
@@ -158,7 +169,8 @@ for kk = 1:length(filenames)
                 for k = iFs
                     if sum(isfinite(F0s_m(:,1,7,k))) > 1
                         SRS(:,i,j,k) = Stest(:,i,j,k) ./ Scond(:,1,7,k);
-                        SRSrel_m(:,i,j,k) = interp1(F0s_m(:,1,7,k), SRS(:,i,j,k), Flin, [], 'extrap');
+                        [~, ix] = unique(SRS(:,i,j,k));
+                        SRSrel_m(:,i,j,k) = interp1(F0s_m(ix,1,7,k), SRS(ix,i,j,k), Flin, [], 'extrap');
                     end
                 end
             end
@@ -219,7 +231,19 @@ sACTi = 3;
 
 for kk = 1:length(filenames)
     
-    cd(['C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Model output\SRS\', versions{kk}])
+    if contains(filenames(kk), 'biophysical') % biophysical model
+    if discretized_model 
+        subfolder =  '\Discretized\';
+    else
+        subfolder = '\Approximated\';
+    end
+    
+    else % Hill-type model
+        subfolder = '\Hill\';
+    end
+    
+    cd([githubfolder, '\biophysical-muscle-model\Model output\SRS', subfolder])
+    
     load(filenames{kk},'Stest', 'Scond', 'AMPs', 'pCas', 'ISIs', 'F0')
     
     % interpolate
@@ -233,7 +257,8 @@ for kk = 1:length(filenames)
             for k = iFs
                 if sum(isfinite(F0s_m(:,1,7,k))) > 1
                     SRS(:,i,j,k) = Stest(:,i,j,k) ./ Scond(:,1,7,k);
-                    SRSrel_m(:,i,j,k) = interp1(F0s_m(:,1,7,k), SRS(:,i,j,k), Flin, [], 'extrap');
+                    [~, ix] = unique(SRS(:,i,j,k));
+                    SRSrel_m(:,i,j,k) = interp1(F0s_m(ix,1,7,k), SRS(ix,i,j,k), Flin, [], 'extrap');
                 end
             end
         end
