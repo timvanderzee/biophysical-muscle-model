@@ -54,10 +54,28 @@ outputfolder = '';
 githubfolder = '';
 ```
 
-Running this script for all fibers, models and methods should result in a folder containing all model time-series. The folder is specified by the user in `outputfolder`. If this folder is then used as `modelfolder` in `reproduce_manuscript_figures.m`, Figures 2-4 and Figure 7 can be reproduced. 
+Running this script for all fibers, models and methods should result in a folder containing all model time-series. The model time-series should be identical to those from the pre-print, provided that the model dynamics and model parameters are not changed. The folder in which time-seris are saved is specified by the user in `outputfolder`. If this folder is then used as `modelfolder` in `reproduce_manuscript_figures.m`, the model traces of Figures 2-4 and Figure 7 can be produced. 
 
 ## 2. Evaluate model predictions for a range of conditions
 
+### Reproduce short-range stiffness predictions
+If you have evaluated the models and obtained the model predictions of time-series (see above), you can reproduce the short-range stiffness (SRS) model predictions. Note: SRS model predictions are already provided in this repository (i.e. in `biophysical-muscle-models/Model output/SRS`).
+
+To reproduce model SRS predictions, run `reproduce_model_SRS.m`
+
+Similar to as before, you need to provide the folders:
+
+``` bash
+% this folder should contain model fits
+modelfolder = '';
+
+% this folder should contain the biophysical-muscle-model repository
+githubfolder = '';
+```
+Running this script for all fibers, models and methods should replace all the SRS predictions in this repository with new values. These should be identical to the ones provided. 
+
+### Reproduce model force RMSDs
+If you have evaluated the models and obtained the model predictions of time-series (see above), and if you have the experimental time-series (reviewers only at the moment), you can reproduce the model force RMSDs.  Note: model force RMSDs are already provided in this repository (i.e. in `biophysical-muscle-models/Model output/RMSD`).
 
 ## 3. Refit model parameters
 
