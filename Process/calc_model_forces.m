@@ -11,10 +11,6 @@ fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18De
 mcodes = [2 2 1; 2 1 1; 1 1 3; 1 1 2; 1 1 1; 1 2 1];
 mcode = mcodes(iii,:);
 
-% choose the correct parameters for the model
-parms_versions = {'', '', '_v2', '' ,'_v4', '_v4'};
-parms_version = parms_versions{iii};
-
 % conditions
 AMPs = [0 12 38 121 216 288 383 532 682]/10000;
 ISIs = [1 10 50 100 200 316 500 1000 3160 10000]/1000;
@@ -62,7 +58,7 @@ for iF = iFs
     % disp(filename)
     input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
     cd(input_foldername)
-    load(['parms_',modelname, parms_version, '.mat'], 'newparms')
+    load(['parms_',modelname, '.mat'], 'newparms')
     
     cd([githubfolder, '\biophysical-muscle-model\Parameters'])
     allparms(iF) = update_parms(newparms);
