@@ -86,7 +86,7 @@ for ii = 1:length(modelnames)
     % activation
     k = 2;
     
-    fig = figure(1)
+    fig = figure(7)
     subplot(3,3,ii)
     surf(amAMPs*100, amISIs, squeeze(mean(SRSrel_m(k,:,:,iFsm), 4, 'omitnan')),'edgecolor',[.8 .8 .8],'linestyle','-','Facealpha',.7,'linewidth',.5); hold on
     surf(aeAMPs*100,aeISIs, 0*ones(size(squeeze(aeISIs))),'facecolor', [1 1 1],'edgecolor', 'none'); hold on
@@ -139,7 +139,7 @@ for ii = 1:length(modelnames)
 end
 
 %%
-figure(1)
+figure(7)
 
 subplot(331)
 h = axes(fig,'visible','off');
@@ -213,7 +213,7 @@ for k = 1:2
     end
     
     %%
-    figure(1)
+    figure(7)
     
     % pCai(:,end) = 9;
     % t0 = 0;
@@ -223,7 +223,7 @@ for k = 1:2
     oFis = nan(max(iFsm), 4000);
     
     % close all
-    % figure(1)
+    % figure(7)
     
     if k == 1
         mcodes = [2 2 1; 2 1 1; 1 1 1];
@@ -318,12 +318,16 @@ for k = 1:2
                     filename = [savefolder, '\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCa*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
                     disp(filename)
                     
-                    load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts')
+                    if isfile(filename)
+                        load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts')
+                    else
+                        return
+                    end
                     
                     oFis(iF, 1:length(oFi)) = oFi;
                 end
                 
-                %         figure(1)
+                %         figure(7)
                 %         plot(tis, oFi, 'color', color(j,:)); hold on
                 
                 
@@ -349,7 +353,7 @@ for k = 1:2
 end
 
 %% size
-figure(1)
+figure(7)
 
 for i = 1:3
     subplot(3,3,i)
@@ -372,7 +376,7 @@ title('Stretch-shortening + short recovery \rightarrow reduced short-range stiff
 subplot(3,3,[7 9])
 title('Stretch-shortening + long recovery \rightarrow no stiffness reduction', 'fontsize', 8, 'HorizontalAlignment', 'center')
 %%
-figure(1)
+figure(7)
 set(gcf,'units','centimeters','position',[10 1 18 18])
 
 

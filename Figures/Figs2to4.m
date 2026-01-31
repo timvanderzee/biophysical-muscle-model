@@ -109,7 +109,11 @@ for j = 1:size(ISIs,1)
             filename = [savefolder,'\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
             disp(filename)
             
-            Mdata(j,i,kk) = load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts');
+            if isfile(filename)
+                Mdata(j,i,kk) = load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts');
+            else
+                return
+            end
         end
     end
 end

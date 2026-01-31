@@ -6,11 +6,11 @@ datafolder = '';
 % this folder should contain model fits
 modelfolder = '';
 
-% this folder should the biophysical-muscle-model repository
+% this folder should contain the biophysical-muscle-model repository
 githubfolder = '';
 
 %% Figures 2-4
-for fig = 2
+for fig = 2:4
     cd([githubfolder, 'biophysical-muscle-model\Figures'])
     Figs2to4(datafolder, modelfolder, githubfolder, fig)
 end
