@@ -6,15 +6,15 @@ color = get_colors();
 
 modelnames = {'Hill (no SE)', 'Hill (with SE)', '2-state XB', '2-state coop', '3-state coop', '4-state coop'};
 
-savefig = 1;
+% savefig = 1;
 iFs = [2,3,5,6,7,8,11];
 discretized_model = 1;
 
-if discretized_model
-    versions = {'parms', 'parms_v4','parms_v4d', 'parms_v4d', 'parms_v4d', 'parms_v4d'};
-else
-    versions = {'parms', 'parms_v4', 'parms_v4','parms','parms_v6', 'parms_v6'};
-end
+% if discretized_model
+%     versions = {'parms', 'parms_v4','parms_v4d', 'parms_v4d', 'parms_v4d', 'parms_v4d'};
+% else
+%     versions = {'parms', 'parms_v4', 'parms_v4','parms','parms_v6', 'parms_v6'};
+% end
 
 %% load RMSD
 % thresholds
@@ -49,7 +49,18 @@ for p = 1:7 % phases
            filename = [model,'_',mvar];
         end
 
-        cd([githubfolder, '\biophysical-muscle-model\Model output\RMSD\', versions{ii}])
+        if contains(filename, 'biophysical') % biophysical model
+            if discretized_model 
+                subfolder =  '\Discretized\';
+            else
+                subfolder = '\Approximated\';
+            end
+
+        else % Hill-type model
+            subfolder = '\Hill\';
+        end
+    
+        cd([githubfolder, '\biophysical-muscle-model\Model output\RMSD', subfolder])
         load([filename, '_RMSD.mat'], 'RMSD', 'AMPs', 'ISIs', 'pCas')
         
         sAMPs = AMPs;
@@ -64,7 +75,7 @@ for p = 1:7 % phases
         sISI = .001;
         sAMP = .0383;
         
-        cd([githubfolder, '\biophysical-muscle-model\Model output\SRS\Miscellaneous\', versions{ii}])
+        cd([githubfolder, '\biophysical-muscle-model\Model output\SRS', subfolder])
         load([filename, '_SRS.mat'],'F0', 'AMPs', 'ISIs')
         
         % average
