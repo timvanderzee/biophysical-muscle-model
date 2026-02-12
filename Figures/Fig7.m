@@ -181,45 +181,45 @@ thmax = [2 .7 .3];
 ISIs = [.001 1];
 
 
+if ~isempty(datafolder)
+    for k = 1:2
+        ISI = ISIs(k);
 
-for k = 1:2
-    ISI = ISIs(k);
-    
-    for iF = iFsm
-        years = {'2017', '2018'};
-        for m = 1:length(years)
-            if contains(fibers{iF}, years{m})
-                fullfolder = [datafolder, '\', years{m}];
+
+        for iF = iFsm
+            years = {'2017', '2018'};
+            for m = 1:length(years)
+                if contains(fibers{iF}, years{m})
+                    fullfolder = [datafolder, '\', years{m}];
+                end
             end
-        end
-        
-        cd(fullfolder)
-        load([fibers{iF},'.mat'],'data');
-        
-        %     figure(k+10)
-        %     nexttile
-        
-        for j = 1:length(thmin)
-            
-            for i = 1:length(pCas)
-                pCa = pCas(i);
-                cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Figures'))
-                [texp, Lexp, Fexp, Tsrel] = get_data(data, ISI, AMP, pCa);
-                
-                Fiso = mean(Fexp(texp<-.5), 'omitnan');
-                
-                if Fiso < thmax(j) && Fiso > thmin(j)
-                    
-                    Fexps(:,iF,j,k) = interp1(texp(isfinite(Fexp)), Fexp(isfinite(Fexp)), tlin);
-                    pCai(iF,j) = pCa;
-                    
-                    %                 plot(texp, Fexp,'-', tlin, Fexps(:,iF,j),'.'); hold on
-                    %                 xlim([-1 1])
-                    break
+
+            cd(fullfolder)
+            load([fibers{iF},'.mat'],'data');
+
+
+            for j = 1:length(thmin)
+
+                for i = 1:length(pCas)
+                    pCa = pCas(i);
+                    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Figures'))
+                    [texp, Lexp, Fexp, Tsrel] = get_data(data, ISI, AMP, pCa);
+
+                    Fiso = mean(Fexp(texp<-.5), 'omitnan');
+
+                    if Fiso < thmax(j) && Fiso > thmin(j)
+
+                        Fexps(:,iF,j,k) = interp1(texp(isfinite(Fexp)), Fexp(isfinite(Fexp)), tlin);
+                        pCai(iF,j) = pCa;
+
+                        %                 plot(texp, Fexp,'-', tlin, Fexps(:,iF,j),'.'); hold on
+                        %                 xlim([-1 1])
+                        break
+                    end
                 end
             end
         end
-    end
+    
     
     %%
     figure(7)
@@ -359,6 +359,7 @@ for k = 1:2
             
         end
     end
+end
 end
 
 %% size
