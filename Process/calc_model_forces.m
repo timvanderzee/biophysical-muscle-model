@@ -17,50 +17,18 @@ ISIs = [1 10 50 100 200 316 500 1000 3160 10000]/1000;
 pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
 Ca = 10.^(-pCas+6);
 
-%% folders
-% save folder
-if iii > 2 % biophysical model
-    if discretized_model 
-        subfolder =  '\Discretized\';
-    else
-        subfolder = '\Approximated\';
-    end
-else % Hill-type model
-    subfolder = '\Hill\';
-end
-
-% models
-models = {'biophysical','Hill', 'PE'};
-
-% model variations
-mvars = {'regular','alternative'};
-
-% type of cooperativity
-cvars = {'full','thin','no'};
-
-% choose the model version
-model = models{mcode(1)};
-mvar = mvars{mcode(2)};
-cvar = cvars{mcode(3)};
-
-if strcmp(model,'biophysical')
-    modelname = [model,'_',cvar,'_',mvar];    
-else
-    modelname = [model,'_',mvar];
-end
-
 % folder containing the .mat files
-savefolder = [modelfolder, subfolder];
+[savefolder, ~, modelname] = get_model_folder(modelfolder, mcode, discretized_model);
 
 %% loop over fibers, pCas, AMPs, ISIs
 for iF = iFs
     
     % disp(filename)
-    input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
+    input_foldername = fullfile(githubfolder, 'biophysical-muscle-model', 'Parameters',fibers{iF});
     cd(input_foldername)
     load(['parms_',modelname, '.mat'], 'newparms')
     
-    cd([githubfolder, '\biophysical-muscle-model\Parameters'])
+    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Parameters'))
     allparms(iF) = update_parms(newparms);
 end
 
@@ -109,7 +77,7 @@ for k = 1:length(iFs)
     for i = 1:length(Ca)
         X0 = x0;
         
-        output_foldername = [savefolder, '\', modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)];
+        output_foldername = fullfile(savefolder, modelname,fibers{iF}, ['pCa=',num2str(pCas(i)*10)]);
         
         if ~isfolder(output_foldername)
             mkdir(output_foldername)
@@ -127,16 +95,16 @@ for k = 1:length(iFs)
             for jj = 1:length(ISIs)
                 ISI = ISIs(jj);
                 
-                filename = [output_foldername, '\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
+                filename = fullfile(output_foldername, [fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat']);
                 
                 if ~exist(filename, 'file') || ~save_results || redo
-                    disp(filename);
+                   
                     tiso = dTt*3+dTc*2+ISI + 2;
                     
                     dt = .001; % gives 10 points in SRS zone
                     N = round(tiso / dt);
                     
-                    cd([githubfolder, '\biophysical-muscle-model\Functions\'])
+                    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Functions'))
                     [tis, Cas, Lis, vis, ts, Ts] = create_input(tiso, dTt, dTc, ISI, Ca(i), N);
                     
                     parms.ti = tis;
@@ -263,6 +231,7 @@ for k = 1:length(iFs)
                     %                         xs = sol.y(:,end);
                     
                     if save_results
+                        disp(['Saving ', filename]);
                         cd(output_foldername);
                         save(filename, 'tis','Cas','vis','Lis','oFi','parms','ts')
                         %                             save_model_forces(filename, tis,Cas,vis,Lis,oFi,parms,ts)

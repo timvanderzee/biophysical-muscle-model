@@ -76,37 +76,10 @@ for j = 1:size(ISIs,1)
             
             mcode = mcodes(kk,:);
             
-            % models
-            models = {'biophysical','Hill', 'PE'};
-            
-            % model variations
-            mvars = {'regular','alternative'};
-            
-            % type of cooperativity
-            cvars = {'full','thin','no'};
-            
-            % choose the model version
-            model = models{mcode(1)};
-            mvar = mvars{mcode(2)};
-            cvar = cvars{mcode(3)};
-            
-            if strcmp(model,'biophysical')
-                modelfilename = [model,'_',cvar,'_',mvar];
-                
-                if discretized_model
-                    savefolder = [modelfolder, '\Discretized\'];
-                else
-                    savefolder = [modelfolder, '\Approximated\'];
-                end
-                
-            else
-                modelfilename = [model,'_',mvar];
-                savefolder = [modelfolder, '\Hill\'];
-            end
-            
-            %             [~, modelfilename, ~, ~] = get_folder_and_model(mcodes(kk,:));
-            
-            filename = [savefolder,'\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
+            cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Process'))
+            [fullmodelfolder, ~, modelfilename] = get_model_folder(modelfolder, mcode, discretized_model);
+                       
+            filename = [fullmodelfolder,'\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
             disp(filename)
             
             if isfile(filename)
@@ -202,14 +175,10 @@ end
 bf = [0 .5 0];
 
 % load data
-% [output_mainfolder, filename, ~, ~] = get_folder_and_model(mcodes(1,:));
-% cd([output_mainfolder{2},'\data'])
-
-
 years = {'2017', '2018'};
 for m = 1:length(years)
     if contains(fibers{iF}, years{m})
-        fullfolder = [datafolder, '\', years{m}];
+        fullfolder = fullfile(datafolder, years{m});
     end
 end
 
@@ -229,7 +198,7 @@ for j = 1:size(ISIs,1)
         
         % plot data
         if isfolder(fullfolder)
-            cd([githubfolder, 'biophysical-muscle-model\Figures'])
+            cd(fullfile(githubfolder, 'biophysical-muscle-model','Figures'))
             [texp, Lexp, Fexp, Tsrel] = get_data(data, ISIs(j,:), AMPs(j,:), pCas(j,:));
             
             dtexp = Tsrel(1,2);

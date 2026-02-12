@@ -68,7 +68,7 @@ ISIid = find(eISIs==sISI);
 AMPid = find(eAMPs==sAMP);
 
 % [username, githubfolder] = get_paths();
-cd([githubfolder, '\biophysical-muscle-model\Data'])
+cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Data'))
 load('SRS_data_v3.mat', 'SRS_pre', 'F0', 'SRS_post')
 
 % average some pCas
@@ -146,16 +146,16 @@ for kk = 1:length(filenames)
     
     if contains(filenames(kk), 'biophysical') % biophysical model
     if discretized_model 
-        subfolder =  '\Discretized\';
+        subfolder =  'Discretized';
     else
-        subfolder = '\Approximated\';
+        subfolder = 'Approximated';
     end
     
     else % Hill-type model
-        subfolder = '\Hill\';
+        subfolder = 'Hill';
     end
     
-    cd([githubfolder, '\biophysical-muscle-model\Model output\SRS', subfolder])
+    cd(fullfile(githubfolder, 'biophysical-muscle-model','Model output', 'SRS', subfolder))
     load(filenames{kk},'Stest', 'Scond', 'AMPs', 'pCas', 'ISIs', 'F0')
  
         % interpolate
@@ -233,16 +233,16 @@ for kk = 1:length(filenames)
     
     if contains(filenames(kk), 'biophysical') % biophysical model
     if discretized_model 
-        subfolder =  '\Discretized\';
+        subfolder =  'Discretized';
     else
-        subfolder = '\Approximated\';
+        subfolder = 'Approximated';
     end
     
     else % Hill-type model
-        subfolder = '\Hill\';
+        subfolder = 'Hill';
     end
     
-    cd([githubfolder, '\biophysical-muscle-model\Model output\SRS', subfolder])
+    cd(fullfile(githubfolder, 'biophysical-muscle-model','Model output', 'SRS', subfolder))
     
     load(filenames{kk},'Stest', 'Scond', 'AMPs', 'pCas', 'ISIs', 'F0')
     

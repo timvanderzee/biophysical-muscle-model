@@ -9,8 +9,7 @@ Cid = tid(1);
 ISIid = tid(2);
 AMPid = tid(3);
 
-% [username, githubfolder] = get_paths();
-cd([githubfolder, '\biophysical-muscle-model\Data'])
+cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Data'))
 load('SRS_data_v3.mat', 'SRS_pre', 'F0', 'SRS_post')
 
 % average some pCas
@@ -58,16 +57,16 @@ for ii = 1:length(modelnames)
     
     if contains(modelname, 'biophysical') % biophysical model
     if discretized_model 
-        subfolder =  '\Discretized\';
+        subfolder =  'Discretized';
     else
-        subfolder = '\Approximated\';
+        subfolder = 'Approximated';
     end
     
     else % Hill-type model
-        subfolder = '\Hill\';
+        subfolder = 'Hill';
     end
     
-    cd([githubfolder, '\biophysical-muscle-model\Model output\SRS', subfolder]);
+    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Model output', 'SRS', subfolder));
     load([modelname,'_SRS.mat'],'Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
     
     amAMPs = repmat(AMPs, length(ISIs), 1);
@@ -161,7 +160,6 @@ set(h, 'Clim', [.6 1.1])
 
 %% plot force traces
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
-% cd('C:\Users\u0167448\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data')
 
 iFsm = [2,3,5,6,7,8,11];
 AMP = .0383;
@@ -205,7 +203,7 @@ for k = 1:2
             
             for i = 1:length(pCas)
                 pCa = pCas(i);
-                cd([githubfolder, 'biophysical-muscle-model\Figures'])
+                cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Figures'))
                 [texp, Lexp, Fexp, Tsrel] = get_data(data, ISI, AMP, pCa);
                 
                 Fiso = mean(Fexp(texp<-.5), 'omitnan');

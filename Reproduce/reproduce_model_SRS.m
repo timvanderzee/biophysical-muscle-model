@@ -1,4 +1,5 @@
 clear all; close all; clc
+cd ..
 
 % get folders
 [~, modelfolder, githubfolder] = get_paths();
@@ -19,5 +20,5 @@ model = 5;
 discretized = 0;
 
 %% Reproduce model SRS
-cd([githubfolder, '\biophysical-muscle-model\Process'])
+cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Process'))
 calc_model_SRS(githubfolder, modelfolder, model, discretized)

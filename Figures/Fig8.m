@@ -1,10 +1,10 @@
 function[] = Fig8(githubfolder)
 
-cd([githubfolder, 'biophysical-muscle-model\Model output'])
+cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Model output'))
 load('output_effect_of_bins_on_cost.mat')
 titles = {'Fixed strain range (± 15 \epsilon_{ps})', ['Fixed bin width (', num2str(bw), ' \epsilon_{ps})']};
 
-figure(3)
+figure(8)
 
 % color = get(gca,'colororder');
 color = flip(copper(3));
@@ -79,7 +79,7 @@ end
 
 % plot approximated
 f = 3;
-figure(3)
+figure(8)
 
 for j = 1:2 % tests       
     subplot(2,3,(j-1)*3+1)
@@ -93,7 +93,7 @@ for j = 1:2 % tests
 end
 
 %%
-figure(3)
+figure(8)
 % add second y-axis
 N = length(tvec);
 
@@ -118,7 +118,7 @@ end
 
 
 %%
-figure(3)
+figure(8)
 set(gcf,'units','centimeters','position',[5 2 19 10])
 
 subplot(231)
@@ -135,6 +135,6 @@ cd('C:\Users\u0167448\OneDrive\9. Short-range stiffness\figures\MAT')
 figname = 'Fig10.png';
 savefig = 1;
 if savefig
-    figure(3)
+    figure(8)
     exportgraphics(gcf,figname)
 end

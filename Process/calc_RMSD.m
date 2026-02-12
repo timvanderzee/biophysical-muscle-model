@@ -15,43 +15,11 @@ ISIs = [1 10 100 316 1000 3160 10000]/1000;
 pCas = [4.5 6.1 6.2 6.3 6.4 6.6 9];
 Ca = 10.^(-pCas+6);
 
-%% folders
-% save folder
-if iii > 2 % biophysical model
-    if discretized_model 
-        subfolder =  '\Discretized\';
-    else
-        subfolder = '\Approximated\';
-    end
-else % Hill-type model
-    subfolder = '\Hill\';
-end
-
-% models
-models = {'biophysical','Hill', 'PE'};
-
-% model variations
-mvars = {'regular','alternative'};
-
-% type of cooperativity
-cvars = {'full','thin','no'};
-
-% choose the model version
-model = models{mcode(1)};
-mvar = mvars{mcode(2)};
-cvar = cvars{mcode(3)};
-
-if strcmp(model,'biophysical')
-    modelname = [model,'_',cvar,'_',mvar];    
-else
-    modelname = [model,'_',mvar];
-end
-
-% folder containing the .mat files
-fullmodelfolder = [modelfolder, subfolder];
+% get folders and names
+[fullmodelfolder, subfolder, modelname] = get_model_folder(modelfolder, mcode, discretized_model);
 
 % folder where output is saved
-outputfolder = [githubfolder, '/biophysical-muscle-model/Model output/RMSD/', subfolder];
+outputfolder = fullfile(githubfolder, 'biophysical-muscle-model', 'Model output', 'RMSD', subfolder);
 
 %% loop over fibers, pCas, AMPs, ISIs and phases
 % pre-allocate
@@ -62,7 +30,7 @@ for iF = iFs
     years = {'2017', '2018'};
     for m = 1:length(years)
         if contains(fibers{iF}, years{m})
-            fullfolder = [datafolder, '\', years{m}];
+            fullfolder = fullfile(datafolder, years{m});
         end
     end
     
@@ -72,7 +40,7 @@ for iF = iFs
     
     for i = 1:length(Ca)
         cd(fullmodelfolder)
-        cd([modelname,'\',fibers{iF}, '\pCa=',num2str(pCas(i)*10)])
+        cd(fullfile(modelname,fibers{iF}, ['pCa=',num2str(pCas(i)*10)]))
         
         for m = 1:length(AMPs)
             

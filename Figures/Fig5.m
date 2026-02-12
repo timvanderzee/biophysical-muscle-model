@@ -29,39 +29,11 @@ for p = 1:7 % phases
         
         mcode = mcodes(ii,:);
         
-        % models
-        models = {'biophysical','Hill', 'PE'};
-
-        % model variations
-        mvars = {'regular','alternative'};
-
-        % type of cooperativity
-        cvars = {'full','thin','no'};
-
-        % choose the model version
-        model = models{mcode(1)};
-        mvar = mvars{mcode(2)};
-        cvar = cvars{mcode(3)};
+        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Process'))        
+        [~, subfolder, modelname] = get_model_folder('', mcode, discretized_model);
         
-        if strcmp(model,'biophysical')
-            filename = [model,'_',cvar,'_',mvar];
-        else
-           filename = [model,'_',mvar];
-        end
-
-        if contains(filename, 'biophysical') % biophysical model
-            if discretized_model 
-                subfolder =  '\Discretized\';
-            else
-                subfolder = '\Approximated\';
-            end
-
-        else % Hill-type model
-            subfolder = '\Hill\';
-        end
-    
-        cd([githubfolder, '\biophysical-muscle-model\Model output\RMSD', subfolder])
-        load([filename, '_RMSD.mat'], 'RMSD', 'AMPs', 'ISIs', 'pCas')
+        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Model output', 'RMSD', subfolder))
+        load([modelname, '_RMSD.mat'], 'RMSD', 'AMPs', 'ISIs', 'pCas')
         
         sAMPs = AMPs;
         sISIs = ISIs;
@@ -75,8 +47,8 @@ for p = 1:7 % phases
         sISI = .001;
         sAMP = .0383;
         
-        cd([githubfolder, '\biophysical-muscle-model\Model output\SRS', subfolder])
-        load([filename, '_SRS.mat'],'F0', 'AMPs', 'ISIs')
+        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Model output', 'SRS', subfolder))
+        load([modelname, '_SRS.mat'],'F0', 'AMPs', 'ISIs')
         
         % average
         for k = iFs

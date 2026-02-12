@@ -1,4 +1,5 @@
 clear all; close all; clc
+cd .. 
 
 % get folders
 [~, modelfolder, githubfolder] = get_paths();
@@ -26,7 +27,7 @@ discretized = 0;
 %% Calculate model time-series
 % note: you could insert nested for loops across fibers, models and methods
 % here to obtain all model predictions
-cd([githubfolder, '\biophysical-muscle-model\Process'])
+cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Process'))
 visualize = 0;
 calc_model_forces(githubfolder, modelfolder, model, fiber, discretized, visualize)
 
