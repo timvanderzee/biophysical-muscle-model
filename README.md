@@ -9,23 +9,8 @@ There are a few things you could use this code for:
 2. To refit model parameters, go to: 
 3. To adapt the model(s) to fit your own needs, see: 
 
-Next, we will provide detail on each of these steps.
-
 ## Before you start: set up your local paths
-Before you get started, you need to set up some paths. Please edit the following lines of code in `get_paths.m`:
-
-```bash
-% this datafolder should contain the subfolders 2017 and 2018
-datafolder = '';
-
-% this folder is where the model fits are or will be saved
-modelfolder = '';
-
-% this folder should contain the biophysical-muscle-model repository
-githubfolder = '';
-```
-
-Note: `githubfolder` is always required, `modelfolder` is only required if you are looking to reproduce model time-series, and `datafolder` is only required if you are looking to reproduce data time-series. 
+Please edit `get_paths.m` and specify `githubfolder`, `outputfolder`, and `datafolder`. Note: `githubfolder` is always required, `outputfolder` is only required if you are looking to reproduce model time-series, and `datafolder` is only required if you are looking to reproduce data time-series. 
 
 ## Contact
 If you have any questions regarding this repository, please contact me at tim.vanderzee@kuleuven.be
