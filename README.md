@@ -5,7 +5,7 @@ Welcome to this repository!
 This repository allows you to use a range of biophysical muscle models and evaluate their predictions of short-range stiffness against experimental data. The models and data are described in detail in our [preprint](https://www.biorxiv.org/content/10.1101/2025.10.31.685881v1). 
 
 There are a few things you could use this code for:
-1. To reproduce the [preprint's](https://www.biorxiv.org/content/10.1101/2025.10.31.685881v1) results and figures, go to [Reproduce results](https://github.com/timvanderzee/biophysical-muscle-model/tree/main/Reproduce). 
+1. To reproduce the [preprint's](https://www.biorxiv.org/content/10.1101/2025.10.31.685881v1) results and figures, go to [biophysical-muscle-model/Reproduce](https://github.com/timvanderzee/biophysical-muscle-model/tree/main/Reproduce). 
 2. To refit model parameters, go to: 
 3. To adapt the model(s) to fit your own needs, see: 
 
