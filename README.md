@@ -26,7 +26,10 @@ modelfolder = '';
 githubfolder = '';
 ```
 
-Note: not all figures require all three folders (see Table below)
+Note: `githubfolder` is always required, `modelfolder` is only required if you are reproducing model time-series, and `datafolder` is only required if you are reproducing data time-series. Not all figures require model and data time-series (see **Table 1: Figure dependencies**). 
+
+## 1. Reproduce the preprint figures
+To reproduce the preprint figures, run `reproduce_manuscript_figures.m`. 
 
 **Table 1: Figure dependencies**
 | Figure | GitHub     | Model (time-series) | Data (time-series)    |
@@ -37,18 +40,16 @@ Note: not all figures require all three folders (see Table below)
 | Figure 7         | ☑️  | ☑️             | Optional |
 | Figure 8         | ☑️  | Not required    | Not required |
 
-## 1. Reproduce the preprint figures
-To reproduce the preprint figures, run `reproduce_manuscript_figures.m`. 
 
 Note: Figures 2-4 and Figure 7 require model time-series. These are not provided, but can be obtained from the provided models and parameter values in this repository, explained below. The data time-series is only provided to manuscript reviewers (as supplementary information), and will be available open-access upon publication. Figures 2-4 and Figure 7 can still be produced without the data, but then only the model traces are shown. 
 
-### Obtain model predictions of time-series
-To obtain the model time-series, run `reproduce_model_fits.m`. 
+### Obtaining model time-series
+To obtain the model time-series (needed for some of the figures, see **Table 1: Figure dependencies**), run `reproduce_model_fits.m`. 
 
-Note: running this script for all fibers, models and methods should result in a folder containing all model time-series. The model time-series should be identical to those from the pre-print, provided that the model dynamics and model parameters are not changed. The folder in which time-seris are saved is specified by the user in `outputfolder`. If this folder is then used as `modelfolder` in `reproduce_manuscript_figures.m`, the model traces of Figures 2-4 and Figure 7 can be produced. 
+Note: running this script for all fibers, models and methods should result in a folder containing all model time-series. The model time-series should be identical to those from the pre-print, provided that the model code and parameters are not changed. The folder in which time-seris are saved is specified by the user in `outputfolder`. If this folder is then used as `modelfolder` in `reproduce_manuscript_figures.m`, the model traces of Figures 2-4 and Figure 7 can be produced. 
 
 ## 2. Evaluate model predictions
-If you have evaluated the models and obtained the model predictions of time-series (see above), you can reproduce the short-range stiffness (SRS) model predictions. If you additionally have the experimental time-series (reviewers only), you can also reproduce the model force RMSDs. Note: SRS model predictions and force RMSDs are already provided in this repository (i.e. in `biophysical-muscle-models/Model output`). Reproducing them is just meant to verify that the model time-series calculated above indeed yield the SRS predictions and RMSDs provided in this repository.
+If you have obtained the model time-series (see above), you can reproduce the model short-range stiffness (SRS) predictions. If you additionally have the experimental time-series (reviewers only), you can also reproduce the model force RMSDs. Note: SRS model predictions and force RMSDs are already provided in this repository (see `biophysical-muscle-models/Model output`). Reproducing them is just meant to verify that the model time-series calculated above indeed yield the SRS predictions and RMSDs provided in this repository.
 
 ### Reproduce short-range stiffness predictions
 To reproduce model SRS predictions, run `reproduce_model_SRS.m`
