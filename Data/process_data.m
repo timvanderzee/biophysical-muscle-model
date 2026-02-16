@@ -5,12 +5,12 @@ clear all; close all; clc
 % note: these are currently not provided
 datafolder = '';
 current_folder = cd; % needs to be the folder where this script lives
+addpath(genpath(fullfile(current_folder, 'Processing')))
 
 %% reorganize stretch-shortening data
 raw_datafolder = fullfile(datafolder, 'Transformed Raw Data to Matlab');
 reorganized_datafolder = fullfile(datafolder, 'Reorganized Data');
 
-cd(current_folder)
 reorganize_data(raw_datafolder, reorganized_datafolder)
 % result: e.g., 6Aug2018a_reorganized.mat
 
@@ -18,7 +18,6 @@ reorganize_data(raw_datafolder, reorganized_datafolder)
 activation_datafolder = fullfile(datafolder, 'Activation Data');
 force_pCa_folder = current_folder;
 
-cd(current_folder)
 calc_force_pCa(activation_datafolder, force_pCa_folder)
 % result: force_pCa.mat
 
