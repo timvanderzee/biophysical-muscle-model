@@ -179,6 +179,8 @@ years = {'2017', '2018'};
 for m = 1:length(years)
     if contains(fibers{iF}, years{m})
         fullfolder = fullfile(datafolder, years{m});
+    else
+        fullfolder = datafolder;
     end
 end
 
