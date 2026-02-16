@@ -69,7 +69,7 @@ AMPid = find(eAMPs==sAMP);
 
 % [username, githubfolder] = get_paths();
 cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Data'))
-load('SRS_data_v3.mat', 'SRS_pre', 'F0', 'SRS_post')
+load('SRS_data.mat', 'SRS_pre', 'F0', 'SRS_post')
 
 % average some pCas
 iFs = 1:11;

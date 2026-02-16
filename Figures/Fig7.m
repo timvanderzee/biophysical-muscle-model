@@ -10,7 +10,7 @@ ISIid = tid(2);
 AMPid = tid(3);
 
 cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Data'))
-load('SRS_data_v3.mat', 'SRS_pre', 'F0', 'SRS_post')
+load('SRS_data.mat', 'SRS_pre', 'F0', 'SRS_post')
 
 % average some pCas
 iFs = 1:11;
@@ -187,11 +187,18 @@ if ~isempty(datafolder)
 
 
         for iF = iFsm
-            years = {'2017', '2018'};
-            for m = 1:length(years)
-                if contains(fibers{iF}, years{m})
-                    fullfolder = [datafolder, '\', years{m}];
+
+            if isfolder(fullfile(datafolder, '2017')) % check whether there is a subfolder
+
+                % load data
+                years = {'2017', '2018'};
+                for m = 1:length(years)
+                    if contains(fibers{iF}, years{m})
+                        fullfolder = fullfile(datafolder, years{m});
+                    end
                 end
+            else
+                fullfolder = datafolder; % otherwise, use the current folder
             end
 
             cd(fullfolder)

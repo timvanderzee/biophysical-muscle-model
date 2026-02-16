@@ -174,14 +174,17 @@ end
 % brigthen factor
 bf = [0 .5 0];
 
-% load data
-years = {'2017', '2018'};
-for m = 1:length(years)
-    if contains(fibers{iF}, years{m})
-        fullfolder = fullfile(datafolder, years{m});
-    else
-        fullfolder = datafolder;
+if isfolder(fullfile(datafolder, '2017')) % check whether there is a subfolder
+
+    % load data
+    years = {'2017', '2018'};
+    for m = 1:length(years)
+        if contains(fibers{iF}, years{m})
+            fullfolder = fullfile(datafolder, years{m});
+        end
     end
+else
+    fullfolder = datafolder; % otherwise, use the current folder
 end
 
 if isfolder(fullfolder)

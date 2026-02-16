@@ -1,5 +1,4 @@
-clear all; close all; clc
-[username, githubfolder] = get_paths();
+function[] = calc_data_SRS(current_folder, normalized_datafolder)
 
 Kss = 1:7;
 tiso = 3;
@@ -14,8 +13,8 @@ fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18De
 visualize = 0;
 
 for k = 1:length(iFs)
-    cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
-    load([fibers{iFs(k)},'_cor_new.mat'],'data')
+    cd(normalized_datafolder)
+    load([fibers{iFs(k)},'.mat'],'data')
     
     disp([fibers{iFs(k)}])
     
@@ -122,6 +121,7 @@ for k = 1:length(iFs)
 end
 
 %% save
-cd([githubfolder, '\biophysical-muscle-model\Data'])
-save('SRS_data_v4.mat', 'SRSrel', 'F0s', 'SRS_post', 'SRS_pre', 'th', 'F0')
+cd(current_folder)
+save('SRS_data.mat', 'SRSrel', 'F0s', 'SRS_post', 'SRS_pre', 'th', 'F0')
 
+end

@@ -1,9 +1,6 @@
 function[Data] = prep_data_v2(data,ns,ms,Ks,tiso)
 
 %% process data
-% load short-range stiffness data (skinned rat soleus muscle fibers),
-% cd('C:\Users\timvd\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data')
-
 Data.F = [];
 Data.L = [];
 Data.t = [];

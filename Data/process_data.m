@@ -22,6 +22,14 @@ calc_force_pCa(activation_datafolder, force_pCa_folder)
 % result: force_pCa.mat
 
 %% normalize stretch-shortening data based on force-pCa
-normlized_datafolder = fullfile(datafolder, 'Normalized Data');
-normalize_data(force_pCa_folder, reorganized_datafolder, normlized_datafolder)
+normalized_datafolder = fullfile(datafolder, 'Normalized Data');
+normalize_data(force_pCa_folder, reorganized_datafolder, normalized_datafolder)
 % result: e.g., 6Aug2018a.mat
+
+%% compute SRS
+cd(current_folder)
+cd .. 
+addpath(genpath('Functions'))
+cd(current_folder)
+calc_data_SRS(current_folder, normalized_datafolder)
+
