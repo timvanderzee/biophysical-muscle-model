@@ -155,7 +155,7 @@ for kk = 1:length(filenames)
         subfolder = 'Hill';
     end
     
-    cd(fullfile(githubfolder, 'biophysical-muscle-model','Model output', 'SRS', subfolder))
+    cd(fullfile(githubfolder, 'biophysical-muscle-model','Reproduce', 'Model output', 'SRS', subfolder))
     load(filenames{kk},'Stest', 'Scond', 'AMPs', 'pCas', 'ISIs', 'F0')
  
         % interpolate
@@ -242,7 +242,7 @@ for kk = 1:length(filenames)
         subfolder = 'Hill';
     end
     
-    cd(fullfile(githubfolder, 'biophysical-muscle-model','Model output', 'SRS', subfolder))
+    cd(fullfile(githubfolder, 'biophysical-muscle-model','Reproduce', 'Model output', 'SRS', subfolder))
     
     load(filenames{kk},'Stest', 'Scond', 'AMPs', 'pCas', 'ISIs', 'F0')
     

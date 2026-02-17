@@ -29,10 +29,10 @@ for p = 1:7 % phases
         
         mcode = mcodes(ii,:);
         
-        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Process'))        
+        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Process'))        
         [~, subfolder, modelname] = get_model_folder('', mcode, discretized_model);
         
-        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Model output', 'RMSD', subfolder))
+        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Model output', 'RMSD', subfolder))
         load([modelname, '_RMSD.mat'], 'RMSD', 'AMPs', 'ISIs', 'pCas')
         
         sAMPs = AMPs;
@@ -47,7 +47,7 @@ for p = 1:7 % phases
         sISI = .001;
         sAMP = .0383;
         
-        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Model output', 'SRS', subfolder))
+        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Model output', 'SRS', subfolder))
         load([modelname, '_SRS.mat'],'F0', 'AMPs', 'ISIs')
         
         % average

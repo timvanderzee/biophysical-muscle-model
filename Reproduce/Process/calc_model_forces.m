@@ -24,11 +24,11 @@ Ca = 10.^(-pCas+6);
 for iF = iFs
     
     % disp(filename)
-    input_foldername = fullfile(githubfolder, 'biophysical-muscle-model', 'Parameters',fibers{iF});
+    input_foldername = fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Parameters',fibers{iF});
     cd(input_foldername)
     load(['parms_',modelname, '.mat'], 'newparms')
     
-    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Parameters'))
+    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Parameters'))
     allparms(iF) = update_parms(newparms);
 end
 
@@ -104,7 +104,7 @@ for k = 1:length(iFs)
                     dt = .001; % gives 10 points in SRS zone
                     N = round(tiso / dt);
                     
-                    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Functions'))
+                    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Common', 'Functions'))
                     [tis, Cas, Lis, vis, ts, Ts] = create_input(tiso, dTt, dTc, ISI, Ca(i), N);
                     
                     parms.ti = tis;

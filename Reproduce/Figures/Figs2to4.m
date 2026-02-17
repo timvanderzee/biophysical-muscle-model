@@ -76,14 +76,14 @@ for j = 1:size(ISIs,1)
             
             mcode = mcodes(kk,:);
             
-            cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Process'))
+            cd(fullfile(githubfolder, 'biophysical-muscle-model','Reproduce',  'Process'))
             [fullmodelfolder, ~, modelfilename] = get_model_folder(modelfolder, mcode, discretized_model);
                        
             filename = [fullmodelfolder,'\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
             disp(filename)
             
             if isfile(filename)
-                Mdata(j,i,kk) = load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts');
+                Mdata(j,i,kk) = load(filename, 'tis','Cas','vis','Lis','oFi', 'ts');
             else
                 return
             end
@@ -203,7 +203,7 @@ for j = 1:size(ISIs,1)
         
         % plot data
         if isfolder(fullfolder)
-            cd(fullfile(githubfolder, 'biophysical-muscle-model','Figures'))
+            cd(fullfile(githubfolder, 'biophysical-muscle-model','Reproduce','Figures'))
             [texp, Lexp, Fexp, Tsrel] = get_data(data, ISIs(j,:), AMPs(j,:), pCas(j,:));
             
             dtexp = Tsrel(1,2);

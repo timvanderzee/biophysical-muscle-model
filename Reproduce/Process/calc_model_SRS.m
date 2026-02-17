@@ -19,7 +19,7 @@ Ca = 10.^(-pCas+6);
 [fullmodelfolder, subfolder, modelname] = get_model_folder(modelfolder, mcode, discretized_model);
 
 % folder where output is saved
-outputfolder = fullfile(githubfolder, 'biophysical-muscle-model', 'Model output', 'SRS', subfolder);
+outputfolder = fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Model output', 'SRS', subfolder);
 
 %% loop over fibers, pCas, AMPs, ISIs
 % pre-allocate
@@ -47,9 +47,9 @@ for iF = iFs
                 if exist(filename, 'file')
                     
                     try
-                        load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts')
+                        load(filename, 'tis','Cas','vis','Lis','oFi', 'ts')
                         
-                        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Functions')) 
+                        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Common', 'Functions')) 
                         [id0,id1,id2] = get_indices(tis, tiso, ts, dTt, dTc, ISI, Ca(i));
                         
                         if visualize

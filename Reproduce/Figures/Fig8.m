@@ -1,7 +1,7 @@
 function[] = Fig8(githubfolder)
 
-cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Model output'))
-load('output_effect_of_bins_on_cost.mat')
+cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Model output'))
+load('output_effect_of_bins_on_cost.mat', 'tsim', 'Fi', 'bw', 'tvec', 'Ns', 'r')
 titles = {'Fixed strain range (± 15 \epsilon_{ps})', ['Fixed bin width (', num2str(bw), ' \epsilon_{ps})']};
 
 figure(8)
@@ -137,4 +137,5 @@ savefig = 1;
 if savefig
     figure(8)
     exportgraphics(gcf,figname)
+end
 end

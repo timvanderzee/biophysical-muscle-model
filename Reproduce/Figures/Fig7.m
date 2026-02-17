@@ -66,7 +66,7 @@ for ii = 1:length(modelnames)
         subfolder = 'Hill';
     end
     
-    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Model output', 'SRS', subfolder));
+    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Model output', 'SRS', subfolder));
     load([modelname,'_SRS.mat'],'Stest', 'Scond', 'AMPs', 'iFs', 'pCas', 'ISIs', 'F0')
     
     amAMPs = repmat(AMPs, length(ISIs), 1);
@@ -209,7 +209,7 @@ if ~isempty(datafolder)
 
                 for i = 1:length(pCas)
                     pCa = pCas(i);
-                    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Figures'))
+                    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
                     [texp, Lexp, Fexp, Tsrel] = get_data(data, ISI, AMP, pCa);
 
                     Fiso = mean(Fexp(texp<-.5), 'omitnan');
@@ -335,7 +335,7 @@ if ~isempty(datafolder)
                     disp(filename)
                     
                     if isfile(filename)
-                        load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts')
+                        load(filename, 'tis','Cas','vis','Lis','oFi', 'ts')
                     else
                         return
                     end

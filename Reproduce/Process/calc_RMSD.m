@@ -19,7 +19,7 @@ Ca = 10.^(-pCas+6);
 [fullmodelfolder, subfolder, modelname] = get_model_folder(modelfolder, mcode, discretized_model);
 
 % folder where output is saved
-outputfolder = fullfile(githubfolder, 'biophysical-muscle-model', 'Model output', 'RMSD', subfolder);
+outputfolder = fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Model output', 'RMSD', subfolder);
 
 %% loop over fibers, pCas, AMPs, ISIs and phases
 % pre-allocate
@@ -27,13 +27,18 @@ RMSD = nan(length(pCas), length(ISIs), length(AMPs), iFs(end), 7);
 
 for iF = iFs
     
-    years = {'2017', '2018'};
-    for m = 1:length(years)
-        if contains(fibers{iF}, years{m})
-            fullfolder = fullfile(datafolder, years{m});
+    if isfolder(fullfile(datafolder, '2017')) % check whether there is a subfolder
+
+        % load data
+        years = {'2017', '2018'};
+        for m = 1:length(years)
+            if contains(fibers{iF}, years{m})
+                fullfolder = fullfile(datafolder, years{m});
+            end
         end
+    else
+        fullfolder = datafolder; % otherwise, use the current folder
     end
-    
     % load data
     cd(fullfolder)
     load([fibers{iF},'.mat'],'data')
@@ -57,7 +62,7 @@ for iF = iFs
                 if exist(filename, 'file')
                     
                     try
-                        load(filename, 'tis','Cas','vis','Lis','oFi','parms', 'ts')
+                        load(filename, 'tis','Cas','vis','Lis','oFi', 'ts')
                         
                         
                         mD = AMP == data.AMPs/10000;
@@ -136,4 +141,5 @@ end
 cd(outputfolder)
 save([modelname, '_RMSD.mat'])
 
+end
 
