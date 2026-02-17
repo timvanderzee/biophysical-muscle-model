@@ -1,6 +1,5 @@
 clear all; close all; clc
 cd ..
-addpath(genpath('Functions'))
 addpath(genpath('Common'))
 
 %% step 1: specify inputs
@@ -91,7 +90,7 @@ model = '3-state XB coop'; % see options above
 % here we look up the parameters for a given fiber and model
 fiber = '7Aug2018a';
 githubfolder = cd;
-load(fullfile(cd, 'Parameters', fiber, ['parms_', modelname, '.mat']))
+load(fullfile(cd, 'Reproduce', 'Parameters', fiber, ['parms_', modelname, '.mat']))
 
 %% step 4: determine initial state
 % we need to define the model states at t = 0
