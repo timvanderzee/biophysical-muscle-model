@@ -1,7 +1,6 @@
 # Test
 
 To test a given model for a given input, run `test_model.m`.
-
 Running `test_model.m` should result in the following figure:
 
 ![picture](test_model.png)
