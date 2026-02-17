@@ -6,9 +6,7 @@ Running `test_model.m` should result in the following figure:
 
 ![picture](test_model.png)
 
-This figure shows the predicted force (bottom row) for a given length (top row) and velocity (middle row) trajectory. 
-
-Three types of protocols can be distinguished:
+This figure shows the model inputs (i.e. calcium, length, velocity) and the resulting model ouput (i.e. force) for three types of protocols:
 1) Ramp protocol as in our [preprint](https://www.biorxiv.org/content/10.1101/2025.10.31.685881v1) (t = 0-2 s)
 2) Isometric protocol (t = 2-4 s)
 3) Sinusoidal protocol (t = 4-6)
