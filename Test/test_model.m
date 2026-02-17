@@ -50,7 +50,7 @@ for i = 1:length(input) % loop over phases
     
     subplot(412)
     plot(input(i).t+t0, input(i).L, 'color', color(1,:), 'linewidth', 1.5); hold on; box off
-    ylabel('Fiber velocity (L_0)')
+    ylabel('\DeltaFiber length (L_0)')
     xline(t0,'k--')
     title('Fiber length change')
     
