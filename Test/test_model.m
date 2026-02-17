@@ -42,15 +42,24 @@ for i = 1:length(input) % loop over phases
     end
     
     figure(1)
-    subplot(311)
-    plot(input(i).t+t0, input(i).L, 'color', color(1,:), 'linewidth', 1.5); hold on; box off
-    ylabel('\DeltaFiber length (L_0)')
+    subplot(411)
+    plot(input(i).t+t0, input(i).Ca, 'color', color(1,:), 'linewidth', 1.5); hold on; box off
+    ylabel('[Ca]^{2+} (\muM)')
     xline(t0,'k--')
+    title('Calcium concentration')
     
-    subplot(312)
+    subplot(412)
+    plot(input(i).t+t0, input(i).L, 'color', color(1,:), 'linewidth', 1.5); hold on; box off
+    ylabel('Fiber velocity (L_0)')
+    xline(t0,'k--')
+    title('Fiber length change')
+    
+    subplot(413)
     plot(input(i).t+t0, input(i).v, 'color', color(1,:), 'linewidth', 1.5); hold on; box off
     ylabel('Fiber velocity (L_0/s)')
     xline(t0,'k--')
+    title('Fiber velocity')
+    
 end
 
 % note: this is just an example. you are free to try any input that you
@@ -116,7 +125,7 @@ for i = 1:length(input)
     
     % plot the forces
     figure(1)
-    subplot(313)
+    subplot(414)
     plot(t+t0, Fse, 'color', color(1,:), 'linewidth', 1.5); hold on; box off
 %     plot(t+t0, Fpe, 'color', color(2,:), 'linewidth', 1.5);
 %     plot(t+t0, Fce, 'color', color(3,:), 'linewidth', 1.5);
@@ -124,6 +133,7 @@ for i = 1:length(input)
     xlabel('Time (s)')
     ylabel('Force (F_0)')
     xline(t0,'k--')
+    title('Fiber force')
 end
 
 % legend('F_{SE}', 'F_{PE}', 'F_{CE}', 'location', 'best')
