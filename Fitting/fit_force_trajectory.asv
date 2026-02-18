@@ -27,39 +27,40 @@ mcode = [1 1 1];
 %% get initial guess
 [parms] = get_initial_parameters(mcode, bnds, githubfolder);
 
+
 parms.ti = Xdata.t;
 parms.vts = Xdata.v;
 parms.Cas = Xdata.Cas;
 parms.Lts = Xdata.L * parms.gamma;
 
 cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Fitting'))
-IG = get_initial_guess(parms.ti(Xdata.idA), parms.Cas(Xdata.idA), parms.vts(Xdata.idA), parms.Lts(Xdata.idA), parms);
+IG = get_initial_guess(tis(idA), Cas(idA), vis(idA), parms.Lts(idA), parms);
 
 oFi = (IG.Fsei) * parms.Fscale;
 
 if visualize
     figure(1)
     subplot(414); hold on
-    plot(Xdata.t(Xdata.idA), oFi,'b'); hold on
+    plot(tis(idA), oFi,'b'); hold on
     
-    plot(Xdata.t(Xdata.idF), oFi(Xdata.idF),'m*', 'markersize', 1); hold on
-    plot(Xdata.t(Xdata.idC), oFi(Xdata.idC),'g.'); hold on
+    plot(tis(idF), oFi(idF),'m*', 'markersize', 1); hold on
+    plot(tis(idC), oFi(idC),'g.'); hold on
 end
 
-Lcost = @(dlse, Lis, parms) ((parms.kse0*(exp(parms.kse*dlse)-1)) - (parms.kpe * (Lis - dlse - parms.Lce0))).^2;
+Lcost = @(dlse, Lis, parms) ((parms.kse0*(exp(parms.kse*dlse)-1)) - (parms.kpe * (Lis*parms.gamma - dlse - parms.Lce0))).^2;
 
-for i = 1:length(parms.Lts)
-    dlse(i) = fminsearch(@(L) Lcost(L, parms.Lts(i), parms), 0);
+for i = 1:length(Lis)
+    dlse(i) = fminsearch(@(L) Lcost(L, Lis(i), parms), 0);
 end
 
-dLce = (parms.Lts - dlse) - parms.Lce0;
+dLce = (Lis * parms.gamma - dlse) - parms.Lce0;
 
 Fse = parms.Fse_func(dlse, parms) * parms.Fscale;
 Fpe = parms.kpe * dLce  * parms.Fscale;
 
 figure(1)
 subplot(414)
-plot(Xdata.t, Fse, '-', Xdata.t, Fpe, '--')
+plot(tis, Fse, '-', tis, Fpe, '--')
 
 % initial guess
 IG.F9 = Fse;
