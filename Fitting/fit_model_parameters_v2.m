@@ -1,4 +1,4 @@
-function[parms, out, opti] = fit_model_parameters_v2(optparms, w, data, parms, IG, bnds, mcode)
+function[parms, out, opti] = fit_model_parameters_v2(model, parms, optparms, bnds, data, IG, w)
 
 import casadi.*
 
@@ -99,7 +99,7 @@ opti.set_initial(q, IG.qi(idA));
 opti.set_initial(Fse, IG.Fsei(idA));
 
 % thin filament activation
-if isequal(mcode, [1 1 1]) || isequal(mcode, [1 1 2]) || isequal(mcode, [1 2 1])
+if contains(model, 'coop')
     Non = opti.variable(1,N);  % derivative constraint
     opti.subject_to(Non > 0);
     opti.set_initial(Non, IG.Noni(idA));
@@ -108,7 +108,7 @@ else
 end
 
 % thick filament activation
-if isequal(mcode, [1 1 1]) || isequal(mcode, [1 2 1])
+if contains(model, '3-state') || contains(model, '4-state')
     DRX = opti.variable(1,N);  % derivative constraint
     opti.subject_to(DRX > 0);
     opti.set_initial(DRX, IG.DRXi(idA));
@@ -116,7 +116,7 @@ else
     DRX = 1 - Q0;
 end
 
-if isequal(mcode, [1 2 1])
+if contains(model, '4-state')
    R = opti.variable(1,N);  % derivative constraint
 %    opti.subject_to(R > 0);
    opti.set_initial(R, IG.Ri(idA));
@@ -193,20 +193,20 @@ opti.subject_to((dQ2dt(1:N-1) + dQ2dt(2:N))*dt/2 + Q2(1:N-1) == Q2(2:N));
 % opti.subject_to((dFsedt(1:N-1) + dFsedt(2:N))*dt/2 + Fse(1:N-1) == Fse(2:N));
 
 %% cooperativity
-if isequal(mcode, [1 2 1])
+if contains(model, '4-state')
 %     dRdt = Rdot;
     opti.subject_to((Rdot(1:N-1) + Rdot(2:N))*dt/2 + R(1:N-1) == R(2:N));
 else
     dRdt = 0;
 end
 
-if isequal(mcode, [1 1 1]) || isequal(mcode, [1 1 2])  || isequal(mcode, [1 2 1])
+if contains(model, 'coop')
     [Jon, Joff] = ThinFilament_Dynamics(Cas(idA), Q0, Non, kon, koff, koop, parms.Noverlap);
     dNondt = Jon - Joff;
     opti.subject_to((dNondt(1:N-1) + dNondt(2:N))*dt/2 + Non(1:N-1) == Non(2:N));
 end
 
-if isequal(mcode, [1 1 1]) || isequal(mcode, [1 2 1])
+if contains(model, '3-state') || contains(model, '4-state')
     [k1, k2] = ThickFilament_Dynamics(Q0, Fce, DRX, J1, J2, JF, parms.Noverlap, R);
     dDRXdt = k1 - k2 - (dQ0dt + Rdot);
     opti.subject_to((dDRXdt(1:N-1) + dDRXdt(2:N))*dt/2 + DRX(1:N-1) == DRX(2:N));
@@ -271,15 +271,15 @@ try
         
         out.Lts = sol.value(Lts);
         
-        if isequal(mcode, [1 2 1])
+        if contains(model, '4-state')
             out.R = sol.value(R);
         end
         
-        if isequal(mcode, [1 1 1])  || isequal(mcode, [1 2 1])
+        if contains(model, '3-state') || contains(model, '4-state')
             out.dDRXdt = sol.value(dDRXdt);
         end
         
-        if isequal(mcode, [1 1 1]) || isequal(mcode, [1 1 2])  || isequal(mcode, [1 2 1])
+        if contains(model, 'coop')
             out.dNondt = sol.value(dNondt);
         end
         
@@ -329,6 +329,10 @@ catch
     for i = 1:length(optparms)
         parms.(optparms{i}) = eval(['opti.debug.value(',optparms{i},');']);
     end
+end
+
+if parms.J1 > 0
+    parms.JF = parms.kF / parms.J1;
 end
 
 out.t     = 0:dt:(N-1)*dt;

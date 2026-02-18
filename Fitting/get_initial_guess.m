@@ -1,17 +1,28 @@
-function[IG] = get_initial_guess(tis, Cas, vts, Lts, parms)
+function[IG] = get_initial_guess(Xdata, parms, visualize)
 
-parms.vts = [0 0];
-parms.ti = [0 5];
-parms.Lts = [0 0];
-parms.Cas = Cas(1) * [1 1];
+parms.ti = Xdata.t;
+parms.vts = Xdata.v;
+parms.Cas = Xdata.Cas;
+parms.Lts = Xdata.L * parms.gamma;
 
-parms.PE_isw_SE = 1;
+tis = parms.ti(Xdata.idA);
+Cas = parms.Cas(Xdata.idA);
+vts = parms.vts(Xdata.idA);
+Lts = parms.Lts(Xdata.idA);
+
+nparms = parms;
+nparms.vts = [0 0];
+nparms.ti = [0 5];
+nparms.Lts = [0 0];
+nparms.Cas = Cas(1) * [1 1];
+
+nparms.PE_isw_SE = 1;
 
 % find L0
 Lcost = @(dlse, parms) ((parms.kse0*(exp(parms.kse*dlse)-1)) - (parms.kpe * (0 - dlse - parms.Lce0))).^2;
 
-L0 = fminsearch(@(L) Lcost(L, parms), 10);
-Fse0 = parms.Fse_func(L0, parms);
+L0 = fminsearch(@(L) Lcost(L, nparms), 10);
+Fse0 = nparms.Fse_func(L0, nparms);
 
 
 % [Q00, Q20, lce0, Q10, Fse0] = find_steady_state(Q0, p0, q0, parms, 'regular');
@@ -20,15 +31,15 @@ x0 = [0 0 Fse0 0 1 0]';
 odeopt = odeset('maxstep', 1e-2);
 
 % isometric contraction
-sol0 = ode15s(@(t,y) fiber_dynamics_explicit_length_v2(t,y, parms), [0 5], x0, odeopt);
+sol0 = ode15s(@(t,y) fiber_dynamics_explicit_length_v2(t,y, nparms), [0 5], x0, odeopt);
 
 % dynamic contraction
-parms.vts = vts;
-parms.Lts = Lts;
-parms.ti = tis;
-parms.Cas = Cas;
+nparms.vts = vts;
+nparms.Lts = Lts;
+nparms.ti = tis;
+nparms.Cas = Cas;
 
-sol = ode15s(@(t,y) fiber_dynamics_explicit_length_v2(t,y,parms), [0 max(tis)], sol0.y(:,end), odeopt);
+sol = ode15s(@(t,y) fiber_dynamics_explicit_length_v2(t,y,nparms), [0 max(tis)], sol0.y(:,end), odeopt);
 
 %% extract the output and interpolate
 % states
@@ -40,18 +51,18 @@ DRXi    = interp1(sol.x, sol.y(5,:), tis); % thick filament activation
 Ri      = interp1(sol.x, sol.y(6,:), tis); %
 
 %% determine Fpe
-dLse = max(parms.Lse_func(Fsei, parms), 0); % can't be negative
+dLse = max(nparms.Lse_func(Fsei, nparms), 0); % can't be negative
 Lce = Lts - dLse;
 
-if isfield(parms, 'PE_isw_SE') % PE in series with SE
-    dLce = Lce - parms.Lce0;
+if isfield(nparms, 'PE_isw_SE') % PE in series with SE
+    dLce = Lce - nparms.Lce0;
 
-    if parms.K*dLce < 10
-        kpe = parms.kpe .* (1 - 1./(exp(parms.K*dLce)+1));
-        Fpe = parms.kpe * log(1+exp(dLce*parms.K))/parms.K;
+    if nparms.K*dLce < 10
+        kpe = nparms.kpe .* (1 - 1./(exp(nparms.K*dLce)+1));
+        Fpe = nparms.kpe * log(1+exp(dLce*nparms.K))/nparms.K;
     else
-        kpe = parms.kpe;
-        Fpe = parms.kpe * dLce;
+        kpe = nparms.kpe;
+        Fpe = nparms.kpe * dLce;
     end
 end
 
@@ -82,19 +93,19 @@ IG.Ri = Ri;
 % kpe = 0;
 
 % points where integrals is evaluated
-k1 = [parms.k11 parms.k12];
-k2 = [parms.k21 -parms.k22];
+k1 = [nparms.k11 nparms.k12];
+k2 = [nparms.k21 -nparms.k22];
 
 % get functions
-[IGf, IGef] = get_IG_IGEf(parms.approx);
+[IGf, IGef] = get_IG_IGEf(nparms.approx);
 
-[Q0dot, Q1dot] = CrossBridge_Dynamics(Q0i, pi, qi, parms.f, parms.w, k1, k2, IGef, Noni, DRXi, IGf, parms.b, parms.k, Ri, parms.dLcrit, parms.ps2);
+[Q0dot, Q1dot] = CrossBridge_Dynamics(Q0i, pi, qi, nparms.f, nparms.w, k1, k2, IGef, Noni, DRXi, IGf, nparms.b, nparms.k, Ri, nparms.dLcrit, nparms.ps2);
 
 % velocity - independent derivative
 F0dot  = Q1dot + Q0dot;
 
-kse = parms.kse * (Fsei + parms.kse0);
-Ldi = (vts .* parms.gamma .* kse - F0dot) ./  (Q0i + kse + kpe);
+kse = nparms.kse * (Fsei + nparms.kse0);
+Ldi = (vts .* nparms.gamma .* kse - F0dot) ./  (Q0i + kse + kpe);
 IG.Ldi = Ldi;
 
 % other variables
@@ -105,5 +116,36 @@ IG.Fpei = Fpe;
 IG.pi = pi;
 IG.qi = qi;
 IG.Q00i = Q00i;
+
+%% passive
+Lcost = @(dlse, Lis, parms) ((parms.kse0*(exp(parms.kse*dlse)-1)) - (parms.kpe * (Lis - dlse - parms.Lce0))).^2;
+
+for i = 1:length(parms.Lts)
+    dlse(i) = fminsearch(@(L) Lcost(L, parms.Lts(i), nparms), 0);
+end
+
+dLce = (parms.Lts - dlse) - nparms.Lce0;
+
+Fse = nparms.Fse_func(dlse, nparms) * nparms.Fscale;
+Fpe = nparms.kpe * dLce  * nparms.Fscale;
+
+figure(1)
+subplot(414)
+plot(Xdata.t, Fse, '-', Xdata.t, Fpe, '--')
+
+% initial guess
+IG.F9 = Fse;
+
+%% plotting
+oFi = (IG.Fsei) * nparms.Fscale;
+
+if visualize
+%     figure(1r
+    subplot(414); hold on
+    plot(Xdata.t(Xdata.idA), oFi,'b'); hold on
+    
+    plot(Xdata.t(Xdata.idF), oFi(Xdata.idF),'m*', 'markersize', 1); hold on
+    plot(Xdata.t(Xdata.idC), oFi(Xdata.idC),'g.'); hold on
+end
 
 end
