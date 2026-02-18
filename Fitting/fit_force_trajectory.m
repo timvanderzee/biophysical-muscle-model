@@ -1,5 +1,24 @@
 clear all; close all; clc
-[username, githubfolder] = get_paths();
+cd .. 
+
+% get folders
+[datafolder, modelfolder, githubfolder] = get_paths();
+
+if isfolder(fullfile(datafolder, '2017')) % check whether there is a subfolder
+
+    % load data
+    years = {'2017', '2018'};
+    for m = 1:length(years)
+        if contains(fibers{iF}, years{m})
+            fullfolder = fullfile(datafolder, years{m});
+        end
+    end
+else
+    fullfolder = datafolder; % otherwise, use the current folder
+end
+
+
+% [username, githubfolder] = get_paths();
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
 % model to be fitted
@@ -65,6 +84,7 @@ elseif sum(mcode == [1 2 1]) == 3
 end
 
 %% specify data
+cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Data'))
 load('active_trials.mat', 'Fm')
 
 %%
@@ -72,10 +92,12 @@ load('active_trials.mat', 'Fm')
 for iF = iFs
     
     %% load data
-    cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
-    load([fibers{iF},'_cor_new.mat'],'data')
+    cd(fullfolder)
+    load([fibers{iF},'.mat'],'data')
    
     Ks = find(Fm(:,iF) > .05); % only consider active trials
+    
+    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Data', 'Processing'))
     AData = prep_data_v2(data,n,m,Ks,tiso);
     [Atis, ACas, ALis, Avis, Ats] = create_input(tiso, AData.dTt, AData.dTc, AData.ISI, AData.Ca(Ks), N);
     
@@ -137,14 +159,13 @@ for iF = iFs
         mmcode = mcode; % use own parms
     end
     
-    cd([githubfolder, '\muscle-thixotropy\new_model\get_variable'])
-    [output_mainfolder, filename, opt_type, ~] = get_folder_and_model(mmcode);
+    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Process'))
+    [~, ~, modelname] = get_model_folder(modelfolder, mcode, 0);
+       
+    foldername = fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Parameters',fibers{2});
     
-    disp(filename)
-    
-    foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{2}];
     cd(foldername)
-    load(['parms_', filename, old_version, '.mat'], 'newparms')
+    load(['parms_', modelname, '.mat'], 'newparms')
 
     parms = newparms;
     
@@ -240,7 +261,7 @@ for iF = iFs
       
     
     %% get initial guess
-
+    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Fitting'))
     IG = get_initial_guess(tis(idA), Cas(idA), vis(idA), parms.Lts(idA), parms);
    
     oFi = (IG.Fsei) * parms.Fscale;
@@ -309,108 +330,139 @@ for iF = iFs
         newparms.JF = newparms.kF / newparms.J1;
     end
     
-    %% sim output
-    Ks = find(Fm(:,iF) > .05);
-    Data = prep_data_v2(data,n,m,Ks,tiso);
+    %% compare parameters
+    foldername = fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Parameters',fibers{iF});
+    cd(foldername)
+    oldparms = load(['parms_', modelname, '.mat'], 'newparms');
 
     if ishandle(2), close(2); end
     figure(2)
-    subplot(121);
-    plot(Data.t, Data.F,'k.'); hold on
-    plot(out.t, out.F) 
-
     for i = 1:length(optparms)
-        lb(i) = bnds.(optparms{i})(1);
-        ub(i) = bnds.(optparms{i})(2);
+        nexttile
+        bar([newparms.(optparms{i}) oldparms.newparms.(optparms{i})])
+        title(optparms{i})
     end
-    
-    subplot(122);
-    bar(categorical(optparms), out.s)
+       
+
+    %% sim output
+%     Ks = find(Fm(:,iF) > .05);
+%     cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Data', 'Processing'))
+%     Data = prep_data_v2(data,n,m,Ks,tiso);
+% 
+%     if ishandle(2), close(2); end
+%     figure(2)
+%     subplot(121);
+%     plot(Data.t, Data.F,'k.'); hold on
+%     plot(out.t, out.F) 
+% 
+%     for i = 1:length(optparms)
+%         lb(i) = bnds.(optparms{i})(1);
+%         ub(i) = bnds.(optparms{i})(2);
+%     end
+%     
+%     subplot(122);
+%     bar(categorical(optparms), out.s)
      
-    %% test with fitted paramers     
+    %% test with fitted parameters     
+    if ishandle(3), close(3); end
+    if ishandle(6), close(6); end 
+
     Ks = find(Fm(:,iF) > 0);
     
-%     newparms.k = 1000;
-%     newparms.b = 3000;
+    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Data', 'Processing'))
     Data = prep_data_v2(data,n,m,Ks,tiso);
-
+    
+    figure(3)
+    plot(Data.t, Data.F,'k.'); hold on
+    
     N = 1000;
     [tis, Cas, Lis, vis, ts] = create_input(tiso, Data.dTt, Data.dTc, Data.ISI, Data.Ca(Ks), N);
      
-    nLiss = Lis * newparms.gamma;
+    for j = 1:2
+        if j == 1
+            testparms = newparms;
+        else
+            testparms = oldparms.newparms;
+        end
+    
+        nLiss = Lis * testparms.gamma;
 
-    newparms.ti = tis;
-    newparms.vts = vis;
-    newparms.Cas = Cas;
-    newparms.Lts = nLiss;
-    
-    odeopt = odeset('maxstep', 1e-2);
-    
-    % initial conditions
-    Q0 = .1;
-    p0 = -1;
-    q0 = .1;
-    [Q00, Q20, lce0, Q10, Fse0] = find_steady_state(Q0, p0, q0, newparms, 'regular');
-    x0 = [Q00 Q20 Fse0 0 0 0];
-    x0 = zeros(1,6);
-    x0(5) = 1;
-    
-    nsol = ode15s(@(t,y) fiber_dynamics_explicit_length_v2(t,y, newparms), [0 max(tis)], x0, odeopt);
-    nt = nsol.x;
+        testparms.ti = tis;
+        testparms.vts = vis;
+        testparms.Cas = Cas;
+        testparms.Lts = nLiss;
 
-    % calc force
-    nF = nsol.y(3,:);
-    ndlse = parms.Lse_func(nF, newparms);
-    L = newparms.Lts - interp1(nt, ndlse, newparms.ti);
-    nFi = interp1(nt, nF, tis) * parms.Fscale; % + nFp;
-    
-    if ishandle(3), close(3); end
-    figure(3)
-    plot(Data.t, Data.F,'k.'); hold on
-    plot(tis, nFi,'-');
+        odeopt = odeset('maxstep', 1e-2);
 
-    legend('Data', 'Sim')
+        % initial conditions
+        Q0 = .1;
+        p0 = -1;
+        q0 = .1;
+        [Q00, Q20, lce0, Q10, Fse0] = find_steady_state(Q0, p0, q0, testparms, 'regular');
+        x0 = [Q00 Q20 Fse0 0 0 0];
+        x0 = zeros(1,6);
+        x0(5) = 1;
 
-    %% estimate SRS
-    % recreate the input, but with a higher sampling rate
+        nsol = ode15s(@(t,y) fiber_dynamics_explicit_length_v2(t,y, testparms), [0 max(tis)], x0, odeopt);
+        nt = nsol.x;
 
-    nFii = interp1(tis, nFi, Data.t);
+        % calc force
+        nF = nsol.y(3,:);
+        ndlse = parms.Lse_func(nF, testparms);
+        L = testparms.Lts - interp1(nt, ndlse, testparms.ti);
+        nFi = interp1(nt, nF, tis) * parms.Fscale; % + nFp;
 
-    Lti = interp1(tis, newparms.Lts, Data.t);
-    
-    % pre-allocate
-    ns = nan(length(Ks), 2);
-    ds = nan(length(Ks), 2);
-    F0 = nan(length(Ks), 1);
-    
-    [id0,id1,id2] = get_indices(Data.t, tiso, ts, Data.dTt, Data.dTc(1), Data.ISI(1), Data.Ca(Ks));
-    
-    for i = 1:length(Ks)
+        figure(3)
+        plot(tis, nFi,'-'); hold on    
         
-        np1 = polyfit(Lti(id1(i,:)), nFii(id1(i,:)), 1);
-        np2 = polyfit(Lti(id2(i,:)), nFii(id2(i,:)), 1);
+        % estimate SRS
+        % recreate the input, but with a higher sampling rate
+        nFii = interp1(tis, nFi, Data.t);
+
+        % compute RMSD
+        RMSD(j) = mean(abs(nFii - Data.F));
         
-        dp1 = polyfit(Data.L(id1(i,:)), Data.F(id1(i,:)), 1);
-        dp2 = polyfit(Data.L(id2(i,:)), Data.F(id2(i,:)), 1);
-        
-        ds(i,:) = [dp1(1) dp2(1)];
-        ns(i,:) = [np1(1) np2(1)];
-        
-        F0(i) = mean(Data.F(id0(i,:)));
+        Lti = interp1(tis, testparms.Lts, Data.t);
+
+        % pre-allocate
+        ns = nan(length(Ks), 2);
+        ds = nan(length(Ks), 2);
+        F0 = nan(length(Ks), 1);
+
+        [id0,id1,id2] = get_indices(Data.t, tiso, ts, Data.dTt, Data.dTc(1), Data.ISI(1), Data.Ca(Ks));
+
+        for i = 1:length(Ks)
+
+            np1 = polyfit(Lti(id1(i,:)), nFii(id1(i,:)), 1);
+            np2 = polyfit(Lti(id2(i,:)), nFii(id2(i,:)), 1);
+
+            dp1 = polyfit(Data.L(id1(i,:)), Data.F(id1(i,:)), 1);
+            dp2 = polyfit(Data.L(id2(i,:)), Data.F(id2(i,:)), 1);
+
+            ds(i,:) = [dp1(1) dp2(1)];
+            ns(i,:) = [np1(1) np2(1)];
+
+            F0(i) = mean(Data.F(id0(i,:)));
+
+        end
+
+        figure(6)
+        plot(F0, ds(:,1)./ds(:,2),'o-'); hold on
+        plot(F0, ns(:,1)./ns(:,2),'o-')
+        box off
+        xlabel('Isometric force (F_0)')
+        ylabel('Relative stiffness')
+        xlim([0 1.05])
         
     end
 
-    
-    if ishandle(6), close(6); end; figure(6)
-    plot(F0, ds(:,1)./ds(:,2),'o-'); hold on
-    plot(F0, ns(:,1)./ns(:,2),'o-')
-    box off
-    xlabel('Isometric force (F_0)')
-    ylabel('Relative stiffness')
-    legend('Data', 'Model', 'location', 'best')
-    legend boxoff
-    xlim([0 1.05])
+    figure(3)
+    legend('Data', 'Sim 1', 'Sim 2')
 
+    figure(6)
+
+    legend('Data', 'Sim 1', 'Data', 'Sim 2', 'location', 'best')
+    legend boxoff
 
     %% save
     if save_results
