@@ -12,7 +12,10 @@ There are various things you could use this code for:
 - To re-fit the model parameters, go to [biophysical-muscle-model/Fitting](https://github.com/timvanderzee/biophysical-muscle-model/tree/main/Fitting).
 
 ## Before you start: set up your local paths
-Please edit `get_paths.m` and specify `githubfolder`, `outputfolder`, and `datafolder`. Note: `githubfolder` is always required, `outputfolder` is only required if you are looking to reproduce model time-series, and `datafolder` is only required if you are looking to reproduce data time-series. 
+Please edit `get_paths.m` and specify:
+- `githubfolder`: always required, should contain this repository (cloned or downloaded)
+- `outputfolder`: only required if you are looking to reproduce model time-series. 
+- `datafolder`: only required if you are looking to reproduce data time-series. 
 
 ## Contact
 If you have any questions regarding this repository, please contact me at tim.vanderzee@kuleuven.be
