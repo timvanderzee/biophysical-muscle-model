@@ -29,10 +29,10 @@ The biophysical models have 3 inputs, namely:
 3) fiber velocity
 
 Each of these inputs must be specified as a function of time. The `test_model.m` script requires a struct (array) called 'input' that contains the following fields:
-- t: [1×N double]
-- L: [1×N double]
-- v: [1×N double]
-- Ca: [1×N double]
+-       t: [1×N double]
+-       L: [1×N double]
+-       v: [1×N double]
+-       Ca: [1×N double]
 
 These fields specify time (s), fiber length (L0), fiber velocity (L0/s) and calcium concentration (uM).
    
@@ -49,8 +49,11 @@ Given the model file (Step 2), you only need to decide the fiber for which you w
 
 Alternatively, you could use your own set of model parameters. 
 
-## Step 4: determine initial state
+## Step 4: simulate model
+You are now ready to simulate the model. You will do this by calling the `simulate_model` function with the following inputs:
+- `model`: containing the model (step 2)
+- `modelfunc`: containing the model function (step 2)
+- `input`: containing the input (step 1)
+- `newparms`: containing the parameters (step 3)
 
-## Step 5: simulate model
-
-## Step 6: analyze simulation output
+After simulating the model you can visualize the obtained force and add it to the figure (see above).
