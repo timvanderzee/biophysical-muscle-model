@@ -127,6 +127,7 @@ opti.subject_to(p > -5);
 opti.subject_to(p < 5);
 opti.subject_to(Q0 > 1e-6);
 opti.subject_to(Fse > 0);
+% opti.subject_to(Q0+Q1 > 0);
 
 % initial guess
 opti.set_initial(Q0, IG.Q0i(idA));
@@ -159,7 +160,8 @@ opti.subject_to(Fse == Fce + Fpe);
 Frel = Fse * parms.Fscale;
 
 % optional: constrain initial value of the force
-opti.subject_to(Frel(1) == 1);
+% opti.subject_to(Frel(1) == 1);
+opti.subject_to(Frel(1) == Fts(idF(1)));
 
 % force-term in cost function
 Fcost = (Frel(idF) - Fts(idF)).^2;
@@ -174,6 +176,7 @@ R   = 0;
 if contains(model, 'coop')
     Non = opti.variable(1,N);  % derivative constraint
     opti.subject_to(Non > 0);
+     opti.subject_to(Non < 2);
     opti.set_initial(Non, IG.Noni(idA));
 end
 
@@ -181,6 +184,7 @@ end
 if contains(model, '3-state') || contains(model, '4-state')
     DRX = opti.variable(1,N);  % derivative constraint
     opti.subject_to(DRX > 0);
+    opti.subject_to(DRX < 2);
     opti.set_initial(DRX, IG.DRXi(idA));
 end
 
@@ -260,7 +264,7 @@ options.detect_simple_bounds    = true;
 % options for IPOPT
 options.ipopt.linear_solver     = 'mumps';
 options.ipopt.mu_strategy       = 'adaptive';
-options.ipopt.max_iter          = 20;
+options.ipopt.max_iter          = 1e3;
 opti.solver('ipopt',options);
 
 %% solve the problem

@@ -133,9 +133,11 @@ dLce = (parms.Lts - dlse) - nparms.Lce0;
 Fse = nparms.Fse_func(dlse, nparms) * nparms.Fscale;
 Fpe = nparms.kpe * dLce  * nparms.Fscale;
 
+if visualize
 figure(1)
 subplot(414)
 plot(Xdata.t, Fse, '-', Xdata.t, Fpe, '--')
+end
 
 % initial guess
 IG.F9 = Fse;

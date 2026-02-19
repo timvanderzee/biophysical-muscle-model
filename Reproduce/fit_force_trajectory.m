@@ -14,11 +14,12 @@ model = '3-state XB coop';
 [optparms, bnds] = get_fitting_parms(model);
 
 %% step 3: obtain (initial) parameter values
-[parms] = get_initial_parameters(model, bnds, githubfolder);
+iF = 2; % [2,3,5,6,7,8,11];
+[parms] = get_initial_parameters(model, bnds, githubfolder, iF);
 
 %% step 4: specify which data we want to fit on
-fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 iF = 7; % [2,3,5,6,7,8,11];
+fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 N = 500; % number of interpolation points
 th = .05; % threshold for active trials
 
@@ -311,7 +312,7 @@ end
 
 end
 
-function[parms] = get_initial_parameters(model, bnds, githubfolder)
+function[parms] = get_initial_parameters(model, bnds, githubfolder, iF)
 
 [~, modelname] = look_up_model(model);
 
@@ -320,7 +321,7 @@ fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18De
 cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Process'))
 % [~, ~, modelname] = get_model_folder('', mcode, 0);
 
-foldername = fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Parameters',fibers{2});
+foldername = fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Parameters',fibers{iF});
 
 cd(foldername)
 load(['parms_', modelname, '.mat'], 'newparms')
