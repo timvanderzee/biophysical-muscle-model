@@ -243,7 +243,7 @@ Xdata.v = vis;
 Xdata.L = Lis;
 Xdata.Cas = Cas;
 Xdata.idF = idF(idF<idA(end));
-Xdata.idC = idC(idC<idA(end));
+Xdata.idC = [1:300 idC(idC<idA(end))];
 Xdata.Ks = Ks;
 
 % active

@@ -1,5 +1,9 @@
 function[IG] = get_initial_guess(Xdata, parms, visualize)
 
+if ~isfield(Xdata, 'idA')
+    Xdata.idA = 1:length(Xdata.Cas);
+end
+
 parms.ti = Xdata.t;
 parms.vts = Xdata.v;
 parms.Cas = Xdata.Cas;
@@ -142,10 +146,17 @@ oFi = (IG.Fsei) * nparms.Fscale;
 if visualize
 %     figure(1r
     subplot(414); hold on
-    plot(Xdata.t(Xdata.idA), oFi,'b'); hold on
     
-    plot(Xdata.t(Xdata.idF), oFi(Xdata.idF),'m*', 'markersize', 1); hold on
-    plot(Xdata.t(Xdata.idC), oFi(Xdata.idC),'g.'); hold on
+    plot(Xdata.t(Xdata.idA), oFi,'b'); hold on
+
+    
+    if isfield(Xdata, 'idF') 
+        plot(Xdata.t(Xdata.idF), oFi(Xdata.idF),'m*', 'markersize', 1); hold on
+    end
+    
+    if isfield(Xdata, 'idC')
+        plot(Xdata.t(Xdata.idC), oFi(Xdata.idC),'g.'); hold on
+    end
 end
 
 end

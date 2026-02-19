@@ -19,14 +19,14 @@ end
 
 % optional: cost function indices
 if isfield(data, 'idF'), idF  = data.idF; % active force term
-else,                    idF = idA;
+else,                    idF = find(isfinite(Fts(idA)));
 end
 
 if isfield(data, 'idFP'), idFP = data.idFP; % passive force term
 else,                     idFP = idP;
 end
 
-if isfield(data, 'idC'),  idC  = [1:300 data.idC]; % regularization term
+if isfield(data, 'idC'),  idC  = data.idC; % regularization term
 else,                     idC = [];
 end
 
@@ -243,11 +243,11 @@ end
 J = 0;
 J = J + weights(1) * sum(Fcost); % active force cost
 
-if ~isempty(idP)
+if ~isempty(idP) && length(weights)>1
     J = J + weights(2) * sum(FcostP);  % passive force cost
 end
 
-if ~isempty(idC)
+if ~isempty(idC) && length(weights)>2
     J = J + weights(3) * (sum(dQ0dt(idC).^2) + sum(dQ1dt(idC).^2) + sum(dQ2dt(idC).^2)); % regularization term
 end
 
@@ -260,7 +260,7 @@ options.detect_simple_bounds    = true;
 % options for IPOPT
 options.ipopt.linear_solver     = 'mumps';
 options.ipopt.mu_strategy       = 'adaptive';
-options.ipopt.max_iter          = 1e3;
+options.ipopt.max_iter          = 20;
 opti.solver('ipopt',options);
 
 %% solve the problem
@@ -292,7 +292,10 @@ out.s       = sol.value(s);
 out.F       = sol.value(Frel);
 out.J       = sol.value(J);
 out.Fcost   = sol.value(Fcost);
-out.Fcost9  = sol.value(FcostP);
+
+if ~isempty(idP)
+    out.Fcost9  = sol.value(FcostP);
+end
 
 % forcible detached
 if contains(model, '4-state')
