@@ -95,7 +95,7 @@ load(fullfile(cd, 'Reproduce', 'Parameters', fiber, ['parms_', modelname, '.mat'
 %% step 4: simulate model
 [sol, out] = simulate_model(model, modelfunc, input, newparms);
 
-%% step 5: visualize
+% visualize
 figure(1)
 subplot(414)
 t0 = 0;
