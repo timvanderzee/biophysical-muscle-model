@@ -1,5 +1,33 @@
-## Reproduce
-To reproduce the preprint figures, run `reproduce_manuscript_figures.m`. 
+# Reproduce
+You can reproduce the following things:
+- model parameter fitting
+- model force time-series
+- model force root-mean-square deviations (RMSDs) from data
+- model short-range stiffness (SRS)
+- manuscript figures
+
+Each of these are explained below
+
+## Model parameter fitting
+To perform parameter fitting you need CasADi software, see: https://web.casadi.org/get/. For more information see [biophysical-muscle-model/Fitting](https://github.com/timvanderzee/biophysical-muscle-model/tree/main/Fitting). 
+
+To reproduce parameter fitting, run the `reproduce_model_fitting.m` script. Running this script for all fibers and modelsshould result in the same parameter values as in our pre-print. If you're just interested in the parameter values themselves, they are provided in the [Parameters folder](https://github.com/timvanderzee/biophysical-muscle-model/tree/main/Reproduce/Parameters).
+
+## Reproduce model force time-series
+To reproduce model forces, run `reproduce_model_forces.m`. Running this script for all fibers, models and methods should result in a folder containing all model time-series. The model force time-series should be identical to those from the pre-print, provided that the model code and parameters are not changed. The folder in which force time-seris are saved is specified by the user in `outputfolder`.
+
+## Reproduce short-range stiffness predictions
+To reproduce model SRS predictions, run `reproduce_model_SRS.m`
+
+If you're just interested in the model SRS values, they are provided in the [Model output folder](https://github.com/timvanderzee/biophysical-muscle-model/tree/main/Reproduce/Model output).
+
+## Reproduce model force root-mean-square deviations
+To reproduce model force RMSDs, run `reproduce_model_RMSD.m`
+
+If you're just interested in the force RMSDs values, they are provided in the [Model output folder](https://github.com/timvanderzee/biophysical-muscle-model/tree/main/Reproduce/Model output).
+
+## Reproduce model figures
+To reproduce the preprint figures, run `reproduce_manuscript_figures.m`. Figures 2-4 and Figure 7 require model and data time-series (see Table 1). Model time-series can be obtained from the provided models and parameter values in this repository (see "Reproduce model forces"). The data time-series is only provided to manuscript reviewers (as supplementary information), and will be available open-access upon publication. Figures 2-4 and Figure 7 can still be produced without the data, but then only the model traces are shown. The other figures require model SRS and RMSDs, which are provided in this repository in [Model output folder](https://github.com/timvanderzee/biophysical-muscle-model/tree/main/Reproduce/Model output).
 
 **Table 1: Figure dependencies**
 | Figure | GitHub     | Model (time-series) | Data (time-series)    |
@@ -10,22 +38,5 @@ To reproduce the preprint figures, run `reproduce_manuscript_figures.m`.
 | Figure 7         | ☑️  | ☑️             | Optional |
 | Figure 8         | ☑️  | Not required    | Not required |
 
-Note: Figures 2-4 and Figure 7 require model time-series. These are not provided, but can be obtained from the provided models and parameter values in this repository, explained below. The data time-series is only provided to manuscript reviewers (as supplementary information), and will be available open-access upon publication. Figures 2-4 and Figure 7 can still be produced without the data, but then only the model traces are shown. 
 
-### Obtaining model time-series
-To obtain the model time-series (needed for some of the figures, see **Table 1: Figure dependencies**), run `reproduce_model_fits.m`. 
 
-Note: running this script for all fibers, models and methods should result in a folder containing all model time-series. The model time-series should be identical to those from the pre-print, provided that the model code and parameters are not changed. The folder in which time-seris are saved is specified by the user in `outputfolder`. If this folder is then used as `modelfolder` in `reproduce_manuscript_figures.m`, the model traces of Figures 2-4 and Figure 7 can be produced. 
-
-### Evaluate model predictions
-If you have obtained the model time-series (see above), you can reproduce the model short-range stiffness (SRS) predictions. If you additionally have the experimental time-series (reviewers only), you can also reproduce the model force RMSDs. Note: SRS model predictions and force RMSDs are already provided in this repository (see `biophysical-muscle-models/Model output`). Reproducing them is just meant to verify that the model time-series calculated above indeed yield the SRS predictions and RMSDs provided in this repository.
-
-### Reproduce short-range stiffness predictions
-To reproduce model SRS predictions, run `reproduce_model_SRS.m`
-
-Note: running this script for all fibers, models and methods should replace all the SRS predictions in this repository with new values. These should be identical to the ones provided. 
-
-### Reproduce model force RMSDs
-To reproduce model force RMSDs, run `reproduce_model_RMSD.m`
-
-Note: running this script for all fibers, models and methods should replace all the RMSDs in this repository with new values. These should be identical to the ones provided. 
