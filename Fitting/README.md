@@ -50,7 +50,7 @@ This last field contains the force that we want to fit. Here, as an example, we 
 We need an initial guess for the model states, given the selected model, parameters and input. This initial guess is stored in the variable `IG`. 
 
 ## Step 6: do fitting
-Here, we can the function `fit_model_parameters_v2`, with the following inputs:
+Here, we call the function `fit_model_parameters_v2` with the following inputs:
 - `model`: model to be fitted
 - `oldparms`: parameter values
 - `optparms`: parameters that will be fitted
@@ -59,9 +59,9 @@ Here, we can the function `fit_model_parameters_v2`, with the following inputs:
 - `IG`: initial guess of model states
 - `weights`: weights for terms in the cost function
 
- This functions returns the following:
+ This functions returns the following outputs:
  - `newparms`: the new parameters, including the ones fitted
  - `out`: simulation output (e.g. model states)
 
 ## Step 7: validate through simulating with obtained parameters
-This is to check that everything went well. 
+This is to check that everything went well. The simulated force should match the fitted force.
