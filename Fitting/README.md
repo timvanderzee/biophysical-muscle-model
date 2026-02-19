@@ -1,8 +1,8 @@
 # Fitting
 
 Here, we will show you how to fit parameters on a given force trajectory. 
-For fitting, you will need CasADi software, see: https://web.casadi.org/get/
-Make sure that the folder containing the downloaded CasADi software is added to your MATLAB path. 
+
+For fitting, you will need CasADi software, see: https://web.casadi.org/get/. Make sure that the folder containing the downloaded CasADi software is added to your MATLAB path. 
 
 Once you have downloaded CasADi, you can run `fit_any_force_trajectory.m`. This script fits a few parameters on an example force trajectory in 7 steps:
 1. specify which model to fit
@@ -16,14 +16,18 @@ Once you have downloaded CasADi, you can run `fit_any_force_trajectory.m`. This 
 These steps are explained in further detail below.
 
 ## Step 1: specify which model to fit
-You can choose any of the biophysical models in this repository (see biophysical-muscle-model/Test for more info)
+You can choose between the following models:
+- 2-state XB
+- 2-state XB coop
+- 3-state XB coop
+- 4-state XB coop
 
 ## Step 2: specify which parameters to fit
 As an example, four parameters are selected:
-- f: the crossbridge attachment rate
-- k11: the crossbridge detachment rate at negative strain
-- J1: the super-relaxed state forward rate constant
-- kse: an SE stiffness parameter
+- `f`: the crossbridge attachment rate
+- `k11`: the crossbridge detachment rate at negative strain
+- `J1`: the super-relaxed state forward rate constant
+- `kse`: an SE stiffness parameter
 
 You can fit any of the parameters stored in the `parms` struct. For each of the selected parameters, you need to specify lower and upper bounds in the `bnds` struct. 
 
