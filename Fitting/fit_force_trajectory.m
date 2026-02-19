@@ -24,7 +24,6 @@ th = .05; % threshold for active trials
 
 if ishandle(1), close(1); end; figure(1)
 [Xdata] = get_fitting_data(githubfolder, datafolder, iF, N, th, visualize);
-% need multiply Xdata.L by parms.gamma! 
 
 %% step 5: obtain initial guess for model states
 cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Fitting'))
@@ -36,9 +35,6 @@ w1 = 100;    % weight for fitting active force trajectory
 w2 = 1000;   % weight for fitting passive force trajectory
 w3 = 1000; 	 % weight for regularization
 weights = [w1 w2 w3];
-
-% specify biophysical parameters to be fitted
-Xdata.L = Xdata.L * parms.gamma;
 
 % fit model parameters
 [newparms, out, opti] = fit_model_parameters_v2(model, parms, optparms, bnds, Xdata, IG, weights);
@@ -63,7 +59,6 @@ th = 0;
 
 figure(3)
 [Xdata, Data] = get_fitting_data(githubfolder, datafolder, iF, N, th, visualize);
-Xdata.L = Xdata.L * parms.gamma;
 
 for j = 1:2
     if j == 1
@@ -79,7 +74,7 @@ for j = 1:2
     testparms.ti = Xdata.t;
     testparms.vts = Xdata.v;
     testparms.Cas = Xdata.Cas;
-    testparms.Lts = Xdata.L;
+    testparms.Lts = Xdata.L * parms.gamma;
     nsol = ode15s(@(t,y,yp) modelfunc(t,y, testparms), [0 max(testparms.ti)], X0, odeset('maxstep', 1e-2));
     
     % get force
@@ -90,7 +85,7 @@ for j = 1:2
     plot(t, Fse,'-'); hold on
     
     % calc SRS
-    [SRSrel] = calc_SRSrel(t, Fse, Xdata, Data);
+    [SRSrel] = calc_SRSrel(t, Fse, Xdata, Data, testparms);
     
     figure(4)
     plot(SRSrel.F0, SRSrel.ds(:,1)./SRSrel.ds(:,2),'o-'); hold on
@@ -426,7 +421,7 @@ function[t, Fse, Fpe, Fce] = get_forces_from_state(sol, input, newparms)
     Fse = sol.y(3,:) * newparms.Fscale;
 
     dLse = max(newparms.Lse_func(Fse, newparms), 0); % can't be negative
-    Lce = interp1(input.t, input.L, t) - dLse;
+    Lce = interp1(input.t, input.L * newparms.gamma, t) - dLse;
 
     dLce = Lce - newparms.Lce0;
     Fpe = newparms.kpe * dLce  * newparms.Fscale;
@@ -457,11 +452,11 @@ elseif strcmp(model, '4-state XB coop')
 end
 end
 
-function[SRSrel, RMSD] = calc_SRSrel(t, Fse, Xdata, Data)
+function[SRSrel, RMSD] = calc_SRSrel(t, Fse, Xdata, Data, parms)
     
 % interpolate
 nFi = interp1(t, Fse, Data.t);
-Lti = interp1(Xdata.t, Xdata.L, Data.t);
+Lti = interp1(Xdata.t, Xdata.L * parms.gamma, Data.t);
 
 % compute RMSD
 RMSD = mean(abs(nFi - Data.F));

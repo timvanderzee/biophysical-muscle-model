@@ -1,30 +1,65 @@
-function[parms, out, opti] = fit_model_parameters_v2(model, parms, optparms, bnds, data, IG, w)
+function[parms, out, opti] = fit_model_parameters_v2(model, parms, optparms, bnds, data, IG, weights)
 
-import casadi.*
+%% extract input and target
+% mandatory
+Cas = data.Cas;                 % calcium concentration
+vts = data.v;                   % crossbridge velocity
+Fts = data.F;                   % fiber force
+toc = data.t;                   % time vector
+Lts = data.L * parms.gamma;     % crossbridge length change
 
-% initialise opti structure
-opti = casadi.Opti();
-
-% parameters
-allparms = {'f','k11','k12','k21','k22','JF','koop','J1','J2', 'kon', 'koff', 'kse','kse0', 'kpe', 'Fpe0','b','k','dLcrit', 'gamma', 'kF', 'vmax', 'kappa', 'ps2', 'act_max', 'Lce0'};
-
-% create variables for all parameters
-for i = 1:length(allparms)
-    eval([allparms{i}, ' = ', num2str(parms.(allparms{i})),';'])
+% optional: active versus passive indices
+if isfield(data, 'idA'), idA = data.idA;
+else,                    idA = 1:length(Cas); % assume everything is active
 end
 
+if isfield(data, 'idP'), idP = data.idP;
+else,                    idP = []; % assume nothing is passive
+end
+
+% optional: cost function indices
+if isfield(data, 'idF'), idF  = data.idF; % active force term
+else,                    idF = idA;
+end
+
+if isfield(data, 'idFP'), idFP = data.idFP; % passive force term
+else,                     idFP = idP;
+end
+
+if isfield(data, 'idC'),  idC  = [1:300 data.idC]; % regularization term
+else,                     idC = [];
+end
+
+N = length(idA);
+dt = mean(diff(toc));
+
+%% normalize parameters
+import casadi.*
+opti = casadi.Opti(); % initialise opti structure
+
+% create variables for all parameters
+allparms = fieldnames(parms);
+for i = 1:length(allparms)
+    if isscalar(parms.(allparms{i})) && isnumeric(parms.(allparms{i}))
+        eval([allparms{i}, ' = ', num2str(parms.(allparms{i})),';'])
+    end
+end
+
+% create variable for parameters that will be fitted
 if ~isempty(optparms)
     % get bounds and normalized values
     lb = nan(1, length(optparms));
     ub = nan(1, length(optparms));
     nv = nan(1, length(optparms));
     
+    % convert into normalized value between bounds
     for i = 1:length(optparms)
         lb(i) = bnds.(optparms{i})(1);
         ub(i) = bnds.(optparms{i})(2);
         nv(i) = (parms.(optparms{i}) - lb(i)) / (ub(i)-lb(i));
     end
     
+    % make sure that initial guess is not at the bounds
     if (sum(nv > 1) + sum(nv < 0)) > 0
         disp('Warning: initial guess out of bounds. Adjusting ...')
         nv(nv > 1) = .9;
@@ -48,36 +83,41 @@ if ~isempty(optparms)
     JF = kF / J1;
 end
 
-%% extract input and target
-Cas = data.Cas;
-vts = data.v;
-Fts = data.F;
-toc = data.t;
-Lts = data.L;
-idF = data.idF;
-idC = [1:300 data.idC];
-idA = data.idA;
-idP = data.idP;
-idFP = data.idFP;
+%% passive force fitting (pCa 9)
+if ~isempty(idP)
+    NP = length(idP);
 
-% N = length(toc);
-N = length(idA);
-dt = mean(diff(toc));
+    FseP = opti.variable(1,NP);
+    opti.set_initial(FseP, IG.F9(idP));
+    opti.subject_to(FseP > 0);
 
-%% define opti variables, specify constraints and initial guesses
-% define opti states (defined as above)
+    % lengths
+    dlseP = log(FseP/kse0+1)/kse;
+    LceP  = Lts(idP) - dlseP;
+    dLceP = LceP - Lce0;
+
+    % parallel force
+    FpeP = kpe * dLceP;
+
+    % constraint (assume Fce = 0)
+    opti.subject_to(FseP == FpeP);
+
+    % cost
+    FrelP = FseP * parms.Fscale;
+    FcostP = (FrelP(idFP - N) - Fts(idFP)).^2;
+end
+
+%% active force fitting: define opti variables, specify constraints and initial guesses
+% define opti variables
 Q0  = opti.variable(1,N); % XBs attached
 Q1  = opti.variable(1,N); % XB force
 Q2  = opti.variable(1,N); % XB elastic strain energy
 Fse = opti.variable(1,N); % SE force
-
-% fiber velocity
-Ld = opti.variable(1,N);  % derivative constraint
-opti.set_initial(Ld, IG.Ldi(idA));
-
-% introduce p and q
 p   = opti.variable(1,N); % mean strain of the distribution
 q   = opti.variable(1,N); % standard deviation strain of the distribution
+Ld  = opti.variable(1,N);  % % fiber velocity
+
+% constraints that specify relation between opti variables
 opti.subject_to(Q1 - Q0 .* p == 0);
 opti.subject_to(Q2 - Q0 .* (p.^2 + q) == 0);
 
@@ -88,51 +128,24 @@ opti.subject_to(p < 5);
 opti.subject_to(Q0 > 1e-6);
 opti.subject_to(Fse > 0);
 
-% initial guess states
+% initial guess
 opti.set_initial(Q0, IG.Q0i(idA));
 opti.set_initial(Q1, IG.Q1i(idA));
 opti.set_initial(Q2, IG.Q2i(idA));
-
-% initial guess extra variables
+opti.set_initial(Ld, IG.Ldi(idA));
 opti.set_initial(p, IG.pi(idA));
 opti.set_initial(q, IG.qi(idA));
 opti.set_initial(Fse, IG.Fsei(idA));
 
-% thin filament activation
-if contains(model, 'coop')
-    Non = opti.variable(1,N);  % derivative constraint
-    opti.subject_to(Non > 0);
-    opti.set_initial(Non, IG.Noni(idA));
-else
-    Non = Cas(idA).^n ./ (kappa^n + Cas(idA).^n); 
-end
-
-% thick filament activation
-if contains(model, '3-state') || contains(model, '4-state')
-    DRX = opti.variable(1,N);  % derivative constraint
-    opti.subject_to(DRX > 0);
-    opti.set_initial(DRX, IG.DRXi(idA));
-else
-    DRX = 1 - Q0;
-end
-
-if contains(model, '4-state')
-   R = opti.variable(1,N);  % derivative constraint
-%    opti.subject_to(R > 0);
-   opti.set_initial(R, IG.Ri(idA));
-else
-    R = 0;
-end
-
-%% Forces
-% calculate parallel force
-dlse = log(Fse/kse0+1)/kse;
-L = Lts(idA) - dlse;
-dLce = L - Lce0;
+%% active force fitting: forces and stiffnesses
+% passive force
+dLse = log(Fse/kse0+1)/kse;
+Lce = Lts(idA) - dLse;
+dLce = Lce - Lce0;
 K = 1;
 Fpe = kpe * log(1+exp(dLce*K))/K;
 
-% XB force
+% active force
 Fce = Q0 + Q1;
 
 % stiffneses
@@ -142,29 +155,43 @@ Kpe = kpe .* (1 - 1./(exp(K*dLce)+1));
 % force constraint
 opti.subject_to(Fse == Fce + Fpe);
 
-%% Passive force during pCa 9
-N9 = length(idP);
+% scale the force
+Frel = Fse * parms.Fscale;
 
-Fse9 = opti.variable(1,N9);
-opti.set_initial(Fse9, IG.F9(idP));
-opti.subject_to(Fse9 > 0);
+% optional: constrain initial value of the force
+opti.subject_to(Frel(1) == 1);
 
-% lengths
-dlse9 = log(Fse9/kse0+1)/kse;
-L9 = data.L(idP) - dlse9;
-dLce9 = L9 - Lce0;
+% force-term in cost function
+Fcost = (Frel(idF) - Fts(idF)).^2;
 
-% parallel force
-Fpe9 = kpe * dLce9;
+%% active force fitting: optional additional variables
+% default: assume regular 2-state model
+Non = Cas(idA).^n ./ (kappa^n + Cas(idA).^n); 
+DRX = 1 - Q0;
+R   = 0;
 
-% constraint (assume Fce = 0)
-opti.subject_to(Fse9 == Fpe9);
+% thin filament activation
+if contains(model, 'coop')
+    Non = opti.variable(1,N);  % derivative constraint
+    opti.subject_to(Non > 0);
+    opti.set_initial(Non, IG.Noni(idA));
+end
 
-% cost
-Frel9 = Fse9 * parms.Fscale;
-Fcost9 = (Frel9(idFP - N) - Fts(idFP)).^2;
+% thick filament activation
+if contains(model, '3-state') || contains(model, '4-state')
+    DRX = opti.variable(1,N);  % derivative constraint
+    opti.subject_to(DRX > 0);
+    opti.set_initial(DRX, IG.DRXi(idA));
+end
 
-%% cross-bridge dynamics
+% forcibly detached state
+if contains(model, '4-state')
+   R = opti.variable(1,N);  % derivative constraint
+%    opti.subject_to(R > 0);
+   opti.set_initial(R, IG.Ri(idA));
+end
+
+%% active force fitting: cross-bridge dynamics
 % points where integrals is evaluated
 k1 = [k11 k12];
 k2 = [k21 -k22];
@@ -178,7 +205,7 @@ k2 = [k21 -k22];
 % velocity - independent derivative
 F0dot  = Q1dot + Q0dot;
 
-% velocity
+% velocity constraint
 opti.subject_to(Ld .* (Q0 + Kse + Kpe) == (vts(idA) .* parms.gamma .* Kse - F0dot));
 
 % cross-bridge derivatives
@@ -190,151 +217,109 @@ dQ2dt = Q2dot + 2 * Ld .* Q1;
 opti.subject_to((dQ0dt(1:N-1) + dQ0dt(2:N))*dt/2 + Q0(1:N-1) == Q0(2:N));
 opti.subject_to((dQ1dt(1:N-1) + dQ1dt(2:N))*dt/2 + Q1(1:N-1) == Q1(2:N));
 opti.subject_to((dQ2dt(1:N-1) + dQ2dt(2:N))*dt/2 + Q2(1:N-1) == Q2(2:N));
-% opti.subject_to((dFsedt(1:N-1) + dFsedt(2:N))*dt/2 + Fse(1:N-1) == Fse(2:N));
 
-%% cooperativity
+%% active force fitting: additional dynamics
+% forcibly detached state
 if contains(model, '4-state')
-%     dRdt = Rdot;
     opti.subject_to((Rdot(1:N-1) + Rdot(2:N))*dt/2 + R(1:N-1) == R(2:N));
-else
-    dRdt = 0;
 end
 
+% thin filament dynamics
 if contains(model, 'coop')
     [Jon, Joff] = ThinFilament_Dynamics(Cas(idA), Q0, Non, kon, koff, koop, parms.Noverlap);
     dNondt = Jon - Joff;
     opti.subject_to((dNondt(1:N-1) + dNondt(2:N))*dt/2 + Non(1:N-1) == Non(2:N));
 end
 
+% thick filament dynamics
 if contains(model, '3-state') || contains(model, '4-state')
     [k1, k2] = ThickFilament_Dynamics(Q0, Fce, DRX, J1, J2, JF, parms.Noverlap, R);
     dDRXdt = k1 - k2 - (dQ0dt + Rdot);
     opti.subject_to((dDRXdt(1:N-1) + dDRXdt(2:N))*dt/2 + DRX(1:N-1) == DRX(2:N));
 end
 
-
-%% cost
-% Frel = (Fse + Fp) * parms.Fscale;
-Frel = Fse * parms.Fscale;
-
-% not needed for Hill-type, because already enforced by dynamics
-opti.subject_to(Frel(1) == 1);
-
-Fcost = (Frel(idF) - Fts(idF)).^2;
-
+%% specify cost to be minimized
 % cost function
 J = 0;
-J = J + w(1) * sum(Fcost);
-J = J + w(2) * sum(Fcost9); 
-J = J + w(3) * (sum(dQ0dt(idC).^2) + sum(dQ1dt(idC).^2) + sum(dQ2dt(idC).^2)); % regularization term
+J = J + weights(1) * sum(Fcost); % active force cost
 
-% optimize
-opti.minimize(J);
-
-%% Solve problem
-% options for IPOPT
-
-options.ipopt.linear_solver = 'mumps';
-% options.ipopt.hessian_approximation = 'limited-memory';
-options.ipopt.mu_strategy           = 'adaptive';
-options.detect_simple_bounds           = true;
-
-options.ipopt.max_iter = 1e3;
-
-opti.solver('ipopt',options);
-
-%%
-
-try
-    sol = opti.solve();
-    
-    out.F     = sol.value(Frel);
-    out.J     = sol.value(J);
-    out.Fcost = sol.value(Fcost);
-    out.Fcost9 = sol.value(Fcost9);
-    
-    if exist('s')
-        out.s = sol.value(s);
-    end
-    
-    if parms.f > 0
-        % Extract the result
-        out.Q0    = sol.value(Q0);
-        out.Q1    = sol.value(Q1);
-        out.Q2    = sol.value(Q2);
-        out.Non    = sol.value(Non);
-        out.DRX    = sol.value(DRX);
-        
-        out.dQ0dt = sol.value(dQ0dt);
-        out.dQ1dt = sol.value(dQ1dt);
-        out.dQ2dt = sol.value(dQ2dt);
-        
-        out.Lts = sol.value(Lts);
-        
-        if contains(model, '4-state')
-            out.R = sol.value(R);
-        end
-        
-        if contains(model, '3-state') || contains(model, '4-state')
-            out.dDRXdt = sol.value(dDRXdt);
-        end
-        
-        if contains(model, 'coop')
-            out.dNondt = sol.value(dNondt);
-        end
-        
-        out.F0dot = sol.value(F0dot);
-        out.p = sol.value(p);
-        out.q = sol.value(q);
-        %         out.L = sol.value(L);
-        out.Ld = sol.value(Ld);
-        out.Fce = sol.value(Fce);
-        out.Fse = sol.value(Fse);
-        out.Fpe = sol.value(Fpe);
-    end
-    
-    % extract the parameters
-    for i = 1:length(optparms)
-        parms.(optparms{i}) = eval(['sol.value(',optparms{i},');']);
-    end
-    
-catch
-    disp('Optimal solution not found')
-    sol = opti.debug();
-    
-    out.F     = opti.debug.value(Frel);
-    out.J     = opti.debug.value(J);
-    out.Fcost = opti.debug.value(Fcost);
-    out.Lts = sol.value(Lts);
-        
-    if exist('s')
-        out.s = sol.value(s);
-    end
-    
-    if parms.f > 0
-        % Extract the result
-        out.Q0    = opti.debug.value(Q0);
-        out.Q1    = opti.debug.value(Q1);
-        out.Q2    = opti.debug.value(Q2);
-        
-        out.Non    = opti.debug.value(Non);
-        out.DRX    = opti.debug.value(DRX);
-        
-        out.dQ0dt = opti.debug.value(dQ0dt);
-        out.dQ1dt = opti.debug.value(dQ1dt);
-        out.dQ2dt = opti.debug.value(dQ2dt);
-    end
-    
-    % extract the parameters
-    for i = 1:length(optparms)
-        parms.(optparms{i}) = eval(['opti.debug.value(',optparms{i},');']);
-    end
+if ~isempty(idP)
+    J = J + weights(2) * sum(FcostP);  % passive force cost
 end
 
+if ~isempty(idC)
+    J = J + weights(3) * (sum(dQ0dt(idC).^2) + sum(dQ1dt(idC).^2) + sum(dQ2dt(idC).^2)); % regularization term
+end
+
+% minimize this cost function
+opti.minimize(J);
+
+%% optimization settings
+options.detect_simple_bounds    = true;
+
+% options for IPOPT
+options.ipopt.linear_solver     = 'mumps';
+options.ipopt.mu_strategy       = 'adaptive';
+options.ipopt.max_iter          = 1e3;
+opti.solver('ipopt',options);
+
+%% solve the problem
+try
+    sol = opti.solve();
+catch
+    sol = opti.debug();
+end
+
+%% obtain output
+% extract variables
+out.Q0      = sol.value(Q0);
+out.Q1      = sol.value(Q1);
+out.Q2      = sol.value(Q2);
+out.Non     = sol.value(Non);
+out.DRX     = sol.value(DRX);
+out.dQ0dt   = sol.value(dQ0dt);
+out.dQ1dt   = sol.value(dQ1dt);
+out.dQ2dt   = sol.value(dQ2dt);
+out.Lts     = sol.value(Lts);
+out.F0dot   = sol.value(F0dot);
+out.p       = sol.value(p);
+out.q       = sol.value(q);
+out.Ld      = sol.value(Ld);
+out.Fce     = sol.value(Fce);
+out.Fse     = sol.value(Fse);
+out.Fpe     = sol.value(Fpe);
+out.s       = sol.value(s);
+out.F       = sol.value(Frel);
+out.J       = sol.value(J);
+out.Fcost   = sol.value(Fcost);
+out.Fcost9  = sol.value(FcostP);
+
+% forcible detached
+if contains(model, '4-state')
+    out.R = sol.value(R);
+end
+
+% thick filament cooperativity
+if contains(model, '3-state') || contains(model, '4-state')
+    out.dDRXdt = sol.value(dDRXdt);
+end
+
+% thin filament cooperativity
+if contains(model, 'coop')
+    out.dNondt = sol.value(dNondt);
+end
+
+% extract the parameters
+for i = 1:length(optparms)
+    parms.(optparms{i}) = eval(['sol.value(',optparms{i},');']);
+end
+    
+% make sure that JF is corrected
 if parms.J1 > 0
     parms.JF = parms.kF / parms.J1;
 end
 
+% time vector
 out.t     = 0:dt:(N-1)*dt;
 
 end
