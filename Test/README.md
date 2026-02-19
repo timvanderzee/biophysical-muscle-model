@@ -6,9 +6,9 @@ Running `test_model.m` should result in the following figure:
 ![picture](test_model.png)
 
 This figure shows the model inputs (i.e. calcium, length, velocity) and the resulting model ouput (i.e. force) for three types of protocols:
-1) Ramp protocol as in our [preprint](https://www.biorxiv.org/content/10.1101/2025.10.31.685881v1) (t = 0-2 s)
-2) Isometric protocol (t = 2-4 s)
-3) Sinusoidal protocol (t = 4-6)
+- Ramp protocol as in our [preprint](https://www.biorxiv.org/content/10.1101/2025.10.31.685881v1) (t = 0-2 s)
+- Isometric protocol (t = 2-4 s)
+- Sinusoidal protocol (t = 4-6)
 
 The user can change each protocol, or add their own protocol. 
 
@@ -24,15 +24,15 @@ Each of these steps is explained in further detail below
 
 ## Step 1: specify inputs
 The biophysical models have 3 inputs, namely:
-1) calcium concentration
-2) fiber length
-3) fiber velocity
+- calcium concentration
+- fiber length
+- fiber velocity
 
 Each of these inputs must be specified as a function of time. The `test_model.m` script requires a struct (array) called 'input' that contains the following fields:
-- t: [1×N double]
-- L: [1×N double]
-- v: [1×N double]
-- Ca: [1×N double]
+-       t: [1×N double]
+-       L: [1×N double]
+-       v: [1×N double]
+-       Ca: [1×N double]
 
 These fields specify time (s), fiber length (L0), fiber velocity (L0/s) and calcium concentration (uM).
    
@@ -49,8 +49,11 @@ Given the model file (Step 2), you only need to decide the fiber for which you w
 
 Alternatively, you could use your own set of model parameters. 
 
-## Step 4: determine initial state
+## Step 4: simulate model
+You are now ready to simulate the model. You will do this by calling the `simulate_model` function with the following inputs:
+- `model`: containing the model (step 2)
+- `modelfunc`: containing the model function (step 2)
+- `input`: containing the input (step 1)
+- `newparms`: containing the parameters (step 3)
 
-## Step 5: simulate model
-
-## Step 6: analyze simulation output
+After simulating the model you can visualize the obtained force and add it to the figure (see above).
