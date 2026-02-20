@@ -91,35 +91,6 @@ kse = parms.kse * (Fsei + parms.kse0);
 Ldi = (vts .* parms.gamma .* kse - F0dot) ./  (Q0i + kse + kpe);
 IG.Ldi = Ldi;
 
-else
-    
-    % activation
-    a = parms.actfunc(Cas, parms);
-    a(a<parms.amin) = parms.amin;
-    
-    % length
-    Lce = interp1(sol.x, sol.y, tis);
-    parms.Lce0 = -10;
-    
-    % SE force
-    dLse = Lts - Lce;
-    Fse = parms.Fse_func(dLse, parms);
-    
-    % PE force
-    dLce = Lce - parms.Lce0;
-    Fpe = parms.kpe * dLce  * parms.Fscale;
-    Fpe(parms.K*dLce < 10) = parms.kpe * log(1+exp(dLce(parms.K*dLce < 10)*parms.K))/parms.K  * parms.Fscale;
-
-    % CE force and velocity
-    Fce = Fse - Fpe;
-    Frel = Fce ./ a;
-    vce = parms.Fv_func(Frel, parms);
-    
-    IG.vcei = vce;
-    IG.Fsei = Fse;
-    
-end
-
 %% compute passive
 Lts = Xdata.L * parms.gamma;
 
@@ -137,12 +108,25 @@ IG.F9 = Fse;
 FiA = (IG.Fsei) * parms.Fscale;
 FiP = (IG.F9) * parms.Fscale;
 
+else
+    
+    Lce = interp1(sol.x, sol.y, Xdata.t);
+    parms.Lce0 = -10;
+    
+    dLse = Xdata.L * parms.gamma - Lce;
+    
+    Fse = parms.Fse_func(dLse, parms);
+
+    IG.Fsei = Fse;
+end
+
+
 if visualize
 
     subplot(414); hold on
-    plot(Xdata.t(Xdata.idA), FiA,'r'); hold on
+    plot(Xdata.t(Xdata.idA), FiA,'b'); hold on
     
-     if isfield(Xdata, 'idP') 
+    if exist('FiP', 'variable')
         plot(Xdata.t, FiP, '--')
     end
     

@@ -90,7 +90,7 @@ model = '3-state XB coop'; % see options above
 % here we look up the parameters for a given fiber and model
 fiber = '7Aug2018a';
 githubfolder = cd;
-load(fullfile(cd, 'Reproduce', 'Parameters', fiber, ['parms_', modelname, '.mat']))
+load(fullfile(cd, 'Reproduce', 'Parameters', fiber, ['parms_', modelname, '.mat']), 'newparms')
 
 %% step 4: simulate model
 [sol, out] = simulate_model(model, modelfunc, input, newparms);

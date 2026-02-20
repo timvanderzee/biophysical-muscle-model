@@ -8,6 +8,7 @@ visualize = 1;
 
 %% step 1: specify which model we want to fit
 model = '3-state XB coop'; 
+% model = 'Hill-type SE'; 
 [modelfunc, modelname] = look_up_model(model);
 
 %% step 2: specify which parameters we are fitting, and which bounds we are using
@@ -35,15 +36,27 @@ IG = get_initial_guess(model, modelfunc, Xdata, parms, visualize);
 w1 = 100;    % weight for fitting active force trajectory
 w2 = 1000;   % weight for fitting passive force trajectory
 w3 = 1000; 	 % weight for regularization
-weights = [w1 w2 w3];
+weights = [w1 w2];
 
 % fit model parameters
 [newparms, out, opti] = fit_model_parameters_v2(model, parms, optparms, bnds, Xdata, IG, weights);
+
+figure(100);
+subplot(211)
+plot(Xdata.t, Xdata.L)
+
+subplot(212)
+plot(out.t, out.F, 'b--'); hold on
+plot(Xdata.t, Xdata.F)
+
+
+return
 
 %% step 7: analyze output
 if ishandle(2), close(2); end
 if ishandle(3), close(3); end
 if ishandle(4), close(4); end
+
 
 % load old parameters for reference
 oldparms = load(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Parameters',fibers{iF}, ['parms_', modelname, '.mat']), 'newparms');
@@ -56,11 +69,14 @@ for i = 1:length(optparms)
 end
 
 N = 1000;
-th = 0;
+th = .05;
 
 figure(3)
 [Xdata, Data] = get_fitting_data(githubfolder, datafolder, iF, N, th, visualize);
 
+%%
+
+%%
 for j = 1:2
     if j == 1
         testparms = newparms;
@@ -82,7 +98,7 @@ for j = 1:2
     nsol = ode15s(@(t,y,yp) modelfunc(t,y, testparms), [0 max(testparms.ti)], X0, odeset('maxstep', 1e-2));
     
     % get force
-    [t, Fse, Fpe, Fce] = get_forces_from_state(nsol, Xdata, testparms);  
+    [t, Fse, Fpe, Fce] = get_forces_from_state(model, nsol, Xdata, testparms);  
 
     figure(3)
     subplot(414);
@@ -251,11 +267,14 @@ Xdata.idC = [1:300 idC(idC<idA(end))];
 Xdata.Ks = Ks;
 
 % active
+
+% if contains(model, 'XB')
 Xdata.idA = idA;
 
 % passive
 Xdata.idP = idP;
 Xdata.idFP = idFP;
+% end
 
 [id0,id1,id2] = get_indices(Data.t, tiso, ts, AData.dTt, AData.dTc(1), AData.ISI(1), AData.Ca(Ks));
 
@@ -419,14 +438,22 @@ end
 
 end
 
-function[t, Fse, Fpe, Fce] = get_forces_from_state(sol, input, newparms)
+function[t, Fse, Fpe, Fce] = get_forces_from_state(model, sol, input, newparms)
 
     t   = sol.x;
-    Fse = sol.y(3,:) * newparms.Fscale;
+    
+    if contains(model, 'XB')
+        Fse = sol.y(3,:) * newparms.Fscale;
 
-    dLse = max(newparms.Lse_func(Fse, newparms), 0); % can't be negative
-    Lce = interp1(input.t, input.L * newparms.gamma, t) - dLse;
-
+        dLse = max(newparms.Lse_func(Fse, newparms), 0); % can't be negative
+        Lce = interp1(input.t, input.L * newparms.gamma, t) - dLse;
+    else
+        Lce = sol.y;
+        newparms.Lce0 = -10;
+        dLse = interp1(input.t, input.L * newparms.gamma, t) - Lce;
+        Fse = newparms.Fse_func(dLse, newparms) * newparms.Fscale;
+    end
+    
     dLce = Lce - newparms.Lce0;
     Fpe = newparms.kpe * dLce  * newparms.Fscale;
     Fpe(newparms.K*dLce < 10) = newparms.kpe * log(1+exp(dLce(newparms.K*dLce < 10)*newparms.K))/newparms.K  * newparms.Fscale;
@@ -434,27 +461,6 @@ function[t, Fse, Fpe, Fce] = get_forces_from_state(sol, input, newparms)
     Fce = Fse - Fpe;
 end
 
-function[modelfunc, modelname] = look_up_model(model)
-
-if contains(model, 'XB')
-    modelfunc = @fiber_dynamics_explicit_length_v2;
-else
-    modelfunc = @hill;
-end
-
-if strcmp(model, '3-state XB coop')
-    modelname = 'biophysical_full_regular';
-
-elseif strcmp(model, '2-state XB coop')
-    modelname = 'biophysical_thin_regular';
-
-elseif strcmp(model, '2-state XB')
-    modelname = 'biophysical_no_regular';
-
-elseif strcmp(model, '4-state XB coop')
-    modelname = 'biophysical_full_alternative';
-end
-end
 
 function[SRSrel, RMSD] = calc_SRSrel(t, Fse, Xdata, Data, parms)
     

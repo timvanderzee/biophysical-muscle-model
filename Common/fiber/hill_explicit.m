@@ -1,23 +1,26 @@
-function[xdot, Fce] = hill_explicit(t, x, parms, Ca)
+function[xdot, Fce] = hill_explicit(t, x, parms)
 
     % states
-    lce = x(1);
-%     lmtc = x(2);
+    Lce = x(1);
+   
+    if numel(parms.Cas) == 1
+        Ca = parms.Cas;
+    else
+        Ca = interp1(parms.ti, parms.Cas, t);
+    end
 
-    lmtc = parms.Lts;
+    if numel(parms.Lts) == 1
+        Lts = parms.Lts;
+    else
+        Lts = interp1(parms.ti, parms.Lts, t);
+    end
 
     % activation from Ca
     a = parms.actfunc(Ca, parms);
     a(a<parms.amin) = parms.amin;
 
     % elastic elements
-    Lse = lmtc - lce;    
-% 
-%     if isfield(parms, 'Fpece_func')
-%         Fpe = parms.Fpece_func(lce, parms);
-%     else
-%         Fpe = 0;
-%     end
+    Lse = Lts - Lce;    
 
     Fpe = 0;
     
@@ -30,9 +33,9 @@ function[xdot, Fce] = hill_explicit(t, x, parms, Ca)
 
     % force-velocity
     Frel = Fce ./ a;
-    vce = parms.Fv_func(Frel, parms);
+    Vce = parms.Fv_func(Frel, parms);
 
     % state derivative
-    xdot = [vce];
+    xdot = Vce;
 
 end

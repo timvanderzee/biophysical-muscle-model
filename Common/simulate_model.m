@@ -24,18 +24,26 @@ end
 % get force
 out = struct();
 for i = 1:length(input) % loop over phases
-    [~, out(i).F, ~, ~] = get_forces_from_state(sol(i), input(i), newparms);
+    [~, out(i).F, ~, ~] = get_forces_from_state(model, sol(i), input(i), newparms);
 end
 end
 
-function[t, Fse, Fpe, Fce] = get_forces_from_state(sol, input, newparms)
+function[t, Fse, Fpe, Fce] = get_forces_from_state(model, sol, input, newparms)
 
     t   = sol.x;
-    Fse = sol.y(3,:) * newparms.Fscale;
+    
+    if contains(model, 'XB')
+        Fse = sol.y(3,:) * newparms.Fscale;
 
-    dLse = max(newparms.Lse_func(Fse, newparms), 0); % can't be negative
-    Lce = interp1(input.t, input.L, t) - dLse;
-
+        dLse = max(newparms.Lse_func(Fse, newparms), 0); % can't be negative
+        Lce = interp1(input.t, input.L * newparms.gamma, t) - dLse;
+    else
+        Lce = sol.y;
+        newparms.Lce0 = -10;
+        dLse = interp1(input.t, input.L * newparms.gamma, t) - Lce;
+        Fse = newparms.Fse_func(dLse, newparms);
+    end
+    
     dLce = Lce - newparms.Lce0;
     Fpe = newparms.kpe * dLce  * newparms.Fscale;
     Fpe(newparms.K*dLce < 10) = newparms.kpe * log(1+exp(dLce(newparms.K*dLce < 10)*newparms.K))/newparms.K  * newparms.Fscale;

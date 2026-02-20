@@ -247,41 +247,41 @@ end
 else % Hill-type
         
     % parameters
-%     kappa   = opti.variable(1);
-%     act_max = opti.variable(1);
-%     vmax    = opti.variable(1);
-%     n       = opti.variable(1);
-%     kpe     = opti.variable(1);
-%     Lce0    = opti.variable(1);
-%     kse0    = opti.variable(1);
-%     kse     = opti.variable(1);
+    kappa   = opti.variable(1);
+    act_max = opti.variable(1);
+    vmax    = opti.variable(1);
+    n       = opti.variable(1);
+    kpe     = opti.variable(1);
+    Lce0    = opti.variable(1);
+    kse0    = opti.variable(1);
+    kse     = opti.variable(1);
     
     % initial values
-%     opti.set_initial(kappa, parms.kappa);
-%     opti.set_initial(act_max, parms.act_max);
-%     opti.set_initial(vmax, parms.vmax);
-%     opti.set_initial(n, parms.n);
-%     opti.set_initial(kpe, parms.kpe);
-%     opti.set_initial(Lce0, parms.Lce0);
-%     opti.set_initial(kse0, parms.kse0);
-%     opti.set_initial(kse, parms.kse);
-%     
-%     % bounds
-%     opti.subject_to(kappa > 0);
-%     opti.subject_to(act_max > 0);
-%     opti.subject_to(vmax > 0);
-%     opti.subject_to(n > 0);
-%     opti.subject_to(kpe > 0);
-%     opti.subject_to(Lce0 < 0);
-%     opti.subject_to(kse0 > 0);
-%     opti.subject_to(kse > 0);
+    opti.set_initial(kappa, parms.kappa);
+    opti.set_initial(act_max, parms.act_max);
+    opti.set_initial(vmax, parms.vmax);
+    opti.set_initial(n, parms.n);
+    opti.set_initial(kpe, parms.kpe);
+    opti.set_initial(Lce0, parms.Lce0);
+    opti.set_initial(kse0, parms.kse0);
+    opti.set_initial(kse, parms.kse);
+    
+    % bounds
+    opti.subject_to(kappa > 0);
+    opti.subject_to(act_max > 0);
+    opti.subject_to(vmax > 0);
+    opti.subject_to(n > 0);
+    opti.subject_to(kpe > 0);
+    opti.subject_to(Lce0 < 0);
+    opti.subject_to(kse0 > 0);
+    opti.subject_to(kse > 0);
     
     % variables
     Fse = opti.variable(1, N);
-    opti.set_initial(Fse, IG.Fsei(idA));
+    opti.set_initial(Fse, IG.Fsei);
         
     vce = opti.variable(1, N);
-    opti.set_initial(vce, IG.vcei(idA));
+    opti.set_initial(Fse, IG.vcei);
     
     % PE
     dLse = log(Fse/kse0+1)/kse;
@@ -291,14 +291,12 @@ else % Hill-type
     Fpe = kpe * log(1+exp(dLce*K))/K;
     
     % CE activations
-    a = act_max * Cas(idA).^n ./ (kappa^n + Cas(idA).^n);
-    Fce = a .* (parms.e(1)*log((parms.e(2)*vce./vmax+parms.e(3))+sqrt((parms.e(2)*vce./vmax+parms.e(3)).^2+1))+parms.e(4));
+    a = act_max * Cas.^n ./ (kappa^n + Cas.^n);
     
-    % force constraint
+    % force-velocity constraint
+    Fce = a .* (parms.e(1)*log((parms.e(2)*vce./vmax+parms.e(3))+sqrt((parms.e(2)*vce./vmax+parms.e(3)).^2+1))+parms.e(4)));
+    
     opti.subject_to(Fce + Fpe == Fse);
-    
-    % velocity is time derivative of length
-    opti.subject_to((vce(1:N-1) + vce(2:N))*dt/2 + Lce(1:N-1) == Lce(2:N));
     
     % Total force
     Frel = Fse * parms.Fscale;
@@ -343,8 +341,6 @@ catch
     sol = opti.debug();
 end
 
-out.F       = sol.value(Frel);
-if contains(model, 'XB')
 %% obtain output
 % extract variables
 out.Q0      = sol.value(Q0);
@@ -364,6 +360,7 @@ out.Fce     = sol.value(Fce);
 out.Fse     = sol.value(Fse);
 out.Fpe     = sol.value(Fpe);
 out.s       = sol.value(s);
+out.F       = sol.value(Frel);
 out.J       = sol.value(J);
 out.Fcost   = sol.value(Fcost);
 
@@ -394,7 +391,6 @@ end
 % make sure that JF is corrected
 if parms.J1 > 0
     parms.JF = parms.kF / parms.J1;
-end
 end
 
 % time vector
