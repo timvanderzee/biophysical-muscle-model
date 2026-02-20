@@ -46,16 +46,16 @@ if ishandle(2), close(2); end
 if ishandle(3), close(3); end
 if ishandle(4), close(4); end
 
-close all
-
 % load old parameters for reference
 oldparms = load(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Parameters',fibers{iF}, ['parms_', modelname, '.mat']), 'newparms');
+oldparms.newparms.Lce0 = -10;
 
 figure(2)
 for i = 1:length(optparms)
     nexttile
-    bar(categorical({'new', 'old'}), [newparms.(optparms{i}) oldparms.newparms.(optparms{i})])
+    bar(categorical({'IG', 'new', 'old'}), [parms.(optparms{i}) newparms.(optparms{i}) oldparms.newparms.(optparms{i})])
     title(optparms{i})
+    box off
 end
 
 N = 1000;
@@ -309,7 +309,7 @@ elseif strcmp(model, '2-state XB')
     optparms = {'f', 'k11', 'k22', 'k21', 'n','kappa', 'kse', 'kse0','Lce0', 'kpe'};
     
 elseif strcmp(model, 'Hill-type SE')
-    optparms = {'n','kappa', 'kse', 'kse0', 'vmax'};
+    optparms = {'n','kappa', 'kse', 'kse0', 'vmax', 'Lce0', 'kpe'};
     
 elseif strcmp(model, 'Hill-type no SE')
     optparms = {'n','kappa', 'vmax'};
@@ -431,12 +431,10 @@ function[t, Fse, Fpe, Fce] = get_forces_from_state(model, sol, input, newparms)
     
     if contains(model, 'XB')
         Fse = sol.y(3,:) * newparms.Fscale;
-
         dLse = max(newparms.Lse_func(Fse, newparms), 0); % can't be negative
         Lce = interp1(input.t, input.L * newparms.gamma, t) - dLse;
     else
         Lce = sol.y;
-        newparms.Lce0 = -10;
         dLse = interp1(input.t, input.L * newparms.gamma, t) - Lce;
         Fse = newparms.Fse_func(dLse, newparms) * newparms.Fscale;
     end
