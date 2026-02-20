@@ -32,6 +32,7 @@ end
 
 N = length(idA);
 dt = mean(diff(toc));
+out.t     = 0:dt:(N-1)*dt;
 
 %% normalize parameters
 import casadi.*
@@ -385,16 +386,18 @@ end
 if contains(model, 'coop')
     out.dNondt = sol.value(dNondt);
 end
-
-% extract the parameters
-for i = 1:length(optparms)
-    parms.(optparms{i}) = eval(['sol.value(',optparms{i},');']);
-end
-    
+   
 % make sure that JF is corrected
 if parms.J1 > 0
     parms.JF = parms.kF / parms.J1;
 end
+else
+    out.a = sol.value(a);
+end
+
+% extract the parameters
+for i = 1:length(optparms)
+    parms.(optparms{i}) = eval(['sol.value(',optparms{i},');']);
 end
 
 % time vector

@@ -7,8 +7,8 @@ save_results = 0;
 visualize = 1;
 
 %% step 1: specify which model we want to fit
-model = '3-state XB coop'; 
-% model = 'Hill-type SE'; 
+% model = '3-state XB coop'; 
+model = 'Hill-type SE'; 
 [modelfunc, modelname] = look_up_model(model);
 
 %% step 2: specify which parameters we are fitting, and which bounds we are using
@@ -41,22 +41,12 @@ weights = [w1 w2];
 % fit model parameters
 [newparms, out, opti] = fit_model_parameters_v2(model, parms, optparms, bnds, Xdata, IG, weights);
 
-figure(100);
-subplot(211)
-plot(Xdata.t, Xdata.L)
-
-subplot(212)
-plot(out.t, out.F, 'b--'); hold on
-plot(Xdata.t, Xdata.F)
-
-
-return
-
 %% step 7: analyze output
 if ishandle(2), close(2); end
 if ishandle(3), close(3); end
 if ishandle(4), close(4); end
 
+close all
 
 % load old parameters for reference
 oldparms = load(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Parameters',fibers{iF}, ['parms_', modelname, '.mat']), 'newparms');
@@ -64,7 +54,7 @@ oldparms = load(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 
 figure(2)
 for i = 1:length(optparms)
     nexttile
-    bar([newparms.(optparms{i}) oldparms.newparms.(optparms{i})])
+    bar(categorical({'new', 'old'}), [newparms.(optparms{i}) oldparms.newparms.(optparms{i})])
     title(optparms{i})
 end
 
@@ -74,16 +64,13 @@ th = .05;
 figure(3)
 [Xdata, Data] = get_fitting_data(githubfolder, datafolder, iF, N, th, visualize);
 
-%%
-
-%%
 for j = 1:2
     if j == 1
         testparms = newparms;
     else
         testparms = oldparms.newparms;
     end
-
+    
     % use approximated exponentials
     testparms.approx = 1;
     
@@ -118,7 +105,7 @@ for j = 1:2
 end
 
 figure(3)
-legend('Data', 'Input', 'Sim 1', 'Sim 2')
+legend('Data', 'Input',  'Fitting', 'Sim 1', 'Sim 2')
 
 figure(4)
 legend('Data', 'Sim 1', 'Data', 'Sim 2', 'location', 'best')
@@ -207,7 +194,7 @@ end
 [Ptis, PCas, PLis, Pvis, Pts] = create_input(tiso, PData.dTt, PData.dTc, PData.ISI, PData.Ca(end), N);
 
 % combine model input
-tis = [Atis (Ptis(2:end) + AData.t(end))];
+tis = [Atis (Ptis(2:end) + Atis(end))];
 Cas = [ACas PCas(2:end)];
 Lis = [ALis PLis(2:end)];
 vis = [Avis Pvis(2:end)];

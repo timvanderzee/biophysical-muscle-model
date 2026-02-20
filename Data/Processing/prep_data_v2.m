@@ -23,7 +23,7 @@ for i = 1:length(ns)
         Data.ISI(i) = data.ISIs(n)/1000;
         Data.dTc(i) = data.AMPs(m)/10000 / .4545; % conditioning stretch
 
-        trange = [-.8 .2];
+        trange = [-.8 3*Data.dTt+.005];
         id1 = t > trange(1) & t < trange(2);
 
         % save
