@@ -28,7 +28,7 @@ if ishandle(1), close(1); end; figure(1)
 
 %% step 5: obtain initial guess for model states
 cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Fitting'))
-IG = get_initial_guess(Xdata, parms, visualize);
+IG = get_initial_guess(model, modelfunc, Xdata, parms, visualize);
 
 %% step 6: do fitting
 % define weigth vector

@@ -91,7 +91,7 @@ title('Fiber force')
     
 %% step 5: obtain initial guess for model states
 cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Fitting'))
-IG = get_initial_guess(input, oldparms, 0);
+IG = get_initial_guess(model, modelfunc, input, oldparms, 0);
 
 subplot(414)
 plot(input.t, IG.Fsei*oldparms.Fscale, 'color', color(2,:), 'linewidth', 1.5); hold on; box off
