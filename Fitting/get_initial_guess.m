@@ -91,32 +91,45 @@ kse = parms.kse * (Fsei + parms.kse0);
 Ldi = (vts .* parms.gamma .* kse - F0dot) ./  (Q0i + kse + kpe);
 IG.Ldi = Ldi;
 
-else
-    
+else % hill-type
     % activation
     a = parms.actfunc(Cas, parms);
     a(a<parms.amin) = parms.amin;
-    
-    % length
-    Lce = interp1(sol.x, sol.y, tis);
-    parms.Lce0 = -10;
-    
-    % SE force
-    dLse = Lts - Lce;
-    Fse = parms.Fse_func(dLse, parms);
-    
-    % PE force
-    dLce = Lce - parms.Lce0;
-    Fpe = parms.kpe * dLce  * parms.Fscale;
-    Fpe(parms.K*dLce < 10) = parms.kpe * log(1+exp(dLce(parms.K*dLce < 10)*parms.K))/parms.K  * parms.Fscale;
 
-    % CE force and velocity
-    Fce = Fse - Fpe;
-    Frel = Fce ./ a;
-    vce = parms.Fv_func(Frel, parms);
-    
-    IG.vcei = vce;
-    IG.Fsei = Fse;
+    if strcmp(model, 'Hill-type SE')
+
+        % length
+        Lce = interp1(sol.x, sol.y, tis);
+        parms.Lce0 = -10;
+
+        % SE force
+        dLse = Lts - Lce;
+        Fse = parms.Fse_func(dLse, parms);
+
+        % PE force
+        dLce = Lce - parms.Lce0;
+        Fpe = parms.kpe * dLce;
+        Fpe(parms.K*dLce < 10) = parms.kpe * log(1+exp(dLce(parms.K*dLce < 10)*parms.K))/parms.K * parms.Fscale;
+
+        % CE force and velocity
+        Fce = Fse - Fpe;
+        Frel = Fce ./ a;
+        vce = parms.Fv_func(Frel, parms);
+
+        IG.vcei = vce;
+        IG.Fsei = Fse;
+        
+    else % no SE
+
+        dLce = Lts - parms.Lce0;
+        
+        Fce = a .* parms.vF_func(vts * parms.gamma, parms);
+        Fpe = parms.kpe * dLce;
+        
+        Fse = Fce + Fpe;
+
+        IG.Fsei = Fse;
+    end
     
 end
 

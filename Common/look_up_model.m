@@ -20,6 +20,9 @@ elseif strcmp(model, '4-state XB coop')
     
 elseif strcmp(model, 'Hill-type SE')
     modelname = 'Hill_regular';
+
+elseif strcmp(model, 'Hill-type no SE')
+    modelname = 'Hill_alternative';
 end
 
 end

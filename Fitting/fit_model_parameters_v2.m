@@ -251,26 +251,43 @@ else % Hill-type
     Fse = opti.variable(1, N);
     opti.set_initial(Fse, IG.Fsei(idA));
     
-    vce = opti.variable(1, N);
-    opti.set_initial(vce, IG.vcei(idA));
-    
-    % PE
-    dLse = log(Fse/kse0+1)/kse;
-    Lce = Lts(idA) - dLse;
-    dLce = Lce - Lce0;
-    K = 1;
-    Fpe = kpe * log(1+exp(dLce*K))/K;
-    
     % CE activations
     a = act_max * Cas(idA).^n ./ (kappa^n + Cas(idA).^n);
-    Fce = a .* (parms.e(1)*log((parms.e(2)*vce./vmax+parms.e(3))+sqrt((parms.e(2)*vce./vmax+parms.e(3)).^2+1))+parms.e(4));
+    
+    if strcmp(model, 'Hill-type SE')
+        vce = opti.variable(1, N);
+        opti.set_initial(vce, IG.vcei(idA));
+
+        % PE
+        dLse = log(Fse/kse0+1)/kse;
+        Lce = Lts(idA) - dLse;
+        dLce = Lce - Lce0;
+        K = 1;
+        Fpe = kpe * log(1+exp(dLce*K))/K;
+
+        % force-velocity
+        Fce = a .* (parms.e(1)*log((parms.e(2)*vce./vmax+parms.e(3))+sqrt((parms.e(2)*vce./vmax+parms.e(3)).^2+1))+parms.e(4));
+       
+        % velocity is time derivative of length
+        opti.subject_to((vce(1:N-1) + vce(2:N))*dt/2 + Lce(1:N-1) == Lce(2:N)); 
+    
+    else % no SE
+        
+        vce = vts(idA) * parms.gamma;
+        
+        % PE
+        dLce = Lts(idA) - Lce0;
+        K = 1;
+        Fpe = kpe * log(1+exp(dLce*K))/K;
+
+        % force-velocity
+        Fce = a .* (parms.e(1)*log((parms.e(2)*vce./vmax+parms.e(3))+sqrt((parms.e(2)*vce./vmax+parms.e(3)).^2+1))+parms.e(4));
+        
+    end
     
     % force constraint
     opti.subject_to(Fce + Fpe == Fse);
-    
-    % velocity is time derivative of length
-    opti.subject_to((vce(1:N-1) + vce(2:N))*dt/2 + Lce(1:N-1) == Lce(2:N));
-    
+   
     % Total force
     Frel = Fse * parms.Fscale;
     
@@ -356,18 +373,19 @@ if contains(model, 'XB')
     if contains(model, 'coop')
         out.dNondt = sol.value(dNondt);
     end
-    
-    % make sure that JF is corrected
-    if parms.J1 > 0
-        parms.JF = parms.kF / parms.J1;
-    end
-else
+
+else % Hill-type specific
     out.a = sol.value(a);
 end
 
 % extract the parameters
 for i = 1:length(optparms)
     parms.(optparms{i}) = eval(['sol.value(',optparms{i},');']);
+end
+  
+% make sure that JF is corrected
+if parms.J1 > 0
+    parms.JF = parms.kF / parms.J1;
 end
 
 % time vector
