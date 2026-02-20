@@ -67,7 +67,10 @@ for j = 1:2
     else
         testparms = oldparms.newparms;
     end
-       
+
+    % use approximated exponentials
+    testparms.approx = 1;
+    
     % get initial state
     X0 = get_initial_state(model, testparms);
     
@@ -188,7 +191,7 @@ end
 [Ptis, PCas, PLis, Pvis, Pts] = create_input(tiso, PData.dTt, PData.dTc, PData.ISI, PData.Ca(end), N);
 
 % combine model input
-tis = [Atis Ptis(2:end) + Atis(end)];
+tis = [Atis (Ptis(2:end) + AData.t(end))];
 Cas = [ACas PCas(2:end)];
 Lis = [ALis PLis(2:end)];
 vis = [Avis Pvis(2:end)];
@@ -224,16 +227,16 @@ idFP = find((tis > (tmax(3) + tiso - 4*PData.dTt - 2*PData.dTc - PData.ISI)) & (
 if visualize
 
     subplot(411)
-    plot(tis(idA), Cas(idA), 'b');
+    plot(tis, Cas, 'b');
     
     subplot(412)
-    plot(tis(idA), vis(idA), 'b');
+    plot(tis, vis, 'b');
     
     subplot(413)
-    plot(tis(idA), Lis(idA),'b');
+    plot(tis, Lis,'b');
     
     subplot(414)
-    plot(tis(idA), Fis(idA), 'b');
+    plot(tis, Fis, 'b');
     
 end
 

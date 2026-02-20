@@ -153,7 +153,7 @@ end
 dx = [dQ0dt; dQ2dt; dFsedt; dNondt; dDRXdt; Rdot; Ldot];
 
 
-% if sum(isnan(dx(:))) > 0
-%     keyboard
-% end
+if sum(isnan(dx(:))) > 0
+    keyboard
+end
 end
