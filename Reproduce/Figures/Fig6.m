@@ -403,9 +403,9 @@ n = sum(isfinite(y(:,eiid,eaid)),'all');
 k = [5 7 10 10 11 12]';
 
 % AIC = 2*k + n.*log(oSSE(:,id)./oSST(id))
-AIC = 2*k + n.*log((oRMSD(:,3).^2)./n)
+AIC = 2*k + n.*log((oRMSD(:,3).^2)./n);
 
-AIC = AIC - AIC(1)
+AIC = AIC - AIC(1);
 
 
 %%

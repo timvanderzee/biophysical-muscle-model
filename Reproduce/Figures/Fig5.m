@@ -1,5 +1,6 @@
 function [] = Fig5(githubfolder)
 
+if ishandle(5), close(5); end
 
 mcodes = [2 2 1; 2 1 1; 1 1 3; 1 1 2; 1 1 1; 1 2 1];
 color = get_colors();

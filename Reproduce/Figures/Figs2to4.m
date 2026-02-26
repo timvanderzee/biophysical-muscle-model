@@ -80,9 +80,9 @@ for j = 1:size(ISIs,1)
             [fullmodelfolder, ~, modelfilename] = get_model_folder(modelfolder, mcode, discretized_model);
                        
             filename = [fullmodelfolder,'\', modelfilename,'\',fibers{iF}, '\pCa=',num2str(pCas(j,i)*10),'\', fibers{iF},'_AMP=',num2str(AMP*10000),'_ISI=',num2str(ISI*1000),'.mat'];
-            disp(filename)
-            
+                  
             if isfile(filename)
+                disp(filename)
                 Mdata(j,i,kk) = load(filename, 'tis','Cas','vis','Lis','oFi', 'ts');
             else
                 return

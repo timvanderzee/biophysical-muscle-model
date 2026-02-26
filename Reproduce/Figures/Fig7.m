@@ -96,7 +96,7 @@ for ii = 1:length(modelnames)
     % activation
     k = 2;
     
-    fig = figure(7)
+    fig = figure(7);
     subplot(3,3,ii)
     surf(amAMPs*100, amISIs, squeeze(mean(SRSrel_m(k,:,:,iFsm), 4, 'omitnan')),'edgecolor',[.8 .8 .8],'linestyle','-','Facealpha',.7,'linewidth',.5); hold on
     surf(aeAMPs*100,aeISIs, 0*ones(size(squeeze(aeISIs))),'facecolor', [1 1 1],'edgecolor', 'none'); hold on
@@ -128,10 +128,10 @@ for ii = 1:length(modelnames)
     set(gca,'YScale','log')
     
     %% compute R2
-    SSE = sum((mean(SRSrel_m(k,miid,maid,iFsm), 4, 'omitnan') - mean(SRSrel(k,:,:,iFsd), 4, 'omitnan')).^2,'all', 'omitnan')
-    SST = sum((mean(SRSrel(k,:,:,iFsd), 'all','omitnan') - mean(SRSrel(k,:,:,iFsd), 4, 'omitnan')).^2,'all', 'omitnan')
+    SSE = sum((mean(SRSrel_m(k,miid,maid,iFsm), 4, 'omitnan') - mean(SRSrel(k,:,:,iFsd), 4, 'omitnan')).^2,'all', 'omitnan');
+    SST = sum((mean(SRSrel(k,:,:,iFsd), 'all','omitnan') - mean(SRSrel(k,:,:,iFsd), 4, 'omitnan')).^2,'all', 'omitnan');
     
-    R2 = 1 - SSE./SST
+    R2 = 1 - SSE./SST;
     
     set(gca,'fontsize',6)
     subtitle(titles{ii}, 'fontsize', 8, 'color', color(ii,:))
@@ -181,7 +181,7 @@ thmax = [2 .7 .3];
 ISIs = [.001 1];
 
 
-if ~isempty(datafolder)
+if isfolder(datafolder)
     for k = 1:2
         ISI = ISIs(k);
 
@@ -201,30 +201,31 @@ if ~isempty(datafolder)
                 fullfolder = datafolder; % otherwise, use the current folder
             end
 
-            cd(fullfolder)
-            load([fibers{iF},'.mat'],'data');
+                cd(fullfolder)
+                load([fibers{iF},'.mat'],'data');
 
 
-            for j = 1:length(thmin)
+                for j = 1:length(thmin)
 
-                for i = 1:length(pCas)
-                    pCa = pCas(i);
-                    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
-                    [texp, Lexp, Fexp, Tsrel] = get_data(data, ISI, AMP, pCa);
+                    for i = 1:length(pCas)
+                        pCa = pCas(i);
+                        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
+                        [texp, Lexp, Fexp, Tsrel] = get_data(data, ISI, AMP, pCa);
 
-                    Fiso = mean(Fexp(texp<-.5), 'omitnan');
+                        Fiso = mean(Fexp(texp<-.5), 'omitnan');
 
-                    if Fiso < thmax(j) && Fiso > thmin(j)
+                        if Fiso < thmax(j) && Fiso > thmin(j)
 
-                        Fexps(:,iF,j,k) = interp1(texp(isfinite(Fexp)), Fexp(isfinite(Fexp)), tlin);
-                        pCai(iF,j) = pCa;
+                            Fexps(:,iF,j,k) = interp1(texp(isfinite(Fexp)), Fexp(isfinite(Fexp)), tlin);
+                            pCai(iF,j) = pCa;
 
-                        %                 plot(texp, Fexp,'-', tlin, Fexps(:,iF,j),'.'); hold on
-                        %                 xlim([-1 1])
-                        break
+                            %                 plot(texp, Fexp,'-', tlin, Fexps(:,iF,j),'.'); hold on
+                            %                 xlim([-1 1])
+                            break
+                        end
                     end
                 end
-            end
+            
         end
     
     
