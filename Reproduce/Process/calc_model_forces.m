@@ -168,10 +168,11 @@ for k = 1:length(iFs)
                             
                             % simulate
                             if discretized_model
-                                sol = ode15s(@(t,y,yp) fiber_dynamics_explicit_no_tendon_full(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, odeopt);
+%                                 sol = ode15s(@(t,y,yp) fiber_dynamics_explicit_no_tendon_full(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, odeopt);
+                                sol = ode15s(@(t,y,yp) fiber_dynamics_explicit_discretized(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, odeopt);
                             else
                                 %                                     sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, XP0, []);
-                                sol = ode15s(@(t,y) fiber_dynamics_explicit_length_v2(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, []);
+                                sol = ode15s(@(t,y) fiber_dynamics_explicit_approximated(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, []);
                             end
                             
                             [~,xdot] = deval(sol, sol.x);

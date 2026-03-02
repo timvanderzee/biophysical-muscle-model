@@ -30,7 +30,10 @@ if contains(model, 'XB')
     [Q00, Q20, lce0, Q10, Fse0, Fpe0, Fce0] = find_steady_state(Q0, p0, q0, newparms, 'regular');
     
     if contains(char(modelfunc), 'discretized')
-        X0 = [Q0 * ones(size(newparms.xi)) lce0 0 0 0];
+        costfunc = @(L, Fce, parms) (Fce + (newparms.kpe*(-L-parms.Lce0)) - (newparms.kse0*(exp(newparms.kse*L)-1))) .^2;
+        dlse = fminsearch(@(L) costfunc(L, 0, newparms), 0);
+        lce0 = -dlse;
+        X0 = [Q0 * zeros(size(newparms.xi)) lce0 0 0 0];
     else
         X0 = [Q00 Q20 Fse0 0 0 0]';
     end

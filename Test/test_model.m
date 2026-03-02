@@ -1,4 +1,5 @@
 clear all; close all; clc
+cd(fileparts(which('test_model.m')));
 cd ..
 addpath(genpath('Common'))
 
@@ -17,7 +18,7 @@ addpath(genpath('Common'))
 % changes
 
 % applicable to all phases
-pCa = 6.1;          % assumed constant and applies to both phases
+pCa = 4.5;          % assumed constant and applies to both phases
 Ca = 10^(6-pCa);    % (uM)
 dt = 1/1000;        % sample time (s)
 T = 1;              % duration (s)
@@ -30,8 +31,8 @@ f = 2;              % sinusoidal frequency (Hz)
 
 % specify all input phases
 input(1) = ramp(Ca, T, dt, RT, A);
-% input(1) = isometric(Ca, T, dt, L0);
-% input(3) = sinusoidal(Ca, T, dt, f, A, L0);
+input(2) = isometric(Ca, T, dt, L0);
+input(3) = sinusoidal(Ca, T, dt, f, A, L0);
 
 % show length and velocity traces
 t0 = 0;
@@ -83,7 +84,7 @@ end
 %% step 2: specify model function
 % you can choose between the following models:
 % Hill-type SE, Hill-type no SE, 2-state XB, 2-state XB coop, 3-state XB coop, 4-state XB coop
-model = '3-state XB coop'; % see options above
+model = '4-state XB coop'; % see options above
 odetype = 'explicit'; % type of differential equations
 method = 'approximated'; % solution method
 % method = 'discretized'; % solution method
@@ -91,9 +92,8 @@ method = 'approximated'; % solution method
 
 %% step 3: specify model parameters
 % here we look up the parameters for a given fiber and model
-fiber = '7Aug2018a';
-githubfolder = cd;
-load(fullfile(cd, 'Reproduce', 'Parameters', fiber, ['parms_', modelname, '.mat']), 'newparms')
+[filename, pathname, filterindex] = uigetfile(['*', modelname, '.mat'], 'Pick a parameters file');
+load(fullfile(pathname, filename), 'newparms')
 
 newparms.f_func = @(xi,f,w,mu)   f/sqrt((2*pi*w^2))*exp(-(xi-mu).^2./(2*w^2));
 newparms.g_func = @(xi,k1,k2) k1*exp(k2*xi);
@@ -118,3 +118,4 @@ xlabel('Time (s)')
 ylabel('Force (F_0)')
 xline(t0,'k--')
 title('Fiber force')
+
