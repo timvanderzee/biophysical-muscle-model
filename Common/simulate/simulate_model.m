@@ -81,7 +81,7 @@ if contains(model, 'XB')
         
         [Fpe, ~] = get_PE(Lce, newparms);
 
-        Fse = FXB + Fpe;
+        Fse = (FXB + Fpe) * newparms.Fscale;
                                 
     else
         

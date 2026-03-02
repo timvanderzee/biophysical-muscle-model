@@ -1,8 +1,8 @@
 clear all; close all; 
-save_results = 1;
+% save_results = 1;
 
-[username, githubfolder] = get_paths();
-
+% [username, githubfolder] = get_paths();
+githubfolder = 'C:\Users\u0167448\Documents\GitHub';
 mcodes = [1 1 1; 1 2 1];
 
 iFs = [2,3,5,6,7,8,11];
@@ -17,16 +17,18 @@ visualize = 0;
 iF = 3;
 mcode = [1 2 1];
 
-[output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
-
-parms_version = '_v2';
+% [output_mainfolder, modelname, ~, ~] = get_folder_and_model(mcode);
+% 
+% % parms_version = '_v2';
 % parms_version = '';
+% 
+% input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
+% cd(input_foldername)
+% load(['parms_',modelname, parms_version, '.mat'])
 
-input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
-cd(input_foldername)
-load(['parms_',modelname, parms_version, '.mat'])
+load(['C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model\Reproduce\Parameters\13Dec2017b\parms_biophysical_full_regular.mat'])
 
-newparms.kF
+% newparms.kF
 
 %%
 % input_foldername = [githubfolder, '\biophysical-muscle-model\Parameters\',fibers{iF}];
@@ -113,7 +115,8 @@ for j = 1:2
         
 %         simulate
         if j == 1
-            sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, xp0, []);
+%             sol = ode15i(@(t,y,yp) fiber_dynamics_implicit_no_tendon(t,y,yp, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, xp0, []);
+                sol = ode15s(@(t,y,yp) fiber_dynamics_explicit_approximated(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, []);
         else
 %              sol = ode15s(@(t,y,yp) fiber_dynamics_explicit_no_tendon(t,y, parms), [aTs(nzi(p)) aTs(nzi(p+1))], X0, []);
 %             parms.k = 500;

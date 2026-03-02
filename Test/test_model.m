@@ -20,7 +20,7 @@ addpath(genpath('Common'))
 pCa = 6.1;          % assumed constant and applies to both phases
 Ca = 10^(6-pCa);    % (uM)
 dt = 1/1000;        % sample time (s)
-T = 2;              % duration (s)
+T = 1;              % duration (s)
 L0 = 0;
 
 % phase-specific
@@ -30,8 +30,8 @@ f = 2;              % sinusoidal frequency (Hz)
 
 % specify all input phases
 input(1) = ramp(Ca, T, dt, RT, A);
-input(2) = isometric(Ca, T, dt, L0);
-input(3) = sinusoidal(Ca, T, dt, f, A, L0);
+% input(1) = isometric(Ca, T, dt, L0);
+% input(3) = sinusoidal(Ca, T, dt, f, A, L0);
 
 % show length and velocity traces
 t0 = 0;
@@ -85,7 +85,8 @@ end
 % Hill-type SE, Hill-type no SE, 2-state XB, 2-state XB coop, 3-state XB coop, 4-state XB coop
 model = '3-state XB coop'; % see options above
 odetype = 'explicit'; % type of differential equations
-method = 'discretized'; % solution method
+method = 'approximated'; % solution method
+% method = 'discretized'; % solution method
 [modelfunc, odefunc, modelname] = look_up_model(model, odetype, method);
 
 %% step 3: specify model parameters
@@ -96,6 +97,8 @@ load(fullfile(cd, 'Reproduce', 'Parameters', fiber, ['parms_', modelname, '.mat'
 
 newparms.f_func = @(xi,f,w,mu)   f/sqrt((2*pi*w^2))*exp(-(xi-mu).^2./(2*w^2));
 newparms.g_func = @(xi,k1,k2) k1*exp(k2*xi);
+newparms.xi = linspace(-15,15,500);
+
 %% step 4: simulate model
 [sol, out] = simulate_model(model, odefunc, modelfunc, input, newparms);
 
