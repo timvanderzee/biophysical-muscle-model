@@ -1,7 +1,7 @@
 function[yp, Fce, Q0] = fiber_dynamics_explicit_discretized(t,y, parms)
 
 % get input
-[vMtilda, ~, Act] = get_input_from_parms(t, parms);
+[vMtilda, Lts, Act] = get_input_from_parms(t, parms);
 
 % States
 n   = y(1:length(parms.xi));
@@ -80,13 +80,31 @@ end
 % attachment must be greater. thus, we need to add Rdot to Q0dot
 dDRXdt = J1 - J2 - (Qdot(1) + dRdt);
 
-% compute velocity
-[Fpe, kpe] = get_PE(L, parms);
+% get PE and SE stiffness, CE force
+[Fce, kpe, kse, Ntot] = get_force_and_stiffness(Fse, Lts, parms);
+
+kpe = 0;
+Fpe = 0;
+
+if isfield(parms, 'PE_isw_SE') % PE in series with SE
+    if parms.PE_isw_SE
+        dLce = L - parms.Lce0;
+
+        if parms.K*dLce < 10
+            kpe = parms.kpe .* (1 - 1./(exp(parms.K*dLce)+1));
+            Fpe = parms.kpe * log(1+exp(dLce*parms.K))/parms.K;
+        else
+            kpe = parms.kpe;
+            Fpe = parms.kpe * dLce;
+        end
+    end
+end
+
 Fse = Fce + Fpe;
 kse = parms.kse * (Fse + parms.kse0);
+
 Ld  = (vMtilda .* parms.gamma .* kse - F0dot) ./ (Q0 + kse + kpe);
 
-% total state derivative
 yp = [ndot(:); Ld; dNondt; dDRXdt; dRdt];
 
 end

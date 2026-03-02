@@ -61,8 +61,14 @@ dFsedt = dFcedt + dFpedt;
 % attachment must be greater. thus, we need to add Rdot to Q0dot
 dDRXdt = J1 - J2 - (Q0dot + Rdot);
 
-% total state derivative vector
-dx = [dQ0dt; dQ2dt; dFsedt; dNondt; dDRXdt; Rdot];
+if length(y) > 6
+    Ldot = vMtilda .* parms.gamma;
+else
+    Ldot = [];
+end
+
+dx = [dQ0dt; dQ2dt; dFsedt; dNondt; dDRXdt; Rdot; Ldot];
+
 
 if sum(isnan(dx(:))) > 0
     keyboard

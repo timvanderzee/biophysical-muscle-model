@@ -6,11 +6,8 @@ end
 
 if strcmp(type, 'explicit')
     if contains(model, 'XB')
-        if strcmp(method, 'approximated')
-            modelfunc = @fiber_dynamics_explicit_approximated;
-        else
-            modelfunc = @fiber_dynamics_explicit_discretized;
-        end
+        if strcmp(method, 'approximate
+        modelfunc = @fiber_dynamics_explicit_approximated;
     else
         modelfunc = @hill_explicit;
     end
