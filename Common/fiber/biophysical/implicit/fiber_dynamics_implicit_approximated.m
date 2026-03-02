@@ -1,4 +1,4 @@
-function[error] = fiber_dynamics_implicit_length_v2(t,y,yp, parms)
+function[error] = fiber_dynamics_implicit_approximated(t,y,yp, parms)
 
 % in this alternative version we have Fse as a state, which may be less prone
 % to error

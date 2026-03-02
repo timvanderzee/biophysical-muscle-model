@@ -84,7 +84,7 @@ end
 % you can choose between the following models:
 % Hill-type SE, Hill-type no SE, 2-state XB, 2-state XB coop, 3-state XB coop, 4-state XB coop
 model = '3-state XB coop'; % see options above
-odetype = 'explicit'; % type of differential equations
+odetype = 'implicit'; % type of differential equations
 [modelfunc, odefunc, modelname] = look_up_model(model, odetype);
 
 %% step 3: specify model parameters

@@ -1,4 +1,4 @@
-function[dx, Fce, Q0] = fiber_dynamics_explicit_length_v2(t,y, parms)
+function[dx, Fce, Q0] = fiber_dynamics_explicit_approximated(t,y, parms)
 
 % Get velocity and calcium
 if numel(parms.vts) == 1

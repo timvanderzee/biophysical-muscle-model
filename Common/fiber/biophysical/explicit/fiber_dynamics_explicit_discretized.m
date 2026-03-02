@@ -1,4 +1,4 @@
-function[yp, F, Q0] = fiber_dynamics_explicit_no_tendon_full(t,y, parms)
+function[yp, F, Q0] = fiber_dynamics_explicit_discretized(t,y, parms)
 
 % Get velocity and calcium
 if numel(parms.vts) == 1

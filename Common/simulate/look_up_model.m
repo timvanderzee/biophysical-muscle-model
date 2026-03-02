@@ -6,7 +6,7 @@ end
 
 if strcmp(type, 'explicit')
     if contains(model, 'XB')
-        modelfunc = @fiber_dynamics_explicit_length_v2;
+        modelfunc = @fiber_dynamics_explicit_approximated;
     else
         modelfunc = @hill_explicit;
     end
@@ -14,7 +14,7 @@ if strcmp(type, 'explicit')
     odefunc = @ode15s;
 else
     if contains(model, 'XB')
-        modelfunc = @fiber_dynamics_implicit_length_v2;
+        modelfunc = @fiber_dynamics_implicit_approximated;
     else
         modelfunc = @hill_type_implicit_v2;
     end
