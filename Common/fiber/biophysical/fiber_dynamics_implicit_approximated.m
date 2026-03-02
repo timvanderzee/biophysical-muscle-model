@@ -1,7 +1,7 @@
 function[error] = fiber_dynamics_implicit_approximated(t,y,yp, parms)
 
 % get input
-[vMtilda, Lts, Act] = get_input_from_parms(t, parms);
+[vMtilda, Lts, Ca] = get_input_from_parms(t, parms);
     
 % States
 Q0      = y(1);
@@ -27,9 +27,10 @@ dRdt    = yp(6);
 
 % Thin and thick filament
 if (parms.kon == 0) && (parms.koff == 0) && (parms.koop == 0)
+    Act = Ca.^parms.n./(parms.kappa^parms.n+Ca.^parms.n); % sigmoidal function
     error_thin = dNondt - ((Act - Non) / .005);
 else 
-    [error_thin, ~] = ThinEquilibrium(Act, Q0, Non, dNondt, parms.kon, parms.koff, parms.koop, parms.act * parms.Noverlap);
+    [error_thin, ~] = ThinEquilibrium(Ca, Q0, Non, dNondt, parms.kon, parms.koff, parms.koop, parms.act * parms.Noverlap);
 end
 
 [error_thick, ~] = ThickEquilibrium(Q0, dQ0dt, Fce, DRX, dDRXdt, parms.J1, parms.J2, parms.JF, parms.act * parms.Noverlap, R, dRdt);
@@ -42,7 +43,7 @@ k2 = [parms.k21 -parms.k22];
 [IG, IGef] = get_IG_IGEf(parms.approx);
 
 % Compute Qdot
-[Q0dot, Q1dot, Q2dot, Rdot] = CrossBridge_Dynamics(Q0, p, q, parms.f, parms.w, k1, k2, IGef, Non, DRX, IG, parms.b, parms.k, R, parms.dLcrit, parms.ps2);
+[Q0dot, Q1dot, Q2dot, Rdot] = CrossBridge_Dynamics(Q0, p, q, parms.f, parms.w, k1, k2, IGef, Non, DRX, IG, parms.b, parms.k, R, parms.dLcrit, 0);
 
 % velocity - independent derivative
 F0dot  = Q1dot + Q0dot;

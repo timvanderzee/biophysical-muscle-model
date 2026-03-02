@@ -19,6 +19,7 @@ lce = x(1);
 vce = xdot(1);
 
 % activation from Ca
+parms.actfunc = @(Ca,parms)parms.act_max*Ca.^parms.n./(parms.kappa^parms.n+Ca.^parms.n);
 a = parms.actfunc(Ca, parms);
 a(a<parms.amin) = parms.amin;
 

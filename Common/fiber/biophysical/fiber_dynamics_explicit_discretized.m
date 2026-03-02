@@ -1,7 +1,7 @@
 function[yp, Fce, Q0] = fiber_dynamics_explicit_discretized(t,y, parms)
 
 % get input
-[vMtilda, ~, Act] = get_input_from_parms(t, parms);
+[vMtilda, ~, Ca] = get_input_from_parms(t, parms);
 
 % States
 n   = y(1:length(parms.xi));
@@ -66,9 +66,10 @@ Qdot = trapz(xi(:), [ndot(:) xi(:).*ndot(:)]);
 F0dot  = Qdot(1) + Qdot(2);
 
 if (parms.kon == 0) && (parms.koff == 0) && (parms.koop == 0)
+	Act = Ca.^parms.n./(parms.kappa^parms.n+Ca.^parms.n); % sigmoidal function
     dNondt = ((Act - Non) / .005);
 else
-    [Jon, Joff] = ThinFilament_Dynamics(Act, Q0, Non, parms.kon, parms.koff, parms.koop, 1);
+    [Jon, Joff] = ThinFilament_Dynamics(Ca, Q0, Non, parms.kon, parms.koff, parms.koop, 1);
     dNondt = Jon - Joff;
 end
 

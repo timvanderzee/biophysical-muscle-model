@@ -84,20 +84,18 @@ end
 %% step 2: specify model function
 % you can choose between the following models:
 % Hill-type SE, Hill-type no SE, 2-state XB, 2-state XB coop, 3-state XB coop, 4-state XB coop
-model = '4-state XB coop'; % see options above
+model = '2-state XB coop'; % see options above
 odetype = 'explicit'; % type of differential equations
-method = 'approximated'; % solution method
-% method = 'discretized'; % solution method
+% method = 'approximated'; % solution method
+method = 'discretized'; % solution method
 [modelfunc, odefunc, modelname] = look_up_model(model, odetype, method);
 
 %% step 3: specify model parameters
 % here we look up the parameters for a given fiber and model
 [filename, pathname, filterindex] = uigetfile(['*', modelname, '.mat'], 'Pick a parameters file');
-load(fullfile(pathname, filename), 'newparms')
-
-newparms.f_func = @(xi,f,w,mu)   f/sqrt((2*pi*w^2))*exp(-(xi-mu).^2./(2*w^2));
-newparms.g_func = @(xi,k1,k2) k1*exp(k2*xi);
-newparms.xi = linspace(-15,15,500);
+fullfilename = fullfile(pathname, filename);
+load(fullfilename, 'redparms')
+newparms = complete_parms(redparms);
 
 %% step 4: simulate model
 [sol, out] = simulate_model(model, odefunc, modelfunc, input, newparms);
@@ -111,7 +109,7 @@ for i = 1:length(input)
     end
 
     % plot the forces
-    plot(sol(i).x+t0, out(i).F, 'color', color(1,:), 'linewidth', 1.5); hold on; box off
+    plot(out(i).t+t0, out(i).F, 'color', color(1,:), 'linewidth', 1.5); hold on; box off
 end
 
 xlabel('Time (s)')

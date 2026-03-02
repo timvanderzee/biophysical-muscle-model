@@ -1,7 +1,7 @@
 function[dx, Fce, Q0] = fiber_dynamics_explicit_approximated(t,y, parms)
 
 % get input
-[vMtilda, Lts, Act] = get_input_from_parms(t, parms);
+[vMtilda, Lts, Ca] = get_input_from_parms(t, parms);
 
 % States
 Q0      = y(1);
@@ -20,9 +20,10 @@ R       = y(6);
 
 % Thin filament dynamics
 if (parms.kon == 0) && (parms.koff == 0) && (parms.koop == 0)
+    Act = Ca.^parms.n./(parms.kappa^parms.n+Ca.^parms.n); % sigmoidal function
     dNondt = Ntot * ((Act - Non) / .005);
 else 
-    [Jon, Joff] = ThinFilament_Dynamics(Act, Q0, Non, parms.kon, parms.koff, parms.koop, Ntot);
+    [Jon, Joff] = ThinFilament_Dynamics(Ca, Q0, Non, parms.kon, parms.koff, parms.koop, Ntot);
     dNondt = Jon - Joff;
 end
 
@@ -37,7 +38,7 @@ k2 = [parms.k21 -parms.k22];
 [IG, IGef] = get_IG_IGEf(parms.approx);
 
 % Compute Qdot
-[Q0dot, Q1dot, Q2dot, Rdot] = CrossBridge_Dynamics(Q0, p, q, parms.f, parms.w, k1, k2, IGef, Non, DRX, IG, parms.b, parms.k, R, parms.dLcrit, parms.ps2);
+[Q0dot, Q1dot, Q2dot, Rdot] = CrossBridge_Dynamics(Q0, p, q, parms.f, parms.w, k1, k2, IGef, Non, DRX, IG, parms.b, parms.k, R, parms.dLcrit, 0);
 
 % velocity - independent derivative
 F0dot  = Q1dot + Q0dot;

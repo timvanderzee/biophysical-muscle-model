@@ -1,4 +1,4 @@
-function[vMtilda, Lts, Act] = get_input_from_parms(t, parms)
+function[vMtilda, Lts, Ca] = get_input_from_parms(t, parms)
     
 % Velocity
 if numel(parms.vts) == 1
@@ -22,6 +22,6 @@ else
 end
 
 % Activation
-Act = parms.actfunc(Ca, parms);
+% Act = parms.actfunc(Ca, parms);
 
 end

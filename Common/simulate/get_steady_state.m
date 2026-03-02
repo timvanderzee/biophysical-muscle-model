@@ -1,4 +1,4 @@
-function[Xss] = get_steady_state(model, odefunc, modelfunc, newparms, Cas)
+function[Xss, newparms] = get_steady_state(model, odefunc, modelfunc, newparms, Cas)
 
 X0 = get_initial_state(model, modelfunc, newparms);
 

@@ -4,6 +4,7 @@ out = struct();
 if strcmp(model, 'Hill-type no SE')
     % CE activation
     for i = 1:length(input) % loop over phases
+        newparms.actfunc = @(Ca,parms)parms.act_max*Ca.^parms.n./(parms.kappa^parms.n+Ca.^parms.n);
         a = newparms.actfunc(input(i).Cas, newparms);
         vce = input(i).v * newparms.gamma;
         
@@ -23,7 +24,7 @@ else
     
     % determine initial state
     % we need to define the model states at t = 0
-    X0 = get_steady_state(model, odefunc, modelfunc, newparms, input(1).Cas(1));
+    [X0, newparms] = get_steady_state(model, odefunc, modelfunc, newparms, input(1).Cas(1));
     
     if contains(char(odefunc), 'i') % implicit
         sol = odefunc(@(t,y,yp) modelfunc(t,y,yp, newparms), [0 .001], X0, zeros(size(X0)), []);
