@@ -1,8 +1,11 @@
 clear all; close all; clc
+cd(fileparts(which('reproduce_manuscript_figures.m')));
 cd .. 
+cd ..
+githubfolder = cd;
 
 % get folders
-[~, modelfolder, githubfolder] = get_paths();
+[~, modelfolder] = get_paths(githubfolder);
 
 %% Choose the fiber
 % valid options: (2,3,5,6,7,8,11);

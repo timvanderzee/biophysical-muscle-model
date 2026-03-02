@@ -1,8 +1,11 @@
 clear all; close all; clc
+cd(fileparts(which('reproduce_manuscript_figures.m')));
 cd .. 
+cd ..
+githubfolder = cd;
 
 % get folders
-[datafolder, modelfolder, githubfolder] = get_paths();
+[datafolder, modelfolder] = get_paths(githubfolder);
 
 %% Figures 2-4: Force traces
 for fig = 2:4

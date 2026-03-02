@@ -1,4 +1,5 @@
 clear all; close all; clc
+cd(fileparts(which('fit_any_force_trajectory.m')));
 cd ..
 addpath(genpath('Common'))
 cd ..

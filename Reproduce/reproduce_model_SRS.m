@@ -1,8 +1,11 @@
 clear all; close all; clc
+cd(fileparts(which('reproduce_model_SRS.m')));
+cd .. 
 cd ..
+githubfolder = cd;
 
 % get folders
-[~, modelfolder, githubfolder] = get_paths();
+[~, modelfolder] = get_paths(githubfolder);
 
 %% Choose the model
 % 1. Hill-type without SEE

@@ -1,8 +1,11 @@
 clear all; close all; clc
+cd(fileparts(which('reproduce_model_RMSD.m')));
 cd .. 
+cd ..
+githubfolder = cd;
 
 % get folders
-[datafolder, modelfolder, githubfolder] = get_paths();
+[datafolder, modelfolder] = get_paths(githubfolder);
 
 %% Choose the model
 % 1. Hill-type without SEE

@@ -1,8 +1,11 @@
 clear all; close all; clc
+cd(fileparts(which('reproduce_model_fitting.m')));
+cd .. 
 cd ..
+githubfolder = cd;
 
 % get folders
-[datafolder, modelfolder, githubfolder] = get_paths();
+[datafolder, modelfolder] = get_paths(githubfolder);
 save_results = 0;
 visualize = 1;
 
