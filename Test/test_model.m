@@ -2,6 +2,7 @@ clear all; close all; clc
 cd(fileparts(which('test_model.m')));
 cd ..
 addpath(genpath('Common'))
+repofolder = cd;
 
 %% step 1: specify inputs
 % the biophysical models have 3 inputs, namely:
@@ -18,16 +19,16 @@ addpath(genpath('Common'))
 % changes
 
 % applicable to all phases
-pCa = 4.5;          % assumed constant and applies to both phases
-Ca = 10^(6-pCa);    % (uM)
-dt = 1/1000;        % sample time (s)
-T = 1;              % duration (s)
-L0 = 0;
+pCa     = 6.1;          % assumed constant and applies to both phases
+Ca      = 10^(6-pCa);   % (uM)
+dt      = 1/1000;       % sample time (s)
+T       = 1;            % duration (s)
+L0      = 0;
 
 % phase-specific
-A = .04;            % length change amplitude (L0)
-RT = .1;            % recovery time (s)
-f = 2;              % sinusoidal frequency (Hz)
+A   = .04;            % length change amplitude (L0)
+RT  = .1;             % recovery time (s)
+f   = 2;              % sinusoidal frequency (Hz)
 
 % specify all input phases
 input(1) = ramp(Ca, T, dt, RT, A);
@@ -84,16 +85,17 @@ end
 %% step 2: specify model function
 % you can choose between the following models:
 % Hill-type SE, Hill-type no SE, 2-state XB, 2-state XB coop, 3-state XB coop, 4-state XB coop
-model = '2-state XB coop'; % see options above
+model   = '2-state XB coop'; % see options above
 odetype = 'explicit'; % type of differential equations
-% method = 'approximated'; % solution method
-method = 'discretized'; % solution method
+method  = 'approximated'; % solution method
+% method = 'discretized'; % solution method
 [modelfunc, odefunc, modelname] = look_up_model(model, odetype, method);
 
 %% step 3: specify model parameters
 % here we look up the parameters for a given fiber and model
-[filename, pathname, filterindex] = uigetfile(['*', modelname, '.mat'], 'Pick a parameters file');
-fullfilename = fullfile(pathname, filename);
+cd(fullfile(repofolder, 'Reproduce', 'Parameters'))
+fibername       = uigetdir('Pick a fiber');
+fullfilename    = fullfile(fibername, ['parms_', modelname, '.mat']);
 load(fullfilename, 'redparms')
 newparms = complete_parms(redparms);
 
