@@ -1,10 +1,27 @@
-function[modelfunc, modelname] = look_up_model(model)
+function[modelfunc, odefunc, modelname] = look_up_model(model, type)
 
-if contains(model, 'XB')
-    modelfunc = @fiber_dynamics_explicit_length_v2;
-else
-    modelfunc = @hill_explicit;
+if nargin < 2
+    type = 'explicit';
 end
+
+if strcmp(type, 'explicit')
+    if contains(model, 'XB')
+        modelfunc = @fiber_dynamics_explicit_length_v2;
+    else
+        modelfunc = @hill_explicit;
+    end
+    
+    odefunc = @ode15s;
+else
+    if contains(model, 'XB')
+        modelfunc = @fiber_dynamics_implicit_length_v2;
+    else
+        modelfunc = @hill_type_implicit_v2;
+    end
+    
+    odefunc = @ode15i;
+end
+
 
 if strcmp(model, '3-state XB coop')
     modelname = 'biophysical_full_regular';

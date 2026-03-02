@@ -82,9 +82,10 @@ end
 
 %% step 2: specify model function
 % you can choose between the following models:
-% 2-state XB, 2-state XB coop, 3-state XB coop, 4-state XB coop
+% Hill-type SE, Hill-type no SE, 2-state XB, 2-state XB coop, 3-state XB coop, 4-state XB coop
 model = '3-state XB coop'; % see options above
-[modelfunc, modelname] = look_up_model(model);
+odetype = 'explicit'; % type of differential equations
+[modelfunc, odefunc, modelname] = look_up_model(model, odetype);
 
 %% step 3: specify model parameters
 % here we look up the parameters for a given fiber and model
@@ -93,7 +94,7 @@ githubfolder = cd;
 load(fullfile(cd, 'Reproduce', 'Parameters', fiber, ['parms_', modelname, '.mat']), 'newparms')
 
 %% step 4: simulate model
-[sol, out] = simulate_model(model, modelfunc, input, newparms);
+[sol, out] = simulate_model(model, odefunc, modelfunc, input, newparms);
 
 % visualize
 figure(1)
