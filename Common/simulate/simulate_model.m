@@ -45,7 +45,6 @@ else
         if contains(char(odefunc), 'i') % implicit
             sol(i) = odefunc(@(t,y,yp) modelfunc(t,y,yp, newparms), [0 max(newparms.ti)], X0, zeros(size(X0)), odeset('maxstep', 1e-2));
         else
-            
             sol(i) = odefunc(@(t,y,yp) modelfunc(t,y, newparms), [0 max(newparms.ti)], X0, odeset('maxstep', 1e-2));
         end
         

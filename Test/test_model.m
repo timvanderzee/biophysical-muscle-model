@@ -31,9 +31,17 @@ RT  = .1;             % recovery time (s)
 f   = 2;              % sinusoidal frequency (Hz)
 
 % specify all input phases
-input(1) = ramp(Ca, T, dt, RT, A);
-input(2) = isometric(Ca, T, dt, L0);
-input(3) = sinusoidal(Ca, T, dt, f, A, L0);
+% input(1) = ramp(Ca, T, dt, RT, A);
+% input(2) = isometric(Ca, T, dt, L0);
+% input(3) = sinusoidal(Ca, T, dt, f, A, L0);
+
+cd('C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model-results\Protocols\pCa=45')
+load('AMP=383_ISI=1000.mat')
+id = tis>Ts(1) & tis < Ts(2);
+input.t = tis(id) - tis(find(id,1));
+input.Cas = Cas(id);
+input.L = Lis(id);
+input.v = vis(id);
 
 % show length and velocity traces
 t0 = 0;
@@ -94,7 +102,8 @@ method  = 'approximated'; % solution method
 %% step 3: specify model parameters
 % here we look up the parameters for a given fiber and model
 cd(fullfile(repofolder, 'Reproduce', 'Parameters'))
-fibername       = uigetdir('Pick a fiber');
+% fibername       = uigetdir('Pick a fiber');
+fibername = '7Aug2018a';
 fullfilename    = fullfile(fibername, ['parms_', modelname, '.mat']);
 load(fullfilename, 'redparms')
 newparms = complete_parms(redparms);

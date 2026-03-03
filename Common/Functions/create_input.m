@@ -6,7 +6,10 @@ if nargin < 6
 end
 
 %% create idealized input
-ti = linspace(0, tiso, N);
+% ti = linspace(0, tiso, N);
+dt = .001;
+ti = 0:dt:tiso;
+tx = ti;
 % vis = [];
 % Lis = [];
 
@@ -17,7 +20,7 @@ Lis = [];
 for i = 1:length(dTc)
 
     Ts = cumsum([tiso-(dTt*3+dTc(i)*2+ISI(i)); dTc(i); dTc(i); ISI(i); dTt; dTt; dTt]);
-    tx = linspace(0, Ts(end), length(Ca)*N);
+%     tx = linspace(0, Ts(end), length(Ca)*N);
 
     % specify velocity
     vx = nan(size(tx));
@@ -38,8 +41,11 @@ for i = 1:length(dTc)
     Lx = cumtrapz(tx, vx);
 
     % interpolate
-    vi = interp1(tx, vx, ti, [], 'extrap');
-    Li = interp1(tx, Lx, ti, [], 'extrap');
+%     vi = interp1(tx, vx, ti, [], 'extrap');
+%     Li = interp1(tx, Lx, ti, [], 'extrap');
+
+    vi = vx;
+    Li = Lx;
     
 %     vis = [vis vi];
 %     Lis = [Lis Li];
@@ -59,9 +65,9 @@ for i = 1:length(dTc)
     ts = 0:tiso:(tiso*(length(Ca)-1));
 end
 
-    tis = linspace(0, tiso * length(Ca) * length(dTc), length(ti) * length(Ca)* length(dTc));
+%     tis = linspace(0, tiso * length(Ca) * length(dTc), length(ti) * length(Ca)* length(dTc));
 
-
+tis = ti;
 
 end
 
