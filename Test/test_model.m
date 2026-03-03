@@ -19,7 +19,7 @@ repofolder = cd;
 % changes
 
 % applicable to all phases
-pCa     = 6.1;          % assumed constant and applies to both phases
+pCa     = 9;          % assumed constant and applies to both phases
 Ca      = 10^(6-pCa);   % (uM)
 dt      = 1/1000;       % sample time (s)
 T       = 1;            % duration (s)
@@ -31,17 +31,9 @@ RT  = .1;             % recovery time (s)
 f   = 2;              % sinusoidal frequency (Hz)
 
 % specify all input phases
-% input(1) = ramp(Ca, T, dt, RT, A);
+input(1) = ramp(Ca, T, dt, RT, A);
 % input(2) = isometric(Ca, T, dt, L0);
 % input(3) = sinusoidal(Ca, T, dt, f, A, L0);
-
-cd('C:\Users\u0167448\Documents\GitHub\biophysical-muscle-model-results\Protocols\pCa=45')
-load('AMP=383_ISI=1000.mat')
-id = tis>Ts(1) & tis < Ts(2);
-input.t = tis(id) - tis(find(id,1));
-input.Cas = Cas(id);
-input.L = Lis(id);
-input.v = vis(id);
 
 % show length and velocity traces
 t0 = 0;
@@ -93,7 +85,7 @@ end
 %% step 2: specify model function
 % you can choose between the following models:
 % Hill-type SE, Hill-type no SE, 2-state XB, 2-state XB coop, 3-state XB coop, 4-state XB coop
-model   = '2-state XB coop'; % see options above
+model   = '3-state XB coop'; % see options above
 odetype = 'explicit'; % type of differential equations
 method  = 'approximated'; % solution method
 % method = 'discretized'; % solution method

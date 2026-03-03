@@ -15,5 +15,5 @@ data2 = load(['C:\Users\u0167448\OneDrive - KU Leuven\9. Short-range stiffness\m
 
 
 
-plot(data1.tis, data1.oFi); hold on
+plot(data1.tis, data1.Fis); hold on
 plot(data2.tis, data2.oFi)
