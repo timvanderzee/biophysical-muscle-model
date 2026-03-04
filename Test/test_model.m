@@ -19,7 +19,7 @@ repofolder = cd;
 % changes
 
 % applicable to all phases
-pCa     = 6.1;          % assumed constant and applies to both phases
+pCa     = 9;          % assumed constant and applies to both phases
 Ca      = 10^(6-pCa);   % (uM)
 dt      = 1/1000;       % sample time (s)
 T       = 1;            % duration (s)

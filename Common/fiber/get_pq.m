@@ -1,23 +1,15 @@
 function[p, q, Q1] = get_pq(Q0, Q2, Fce)
 
-% mean and standard deviation
-% k   = parms.K;
-% Q00 = log(1+exp(Q0*k))/k; % note: goes to inf for large k, may need another function
-% Q00 = max(Q0, 1e-6);
-Q00 = Q0;
+% compute first order moment
 Q1 = Fce - Q0;
-p = Q1./Q00; 
 
-% limit p
-p = 10*tanh(p/10);
+% mean and standard deviation of the XB distribution
+p = Q1./Q0;                % mean
+q = Q2./Q0 - p.^2;         % standard deviation
 
-q = Q2./Q00 - p.^2;  
-% q = log(1+exp(q*k))/k;
+% constraining p and q
+p = 10*tanh(p/10);          % constraining minimum and maximum
+q = log(1+exp(q*10))/10;    % constraining to be larger than zero
+q = 2*tanh(q/2);            % constraining the maximum 
 
-q = 1*tanh(q/1); 
-q = max(q, 0);
-
-if sum(~isreal(q)) > 0
-    keyboard
-end
 end
