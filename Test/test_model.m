@@ -94,8 +94,8 @@ method  = 'approximated'; % solution method
 %% step 3: specify model parameters
 % here we look up the parameters for a given fiber and model
 cd(fullfile(repofolder, 'Reproduce', 'Parameters'))
-% fibername       = uigetdir('Pick a fiber');
-fibername = '7Aug2018a';
+fibername       = uigetdir('Pick a fiber');
+% fibername = '7Aug2018a';
 fullfilename    = fullfile(fibername, ['parms_', modelname, '.mat']);
 load(fullfilename, 'redparms')
 newparms = complete_parms(redparms);

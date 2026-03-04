@@ -65,7 +65,7 @@ dDRXdt = J1 - J2 - (Q0dot + Rdot);
 % total state derivative vector
 dx = [dQ0dt; dQ2dt; dFsedt; dNondt; dDRXdt; Rdot];
 
-if sum(isnan(dx(:))) > 0
-    keyboard
-end
+% if sum(isnan(dx(:))) > 0
+%     keyboard
+% end
 end
