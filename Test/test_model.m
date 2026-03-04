@@ -26,10 +26,10 @@ T       = 1;            % duration (s)
 L0      = 0;
 
 % phase-specific
-A   = .5;              % length change amplitude (L0)
+A   = .2;              % length change amplitude (L0)
 RT  = .1;             % recovery time (s)
 f   = 2;              % sinusoidal frequency (Hz)
-v   = 5;            % velocity (L0/s)
+v   = 1;            % velocity (L0/s)
 
 % specify all input phases
 input(1) = ramp(Ca, T, dt, RT, A, v);

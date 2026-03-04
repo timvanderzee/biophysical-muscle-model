@@ -30,7 +30,7 @@ for i = 1:length(dTc)
     vx(tx > Ts(3) & tx <=  Ts(4)) = 0;
     vx(tx > Ts(4) & tx <=  Ts(5)) = .4545;
     vx(tx > Ts(5) & tx <=  Ts(6)) = 0;
-    vx(tx > Ts(6) & tx <=  Ts(7)) = -.4545;
+    vx(tx > Ts(6) & tx <=  Ts(7)+eps) = -.4545;
 
     % integrate to get length
 %     Lx = cumtrapz(tx, vx);
