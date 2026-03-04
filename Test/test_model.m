@@ -19,21 +19,22 @@ repofolder = cd;
 % changes
 
 % applicable to all phases
-pCa     = 9;          % assumed constant and applies to both phases
+pCa     = 6.1;          % assumed constant and applies to both phases
 Ca      = 10^(6-pCa);   % (uM)
 dt      = 1/1000;       % sample time (s)
 T       = 1;            % duration (s)
 L0      = 0;
 
 % phase-specific
-A   = .04;            % length change amplitude (L0)
+A   = .5;              % length change amplitude (L0)
 RT  = .1;             % recovery time (s)
 f   = 2;              % sinusoidal frequency (Hz)
+v   = 5;            % velocity (L0/s)
 
 % specify all input phases
-input(1) = ramp(Ca, T, dt, RT, A);
-% input(2) = isometric(Ca, T, dt, L0);
-% input(3) = sinusoidal(Ca, T, dt, f, A, L0);
+input(1) = ramp(Ca, T, dt, RT, A, v);
+input(2) = isometric(Ca, T, dt, L0);
+input(3) = sinusoidal(Ca, T, dt, f, A, L0);
 
 % show length and velocity traces
 t0 = 0;
@@ -94,8 +95,8 @@ method  = 'approximated'; % solution method
 %% step 3: specify model parameters
 % here we look up the parameters for a given fiber and model
 cd(fullfile(repofolder, 'Reproduce', 'Parameters'))
-fibername       = uigetdir('Pick a fiber');
-% fibername = '7Aug2018a';
+% fibername       = uigetdir('Pick a fiber');
+fibername = '7Aug2018a';
 fullfilename    = fullfile(fibername, ['parms_', modelname, '.mat']);
 load(fullfilename, 'redparms')
 newparms = complete_parms(redparms);
