@@ -1,10 +1,10 @@
-function[Xss, newparms] = get_steady_state(model, odefunc, modelfunc, newparms, Cas)
+function[Xss, newparms] = get_steady_state(model, odefunc, modelfunc, newparms, Cas, Lts)
 
-X0 = get_initial_state(model, modelfunc, newparms);
+X0 = get_initial_state(model, modelfunc, newparms, Lts(1));
 
 newparms.vts = [0 0];
-newparms.ti = [0 5];
-newparms.Lts = [0 0];
+newparms.ti = [0 10];
+newparms.Lts = Lts(1) * [1 1];
 newparms.Cas = Cas(1) * [1 1];
 
 if contains(char(odefunc), 'i') % implicit
@@ -14,10 +14,11 @@ else % explicit
 end
 
 Xss = sol.y(:,end);
+% Xss = X0;
 
 end
 
-function[X0] = get_initial_state(model, modelfunc, newparms)
+function[X0] = get_initial_state(model, modelfunc, newparms, L0)
 
 if contains(model, 'XB')
     
@@ -27,7 +28,7 @@ if contains(model, 'XB')
     q0 = .1; % standard deviation strain of bound XBs (power-stroke normalized)
     
     % find the state in which Fse = Fce + Fpe, given the intial XB state
-    [Q00, Q20, lce0, Q10, Fse0, Fpe0, Fce0] = find_steady_state(Q0, p0, q0, newparms, 'regular');
+    [Q00, Q20, lce0, Q10, Fse0, Fpe0, Fce0] = find_steady_state(Q0, p0, q0, L0, newparms, 'regular');
     
     if contains(char(modelfunc), 'discretized')
         costfunc = @(L, Fce, parms) (Fce + (newparms.kpe*(-L-parms.Lce0)) - (newparms.kse0*(exp(newparms.kse*L)-1))) .^2;

@@ -18,9 +18,15 @@ kse = parms.kse * (Fse + parms.kse0);
 % overlap
 if isfield(parms, 'FL_overlap')
     if parms.FL_overlap
-        h = (.5 * parms.s / parms.gamma); % powerstroke size
-        L_hs = Lce * h * 1e9 + 1.3e3; % [nm]
-        Ntot = return_f_overlap(L_hs, parms);
+        L = Lce/parms.gamma;
+        Ntot = exp(-3*L.^2);
+        
+%         disp(Ntot)
+%         Ntot = .5;
+        
+%         h = (.5 * parms.s / parms.gamma); % powerstroke size
+%         L_hs = Lce * h * 1e9 + 1.3e3; % [nm]
+%         Ntot = return_f_overlap(L_hs, parms);
     else
         Ntot = 1;
     end

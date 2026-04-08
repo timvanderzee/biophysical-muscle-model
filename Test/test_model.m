@@ -19,7 +19,7 @@ repofolder = cd;
 % changes
 
 % applicable to all phases
-pCa     = 9;          % assumed constant and applies to both phases
+pCa     = 4.5;          % assumed constant and applies to both phases
 Ca      = 10^(6-pCa);   % (uM)
 dt      = 1/1000;       % sample time (s)
 T       = 1;            % duration (s)
@@ -86,7 +86,7 @@ end
 %% step 2: specify model function
 % you can choose between the following models:
 % Hill-type SE, Hill-type no SE, 2-state XB, 2-state XB coop, 3-state XB coop, 4-state XB coop
-model   = '3-state XB coop'; % see options above
+model   = 'Hill-type SE'; % see options above
 odetype = 'explicit'; % type of differential equations
 method  = 'approximated'; % solution method
 % method = 'discretized'; % solution method
@@ -102,7 +102,9 @@ load(fullfilename, 'redparms')
 newparms = complete_parms(redparms);
 
 %% step 4: simulate model
+tic
 [sol, out] = simulate_model(model, odefunc, modelfunc, input, newparms);
+toc
 
 % visualize
 figure(1)

@@ -24,7 +24,7 @@ else
     
     % determine initial state
     % we need to define the model states at t = 0
-    [X0, newparms] = get_steady_state(model, odefunc, modelfunc, newparms, input(1).Cas(1));
+    [X0, newparms] = get_steady_state(model, odefunc, modelfunc, newparms, input(1).Cas(1),input(1).L(1)*newparms.gamma);
     
     if contains(char(odefunc), 'i') % implicit
         sol = odefunc(@(t,y,yp) modelfunc(t,y,yp, newparms), [0 .001], X0, zeros(size(X0)), []);
@@ -54,12 +54,12 @@ else
     
     % get force
     for i = 1:length(input) % loop over phases
-        [out(i).t, out(i).F, ~, ~] = get_forces_from_state(model, modelfunc, sol(i), input(i), newparms);
+        [out(i).t, out(i).F, out(i).Fpe, out(i).Fce, out(i).Lce] = get_forces_from_state(model, modelfunc, sol(i), input(i), newparms);
     end
 end
 end
 
-function[t, Fse, Fpe, Fce] = get_forces_from_state(model, modelfunc, sol, input, newparms)
+function[t, Fse, Fpe, Fce,Lce] = get_forces_from_state(model, modelfunc, sol, input, newparms)
 
 t   = sol.x;
 
