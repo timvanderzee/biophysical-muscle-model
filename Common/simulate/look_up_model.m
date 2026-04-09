@@ -2,6 +2,7 @@ function[modelfunc, odefunc, modelname] = look_up_model(model, type, method)
 
 if nargin < 2
     type = 'explicit';
+    method = 'approximated';
 end
 
 if strcmp(type, 'explicit')

@@ -1,4 +1,4 @@
-function[IG] = get_initial_guess(model, modelfunc, Xdata, parms, visualize)
+function[IG] = get_initial_guess(model, odefunc, modelfunc, Xdata, parms, visualize)
 
 if ~isfield(Xdata, 'idA')
     Xdata.idA = 1:length(Xdata.Cas);
@@ -11,7 +11,7 @@ vts = Xdata.v(Xdata.idA);
 Lts = Xdata.L(Xdata.idA) * parms.gamma;
 
 % get the steady state
-Xss = get_steady_state(model, modelfunc, parms, Cas(1));
+Xss = get_steady_state(model, odefunc, modelfunc, parms, Cas(1), Lts(1));
 
 % simulate
 parms.ti = tis;

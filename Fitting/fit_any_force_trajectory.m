@@ -7,7 +7,7 @@ githubfolder = cd;
 
 %% step 1: specify which model we want to fit
 model = '3-state XB coop'; 
-[modelfunc, modelname] = look_up_model(model);
+[modelfunc, odefunc, modelname] = look_up_model(model);
 
 %% step 2: specify which parameters we are fitting, and which bounds we are using
 optparms    = {'f', 'k11', 'J1', 'kse'};
@@ -44,9 +44,10 @@ dt = 1/1000;    % sample time (s)
 Ca = 1;         % calcium concentration (uM)
 RT = .1;        % recovery time(s)
 A = .04;        % stretch amplitude (L0)
+v = .4545;      % stretch velocity (L0/s)
 
 % make an input struct
-input = ramp(Ca, T, dt, RT, A);
+input = ramp(Ca, T, dt, RT, A, v);
 color = lines(3);
 
 % at this time, we still need to add the force data that we'd like to fit
@@ -57,7 +58,7 @@ color = lines(3);
 % noise. as a result of these adjustments, there will be a mismatch between
 % the initial model force and the target model force. this mismatch can be
 % reduced by re-fitting the model parameters
-[sol, out] = simulate_model(model, modelfunc, input, oldparms);
+[sol, out] = simulate_model(model, odefunc, modelfunc, input, oldparms);
 
 % adjustment parameters
 offset = -.2;
@@ -92,7 +93,7 @@ title('Fiber force')
     
 %% step 5: obtain initial guess for model states
 cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Fitting'))
-IG = get_initial_guess(model, modelfunc, input, oldparms, 0);
+IG = get_initial_guess(model, odefunc, modelfunc, input, oldparms, 0);
 
 subplot(414)
 plot(input.t, IG.Fsei*oldparms.Fscale, 'color', color(2,:), 'linewidth', 1.5); hold on; box off
@@ -106,7 +107,7 @@ weights = 100;
 [newparms, out, opti] = fit_model_parameters_v2(model, oldparms, optparms, bnds, input, IG, weights);
 
 %% step 7: validate through simulating with the obtained parameters
-[sol, sim_out] = simulate_model(model, modelfunc, input, newparms);
+[sol, sim_out] = simulate_model(model, odefunc, modelfunc, input, newparms);
 
 %% visualize output
 if ishandle(2), close(2); end
