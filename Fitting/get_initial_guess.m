@@ -35,7 +35,7 @@ Ri      = interp1(sol.x, sol.y(6,:), tis); % forcibly detached
 dLse = max(parms.Lse_func(Fsei, parms), 0); % can't be negative
 Lce = Lts - dLse;
 
-if isfield(parms, 'PE_isw_SE') % PE in series with SE
+% if isfield(parms, 'PE_isw_SE') % PE in series with SE
     dLce = Lce - parms.Lce0;
 
     if parms.K*dLce < 10
@@ -45,7 +45,7 @@ if isfield(parms, 'PE_isw_SE') % PE in series with SE
         kpe = parms.kpe;
         Fpe = parms.kpe * dLce;
     end
-end
+% end
 
 %% Determine cross-bridge states
 Fce = Fsei - Fpe;
@@ -82,7 +82,7 @@ k2 = [parms.k21 -parms.k22];
 % get functions
 [IGf, IGef] = get_IG_IGEf(parms.approx);
 
-[Q0dot, Q1dot] = CrossBridge_Dynamics(Q0i, pi, qi, parms.f, parms.w, k1, k2, IGef, Noni, DRXi, IGf, parms.b, parms.k, Ri, parms.dLcrit, parms.ps2);
+[Q0dot, Q1dot] = CrossBridge_Dynamics(Q0i, pi, qi, parms.f, parms.w, k1, k2, IGef, Noni, DRXi, IGf, parms.b, parms.k, Ri, parms.dLcrit, 0);
 
 % velocity - independent derivative
 F0dot  = Q1dot + Q0dot;

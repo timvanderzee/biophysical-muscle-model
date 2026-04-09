@@ -1,5 +1,5 @@
 function[sol, out] = simulate_model(model, odefunc, modelfunc, input, newparms)
-out = struct();
+% out = struct();
 
 if strcmp(model, 'Hill-type no SE')
     % CE activation
@@ -24,7 +24,16 @@ else
     
     % determine initial state
     % we need to define the model states at t = 0
-    [X0, newparms] = get_steady_state(model, odefunc, modelfunc, newparms, input(1).Cas(1),input(1).L(1)*newparms.gamma);
+    if ~isfield(newparms, 'X0')
+        [X0, newparms] = get_steady_state(model, odefunc, modelfunc, newparms, input(1).Cas(1),input(1).L(1)*newparms.gamma);
+    else
+        X0 = newparms.X0;
+        newparms.vts = [0 0];
+        newparms.ti = [0 10];
+        newparms.Lts = input(1).Cas(1) * [1 1];
+        newparms.Cas = input(1).L(1)*newparms.gamma * [1 1];
+
+    end
     
     if contains(char(odefunc), 'i') % implicit
         sol = odefunc(@(t,y,yp) modelfunc(t,y,yp, newparms), [0 .001], X0, zeros(size(X0)), []);
@@ -54,12 +63,12 @@ else
     
     % get force
     for i = 1:length(input) % loop over phases
-        [out(i).t, out(i).F, out(i).Fpe, out(i).Fce, out(i).Lce] = get_forces_from_state(model, modelfunc, sol(i), input(i), newparms);
+        out(i) = get_forces_from_state(model, modelfunc, sol(i), input(i), newparms);
     end
 end
 end
 
-function[t, Fse, Fpe, Fce,Lce] = get_forces_from_state(model, modelfunc, sol, input, newparms)
+function[out] = get_forces_from_state(model, modelfunc, sol, input, newparms)
 
 t   = sol.x;
 
@@ -86,7 +95,7 @@ if contains(model, 'XB')
     else
         
         Fse = sol.y(3,:) * newparms.Fscale;
-        dLse = max(newparms.Lse_func(Fse, newparms), 0); % can't be negative
+        dLse = max(newparms.Lse_func(Fse/newparms.Fscale, newparms), 0); % can't be negative
         Lce = interp1(input.t, input.L * newparms.gamma, t) - dLse;
     end
 else
@@ -104,6 +113,14 @@ Fpe = newparms.kpe * dLce  * newparms.Fscale;
 Fpe(newparms.K*dLce < 10) = newparms.kpe * log(1+exp(dLce(newparms.K*dLce < 10)*newparms.K))/newparms.K  * newparms.Fscale;
 
 Fce = Fse - Fpe;
+
+out.t = t;
+out.F = Fse;
+out.Fpe = Fpe;
+out.Fce = Fce;
+out.Lce = Lce;
+out.dLse = dLse;
+% out(i).t, out(i).F, out(i).Fpe, out(i).Fce, out(i).Lce
 end
 
 

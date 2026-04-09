@@ -106,6 +106,8 @@ if ~isempty(idP)
     % cost
     FrelP = FseP * parms.Fscale;
     FcostP = (FrelP(idFP - N) - Fts(idFP)).^2;
+else
+    FcostP = 0;
 end
 
 %% active force fitting: define opti variables, specify constraints and initial guesses
@@ -119,6 +121,10 @@ if contains(model, 'XB')
     q   = opti.variable(1,N); % standard deviation strain of the distribution
     Ld  = opti.variable(1,N);  % % fiber velocity
     
+%     p = 10*tanh((Q1./Q0) /10);          % constraining minimum and maximum
+%     q = 2*tanh((log(1+exp((Q2./Q0 - p.^2)*10))/10)/2);    % constraining to be larger than zero
+
+
     % constraints that specify relation between opti variables
     opti.subject_to(Q1 - Q0 .* p == 0);
     opti.subject_to(Q2 - Q0 .* (p.^2 + q) == 0);
@@ -163,7 +169,7 @@ if contains(model, 'XB')
     
     % optional: constrain initial value of the force
     % opti.subject_to(Frel(1) == 1);
-    opti.subject_to(Frel(1) == Fts(idF(1)));
+%     opti.subject_to(Frel(1) == Fts(idF(1)));
     
     % force-term in cost function
     Fcost = (Frel(idF) - Fts(idF)).^2;
@@ -206,7 +212,7 @@ if contains(model, 'XB')
     [IG, IGef] = get_IG_IGEf(parms.approx);
     
     % Compute Qdot
-    [Q0dot, Q1dot, Q2dot, Rdot] = CrossBridge_Dynamics(Q0, p, q, f, parms.w, k1, k2, IGef, Non, DRX, IG, b, k, R, dLcrit, ps2);
+    [Q0dot, Q1dot, Q2dot, Rdot] = CrossBridge_Dynamics(Q0, p, q, f, parms.w, k1, k2, IGef, Non, DRX, IG, b, k, R, dLcrit, 0);
     
     % velocity - independent derivative
     F0dot  = Q1dot + Q0dot;
@@ -230,16 +236,25 @@ if contains(model, 'XB')
         opti.subject_to((Rdot(1:N-1) + Rdot(2:N))*dt/2 + R(1:N-1) == R(2:N));
     end
     
+    % force-length
+    Ntot = parms.Noverlap;
+    if isfield(parms, 'FL_overlap')
+        if parms.FL_overlap
+            Lcerel = Lce/parms.gamma;
+            Ntot = exp(-3*Lcerel.^2);
+        end
+    end
+    
     % thin filament dynamics
     if contains(model, 'coop')
-        [Jon, Joff] = ThinFilament_Dynamics(Cas(idA), Q0, Non, kon, koff, koop, parms.Noverlap);
+        [Jon, Joff] = ThinFilament_Dynamics(Cas(idA), Q0, Non, kon, koff, koop, Ntot);
         dNondt = Jon - Joff;
         opti.subject_to((dNondt(1:N-1) + dNondt(2:N))*dt/2 + Non(1:N-1) == Non(2:N));
     end
     
     % thick filament dynamics
     if contains(model, '3-state') || contains(model, '4-state')
-        [k1, k2] = ThickFilament_Dynamics(Q0, Fce, DRX, J1, J2, JF, parms.Noverlap, R);
+        [k1, k2] = ThickFilament_Dynamics(Q0, Fce, DRX, J1, J2, JF, Ntot, R);
         dDRXdt = k1 - k2 - (dQ0dt + Rdot);
         opti.subject_to((dDRXdt(1:N-1) + dDRXdt(2:N))*dt/2 + DRX(1:N-1) == DRX(2:N));
     end
@@ -354,6 +369,8 @@ if contains(model, 'XB')
     out.s       = sol.value(s);
     out.J       = sol.value(J);
     out.Fcost   = sol.value(Fcost);
+    out.Lce   = sol.value(Lce);
+    out.dLse   = sol.value(dLse);
     
     if ~isempty(idP)
         out.Fcost9  = sol.value(FcostP);
