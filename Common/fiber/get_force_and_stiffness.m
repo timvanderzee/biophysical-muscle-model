@@ -18,8 +18,8 @@ kse = parms.kse * (Fse + parms.kse0);
 % overlap
 if isfield(parms, 'FL_overlap')
     if parms.FL_overlap
-        L = Lce/parms.gamma;
-        Ntot = exp(-3*L.^2);
+        L = (Lce-parms.Lceopt) / parms.gamma;
+        Ntot = max(exp(-parms.FL*L.^2), .1);
         
 %         disp(Ntot)
 %         Ntot = .5;
