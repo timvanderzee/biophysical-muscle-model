@@ -13,7 +13,7 @@ R       = y(6);
 % R(R<0) = 0;
 
 % get PE and SE stiffness, CE force
-[Fce, kpe, kse, Ntot] = get_force_and_stiffness(Fse, Lts, parms);
+[Fce, kpe, kse, Ntot, Fpe] = get_force_and_stiffness(Fse, Lts, parms);
 
 % get distribution mean and standard deviation
 [p, q, Q1] = get_pq(Q0, Q2, Fce);
@@ -28,6 +28,7 @@ else
 end
 
 % Thick filament dynamics
+Ftot = Fpe + Fce;
 [J1, J2] = ThickFilament_Dynamics(Q0, Fce, DRX, parms.J1, parms.J2, parms.JF, 1, R);
 
 % points where integrals is evaluated

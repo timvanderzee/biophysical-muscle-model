@@ -5,6 +5,7 @@ cd ..
 githubfolder = cd;
 
 % get folders
+cd('biophysical-muscle-model')
 [datafolder, modelfolder] = get_paths(githubfolder);
 save_results = 0;
 visualize = 1;

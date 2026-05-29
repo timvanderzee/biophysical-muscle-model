@@ -122,7 +122,7 @@ plot(ax(2), [0 1], mean(SRSrel(3,ISIid, AMPid, :),4,'omitnan') * ones(1,2), ':',
 plot(ax(2), AMPs(AMPid) * ones(1,2), ylim,  ':', 'color', [.7 .7 .7])
 SST(2) = sum((squeeze(mean(SRSrel(Cid,ISIid, maid, :),4,'omitnan')) - mean(mean(SRSrel(Cid,ISIid, maid, :),4,'omitnan'),'omitnan')).^2,'omitnan');
 
-plot(ax(2), eAMPs(maid), squeeze(SRSrel(Cid,ISIid,maid,:)), '.', 'color', [.2 .2 .2]); hold on
+plot(ax(2), eAMPs(:), squeeze(SRSrel(Cid,ISIid,:,:)), '.', 'color', [.2 .2 .2]); hold on
 errorbar(ax(2), eAMPs(maid(1:end-1)), squeeze(mean(SRSrel(Cid,ISIid,maid(1:end-1),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,maid(1:end-1),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [1 1 1], 'markersize', ms)
 errorbar(ax(2), eAMPs(maid(end)), squeeze(mean(SRSrel(Cid,ISIid,maid(end),:), 4, 'omitnan')), squeeze(std(SRSrel(Cid,ISIid,maid(end),:), 1, 4, 'omitnan')), 'o', 'color', [.5 .5 .5], 'markerfacecolor', [.5 .5 .5], 'markersize', ms)
 set(ax(2), 'yticklabel', {}, 'yColor', 'none')

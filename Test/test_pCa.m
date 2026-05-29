@@ -19,11 +19,11 @@ repofolder = cd;
 % changes
 
 % applicable to all phases
-pCa     = 6.1;          % assumed constant and applies to both phases
-Ca      = 10^(6-pCa);   % (uM)
+pCas     = flip([9 7:-.1:5 4.5]);          % assumed constant and applies to both phases
+Cas      = 10.^(6-pCas);   % (uM)
 dt      = 1/1000;       % sample time (s)
 T       = 1;            % duration (s)
-L0      = 0;
+L0      = .5;
 
 % phase-specific
 A   = .2;              % length change amplitude (L0)
@@ -32,9 +32,11 @@ f   = 2;              % sinusoidal frequency (Hz)
 v   = 1;            % velocity (L0/s)
 
 % specify all input phases
-input(1) = ramp(Ca, T, dt, RT, A, v);
-% input(2) = isometric(Ca, T, dt, L0);
+for i = 1:length(Cas)
+% input(1) = ramp(Ca, T, dt, RT, A, v);
+input(i) = isometric(Cas(i), T, dt, L0);
 % input(3) = sinusoidal(Ca, T, dt, f, A, L0);
+end
 
 % show length and velocity traces
 t0 = 0;
@@ -106,7 +108,7 @@ tic
 [sol, out] = simulate_model(model, odefunc, modelfunc, input, newparms);
 toc
 
-%% visualize
+% visualize
 figure(1)
 subplot(414)
 t0 = 0;
@@ -115,11 +117,16 @@ for i = 1:length(input)
     end
 
     % plot the forces
-    plot(out(i).t+t0, out(i).F, '-', 'color', color(2,:), 'linewidth', 1.5); hold on; box off
+    plot(out(i).t+t0, out(i).F, 'color', color(1,:), 'linewidth', 1.5); hold on; box off
+    
+    Fss(i) = out(i).Fce(end);
 end
 
 xlabel('Time (s)')
 ylabel('Force (F_0)')
 xline(t0,'k--')
 title('Fiber force')
+
+figure(10)
+plot(pCas, Fss, 'o')
 

@@ -1,4 +1,4 @@
-function[Fce, kpe, kse, Ntot] = get_force_and_stiffness(Fse, Lts, parms)
+function[Fce, kpe, kse, Ntot, Fpe] = get_force_and_stiffness(Fse, Lts, parms)
 
 % SE
 Fse(Fse<1e-6) = 1e-6;
