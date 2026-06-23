@@ -5,7 +5,7 @@ fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18De
 iF = 6;
 
 acolors = get_colors;
-discretized_model = 0;
+discretized_model = 1;
 
 % all model codes (corresponding to colors)
 all_mcodes = [2 2 1; 2 1 1; 1 1 3; 1 1 2; 1 1 1; 1 2 1];

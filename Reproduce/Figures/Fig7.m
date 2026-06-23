@@ -39,7 +39,7 @@ aeISIs = repmat(eISIs(:), 1, 8);
 modelnames = {'Hill_alternative', 'Hill_regular', 'biophysical_full_regular'};
 titles = {'Hill-type model (no SE)', 'Hill-type model (with SE)', '3-state XB coop model'};
 
-discretized_model = 0;
+discretized_model = 1;
 if discretized_model
     versions = {'parms', 'parms_v3','parms_v4d'};
 else

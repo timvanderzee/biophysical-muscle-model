@@ -29,3 +29,11 @@ Fig7(datafolder, modelfolder, githubfolder)
 %% Figure 8: Computational cost
 cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
 Fig8(githubfolder)
+
+%% Export to PDF
+cd('C:\Users\u0167448\OneDrive - KU Leuven\9. Short-range stiffness\revision\figures\PDF')
+
+for i = 2:8
+    figure(i)
+    exportgraphics(gcf,['Fig', num2str(i), '.svg'],'ContentType','vector')
+end

@@ -380,11 +380,11 @@ end
 figure(6)
 
 for i = 1:3
-    ax(i+3) = axes('units', 'centimeters', 'position', [5 + 5 * (i-1)   9.5   1    1], 'box', 'off', 'Ylim', [0 .35], ...
+    ax(i+3) = axes('units', 'centimeters', 'position', [4 + 5 * (i-1)   9.5   1    1], 'box', 'off', 'Ylim', [0 .35], ...
         'Xtick', 1:10, 'XTickLabels', {},'fontsize', 6);
     
-    title(ax(i+3), 'Error', 'fontsize', 8)
-    ylabel(ax(i+3), '\sigma_{SRS}', 'fontsize', 8)
+    title(ax(i+3), 'Model error', 'fontsize', 6)
+    ylabel(ax(i+3), '\sigmâ_{SRS}', 'fontsize', 6)
 end
 
 for j = 1:3
