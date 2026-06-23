@@ -14,7 +14,6 @@ for fig = 2:4
     Figs2to4(datafolder, modelfolder, githubfolder, fig)
 end
 
-return
 %% Figure 5: Force RMSD
 cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
 Fig5(githubfolder)

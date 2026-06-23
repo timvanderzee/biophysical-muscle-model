@@ -18,27 +18,36 @@ repofolder = cd;
 % 3) a sinusoidal phase in which the fiber undergoes sinusoidal length
 % changes
 
+
+vs = linspace(.45, 4.5, 3);
+ls = {'-', '--'};
+
+for kk = 1:length(vs)
+    
 % applicable to all phases
 pCa     = 6.1;          % assumed constant and applies to both phases
 Ca      = 10^(6-pCa);   % (uM)
 dt      = 1/1000;       % sample time (s)
-T       = 1;            % duration (s)
+T       = .3;            % duration (s)
 L0      = 0;
 
 % phase-specific
-A   = .2;              % length change amplitude (L0)
-RT  = .1;             % recovery time (s)
+A   = .5;              % length change amplitude (L0)
+RT  = .01;             % recovery time (s)
 f   = 2;              % sinusoidal frequency (Hz)
-v   = 1;            % velocity (L0/s)
+v   = vs(kk);            % velocity (L0/s)
+
+% T       = A/v + 2;            % duration (s)
 
 % specify all input phases
-input(1) = ramp(Ca, T, dt, RT, A, v);
+% input(1) = ramp(Ca, T, dt, RT, A, v);
+input(1) = isokinetic(Ca, T, dt, L0, v, .1);
 % input(2) = isometric(Ca, T, dt, L0);
 % input(3) = sinusoidal(Ca, T, dt, f, A, L0);
 
 % show length and velocity traces
 t0 = 0;
-color = lines(3);
+color = lines(5);
 for i = 1:length(input) % loop over phases
     if i > 1, t0 = input(i-1).t(end) + t0;
     end
@@ -86,8 +95,16 @@ end
 %% step 2: specify model function
 % you can choose between the following models:
 % Hill-type SE, Hill-type no SE, 2-state XB, 2-state XB coop, 3-state XB coop, 4-state XB coop
-model   = '3-state XB coop'; % see options above
-odetype = 'explicit'; % type of differential equations
+
+for j = 1:2
+    if j == 1
+        model   = '3-state XB coop'; % see options above
+
+    else
+model   = '4-state XB coop'; % see options above
+
+    end
+        odetype = 'explicit'; % type of differential equations
 method  = 'approximated'; % solution method
 % method = 'discretized'; % solution method
 [modelfunc, odefunc, modelname] = look_up_model(model, odetype, method);
@@ -107,19 +124,33 @@ tic
 toc
 
 %% visualize
-figure(1)
-subplot(414)
+figure(2)
+% subplot(414)
 t0 = 0;
 for i = 1:length(input)
     if i > 1, t0 = input(i-1).t(end) + t0;
     end
-
+    
+    subplot(311)
+    plot(input(i).t+t0, input(i).L, 'color', color(kk,:), 'linewidth', 1.5); hold on; box off
+    
     % plot the forces
-    plot(out(i).t+t0, out(i).F, '-', 'color', color(2,:), 'linewidth', 1.5); hold on; box off
+    
+    subplot(312)
+    plot(out(i).t+t0, out(i).F, 'linestyle', ls{j}, 'color', color(kk,:), 'linewidth', 1.5); hold on; box off
+    
 end
 
 xlabel('Time (s)')
 ylabel('Force (F_0)')
-xline(t0,'k--')
+% xline(t0,'k--')
 title('Fiber force')
+end
+end
 
+
+%%
+figure(2)
+subplot(212)
+xlim([0 .3])
+ylim([0 1.5])

@@ -67,6 +67,6 @@ dDRXdt = J1 - J2 - (Q0dot + Rdot);
 dx = [dQ0dt; dQ2dt; dFsedt; dNondt; dDRXdt; Rdot];
 
 if sum(isnan(dx(:))) > 0
-    keyboard
+%     keyboard
 end
 end

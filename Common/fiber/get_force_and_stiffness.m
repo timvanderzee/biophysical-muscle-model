@@ -14,11 +14,13 @@ Fce = max(Fce, 0);
 
 % SE stiffness
 kse = parms.kse * (Fse + parms.kse0);
+kse = parms.kse;
 
 % overlap
 if isfield(parms, 'FL_overlap')
     if parms.FL_overlap
-        L = (Lce-parms.Lceopt) / parms.gamma;
+%         L = (Lce-parms.Lceopt) / parms.gamma;
+        L = (Lce-parms.Lceopt);
         Ntot = max(exp(-parms.FL*L.^2), .1);
         
 %         disp(Ntot)

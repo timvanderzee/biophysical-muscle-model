@@ -159,7 +159,8 @@ if contains(model, 'XB')
     Fce = Q0 + Q1;
     
     % stiffneses
-    Kse = kse * (Fse + kse0);
+%     Kse = kse * (Fse + kse0);
+    Kse = kse;
     Kpe = kpe .* (1 - 1./(exp(K*dLce)+1));
     
     % force constraint

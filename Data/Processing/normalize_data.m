@@ -120,11 +120,14 @@ Force_cor   = nan(size(Force,1), size(Force,2), length(fibers), size(Force,3), s
 Time_cor    = nan(size(Force,1), size(Force,2), length(fibers), size(Force,3), size(Force,4));
 Length_cor    = nan(size(Force,1), size(Force,2), length(fibers), size(Force,3), size(Force,4));
 
+fac = nan(size(Force,2), length(fibers), size(Force,3), size(Force,4));
+
 AMPs = [0 12 38 121 216 288 383 682];
 ISIs = [1 10 100 316 1000 3162 10000];
 
 show = 0;
-
+F_pCa.F02 =  nan(size(Force,2), length(fibers), size(Force,3), size(Force,4));
+ 
 for k = 1:length(fibers)
     disp([fibers{k},'_reorganized.mat'])
     load([fibers{k},'_reorganized.mat'],'Time','Force','pCas','Length')
@@ -149,6 +152,9 @@ for k = 1:length(fibers)
                 
                 % correct the force
                 Force_cor(:,i,k,n,m) = Force(:,i,n,m)/mean(Force(id,i,n,m),'omitnan') * F_pCa.F0(k,i)/F_pCa.Fmax(k);
+                
+                F_pCa.F02(i,k,n,m) = mean(Force(id,i,n,m),'omitnan');
+                fac(i,k,n,m) = mean(Force(id,i,n,m),'omitnan') / F_pCa.F0(k,i);
                 
                 if show
                     % plot the corrected force
