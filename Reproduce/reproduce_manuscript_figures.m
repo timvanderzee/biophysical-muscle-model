@@ -1,39 +1,51 @@
 clear all; close all; clc
 cd(fileparts(which('reproduce_manuscript_figures.m')));
-cd .. 
+cd ..
 cd ..
 githubfolder = cd;
 
 % get folders
 cd('biophysical-muscle-model')
 [datafolder, modelfolder] = get_paths(githubfolder);
+modelfolder = 'C:\Users\u0167448\Desktop\Model fits';
 
-%% Figures 2-4: Force traces
-for fig = 2:4
+figs = 7;
+
+for fig = figs
     cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
-    Figs2to4(datafolder, modelfolder, githubfolder, fig)
+
+    %% Figures 2-4: Force traces    
+    if fig > 1 && fig < 5
+        Figs2to4(datafolder, modelfolder, githubfolder, fig)
+    elseif fig == 5
+        
+        %% Figure 5: Force RMSD
+        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
+        Fig5(githubfolder)
+        
+    elseif fig == 6
+        %% Figure 6: SRS
+        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
+        Fig6(githubfolder)
+        
+    elseif fig == 7
+        %% Figure 7: SRS
+        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
+        Fig7(datafolder, modelfolder, githubfolder)
+        
+    elseif fig == 8
+        %% Figure 8: Computational cost
+        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
+        Fig8(githubfolder)
+    end
 end
 
-%% Figure 5: Force RMSD
-cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
-Fig5(githubfolder)
-
-%% Figure 6: SRS
-cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
-Fig6(githubfolder)
-
-%% Figure 7: SRS
-cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
-Fig7(datafolder, modelfolder, githubfolder)
-
-%% Figure 8: Computational cost
-cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
-Fig8(githubfolder)
-
+return
 %% Export to PDF
 cd('C:\Users\u0167448\OneDrive - KU Leuven\9. Short-range stiffness\revision\figures\PDF')
 
-for i = 2:8
+for i = figs
     figure(i)
-    exportgraphics(gcf,['Fig', num2str(i), '.svg'],'ContentType','vector')
+    %     exportgraphics(gcf,['Fig', num2str(i), '.svg'],'ContentType','vector')
+    exportgraphics(gcf,['FigS', num2str(i-1), '.pdf'],'ContentType','vector')
 end

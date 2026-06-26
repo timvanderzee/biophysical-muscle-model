@@ -13,7 +13,7 @@ sISIs = [0.001, 0.1, 0.3160, 1, 10];
 sISI = .001;
 sAMP = .0383;
 
-discretized_model = 1;
+discretized_model = 0;
 
 %% Model
 showbar = 0;
@@ -73,8 +73,8 @@ AMPid = find(eAMPs==sAMP);
 cd('C:\Users\u0167448\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data')
 
 % default: 10 ms
-load('SRS_data_DT10.mat', 'SRS_pre', 'F0', 'SRS_post', 'SRSrel2', 'SRSrel')
-SRSrel = SRSrel2;
+load('SRS_data_DT10_new.mat', 'SRS_pre', 'F0', 'SRS_post', 'SRSrel2', 'SRSrel')
+% SRSrel = SRSrel2;
 % 
 % % passive: 30 ms
 % load('SRS_data_DT20.mat', 'SRS_pre', 'F0', 'SRS_post', 'SRSrel2')

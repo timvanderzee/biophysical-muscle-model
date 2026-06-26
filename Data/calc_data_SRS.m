@@ -5,16 +5,19 @@ tiso = 3;
 
 iFs = 1:11;
 
+dt = .01;
+N = round(.01/dt); % 10 ms
+
 F0 = nan(length(Kss), 7,8,length(iFs));
 SRS_pre = nan(length(Kss), 7,8,length(iFs));
 SRS_post = nan(length(Kss), 7,8,length(iFs));
 R2_pre = nan(length(Kss), 7,8,length(iFs));
 R2_post = nan(length(Kss), 7,8,length(iFs));
 
-LSRS_post = nan(20, 7,8,length(Kss),length(iFs));
-FSRS_post = nan(20, 7,8,length(Kss),length(iFs));
-LSRS_pre = nan(20, 7,8,length(Kss),length(iFs));
-FSRS_pre = nan(20, 7,8,length(Kss),length(iFs));
+LSRS_post = nan(N, 7,8,length(Kss),length(iFs));
+FSRS_post = nan(N, 7,8,length(Kss),length(iFs));
+LSRS_pre = nan(N, 7,8,length(Kss),length(iFs));
+FSRS_pre = nan(N, 7,8,length(Kss),length(iFs));
 
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
@@ -205,7 +208,7 @@ SRSrel2(end,end,7,2) = nan;
 
 %% save
 cd(current_folder)
-save(['SRS_data_DT20.mat'], 'SRSrel', 'F0s', 'SRS_post', 'SRS_pre', 'th', 'F0',  'SRSrel2')
+save(['SRS_data_DT10_new.mat'], 'SRSrel', 'F0s', 'SRS_post', 'SRS_pre', 'th', 'F0',  'SRSrel2')
 
 end
 end

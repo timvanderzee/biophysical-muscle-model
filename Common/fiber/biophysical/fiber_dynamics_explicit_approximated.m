@@ -28,7 +28,6 @@ else
 end
 
 % Thick filament dynamics
-Ftot = Fpe + Fce;
 [J1, J2] = ThickFilament_Dynamics(Q0, Fce, DRX, parms.J1, parms.J2, parms.JF, 1, R);
 
 % points where integrals is evaluated

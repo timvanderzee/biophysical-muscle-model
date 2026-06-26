@@ -14,7 +14,13 @@ Fce = max(Fce, 0);
 
 % SE stiffness
 kse = parms.kse * (Fse + parms.kse0);
-kse = parms.kse;
+
+% if we want a linear tendon
+if isfield(parms, 'linear_tendon')
+    if parms.linear_tendon
+        kse = parms.kse;
+    end
+end
 
 % overlap
 if isfield(parms, 'FL_overlap')
