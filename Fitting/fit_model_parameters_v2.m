@@ -130,9 +130,9 @@ if contains(model, 'XB')
     opti.subject_to(Q2 - Q0 .* (p.^2 + q) == 0);
     
     % bounds
-%     opti.subject_to(q > 0);
-%     opti.subject_to(p > -5);
-%     opti.subject_to(p < 5);
+    opti.subject_to(q > 0);
+    opti.subject_to(p > -5);
+    opti.subject_to(p < 5);
     opti.subject_to(Q0 > 1e-6);
     opti.subject_to(Fse > 0);
     opti.subject_to(Fse < 2);
@@ -159,8 +159,15 @@ if contains(model, 'XB')
     Fce = Q0 + Q1;
     
     % stiffneses
-%     Kse = kse * (Fse + kse0);
-    Kse = kse;
+    Kse = kse * (Fse + kse0);
+    
+    % overrule if we have a linear tendon
+    if isfield(parms, 'linear_tendon')
+        if parms.linear_tendon
+            Kse = kse;
+        end
+    end
+    
     Kpe = kpe .* (1 - 1./(exp(K*dLce)+1));
     
     % force constraint

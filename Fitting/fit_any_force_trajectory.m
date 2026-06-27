@@ -22,7 +22,8 @@ fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18De
 foldername = fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Parameters',fibers{iF});
 
 cd(foldername)
-load(['parms_', modelname, '.mat'], 'newparms')
+load(['parms_', modelname, '.mat'], 'redparms')
+newparms = complete_parms(redparms);
 oldparms = newparms;
 
 %% step 4: specify which data we want to fit on

@@ -6,12 +6,14 @@ if nargin < 6
 end
 
 %% create idealized input
-% ti = linspace(0, tiso, N);
-dt = .001;
-ti = 0:dt:tiso;
+ti = linspace(0, tiso, N);
+% dt = .001;
+% ti = 0:dt:tiso;
 tx = ti;
 % vis = [];
 % Lis = [];
+
+epsi = 1e-6;
 
 vis = [];
 Cas = [];
@@ -30,7 +32,7 @@ for i = 1:length(dTc)
     vx(tx > Ts(3) & tx <=  Ts(4)) = 0;
     vx(tx > Ts(4) & tx <=  Ts(5)) = .4545;
     vx(tx > Ts(5) & tx <=  Ts(6)) = 0;
-    vx(tx > Ts(6) & tx <=  Ts(7)+eps) = -.4545;
+    vx(tx > Ts(6) & tx <=  Ts(7)+epsi) = -.4545;
 
     % integrate to get length
 %     Lx = cumtrapz(tx, vx);
@@ -67,7 +69,7 @@ end
 
 %     tis = linspace(0, tiso * length(Ca) * length(dTc), length(ti) * length(Ca)* length(dTc));
 
-tis = ti;
+tis = linspace(0, tiso*k*i, N*k*i);
 
 end
 

@@ -12,27 +12,29 @@ visualize = 1;
 
 %% step 1: specify which model we want to fit
 model = '3-state XB coop'; 
-[modelfunc, modelname] = look_up_model(model);
+[modelfunc, odefunc, modelname] = look_up_model(model);
 
 %% step 2: specify which parameters we are fitting, and which bounds we are using
 [optparms, bnds] = get_fitting_parms(model);
 
 %% step 3: obtain (initial) parameter values
-iF = 2; % [2,3,5,6,7,8,11];
+iF = 6; % [2,3,5,6,7,8,11];
 [parms] = get_initial_parameters(model, bnds, githubfolder, iF);
 
 %% step 4: specify which data we want to fit on
-iF = 7; % [2,3,5,6,7,8,11];
+iF = 6; % [2,3,5,6,7,8,11];
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 N = 500; % number of interpolation points
 th = .05; % threshold for active trials
 
 if ishandle(1), close(1); end; figure(1)
 [Xdata] = get_fitting_data(githubfolder, datafolder, iF, N, th, visualize);
+Xdata.idP = [];
+optparms = optparms(1:9);
 
 %% step 5: obtain initial guess for model states
 cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Fitting'))
-IG = get_initial_guess(model, modelfunc, Xdata, parms, visualize);
+IG = get_initial_guess(model, odefunc, modelfunc, Xdata, parms, visualize);
 
 %% step 6: do fitting
 % define weigth vector
@@ -81,7 +83,7 @@ for j = 1:2
     testparms.approx = 1;
 
     % simulate
-    [nsol, sout] = simulate_model(model, modelfunc, Xdata, testparms);
+    [nsol, sout] = simulate_model(model, odefunc, modelfunc, Xdata, testparms);
     
     figure(3)
     subplot(414);
@@ -121,9 +123,9 @@ if isfolder(fullfile(datafolder, '2017')) % check whether there is a subfolder
     
     % load data
     years = {'2017', '2018'};
-    for m = 1:length(years)
-        if contains(fibers{iF}, years{m})
-            fullfolder = fullfile(datafolder, years{m});
+    for i = 1:length(years)
+        if contains(fibers{iF}, years{i})
+            fullfolder = fullfile(datafolder, years{i});
         end
     end
 else
@@ -306,7 +308,7 @@ end
 
 function[parms] = get_initial_parameters(model, bnds, githubfolder, iF)
 
-[~, modelname] = look_up_model(model);
+[~, ~, modelname] = look_up_model(model);
 
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
 
@@ -316,8 +318,8 @@ cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Process'))
 foldername = fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Parameters',fibers{iF});
 
 cd(foldername)
-load(['parms_', modelname, '.mat'], 'newparms')
-
+load(['parms_', modelname, '.mat'], 'redparms')
+newparms = complete_parms(redparms);
 parms = newparms;
 
 % add some parameters that didn't exist before

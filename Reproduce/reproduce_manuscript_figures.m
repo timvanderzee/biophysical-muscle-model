@@ -7,9 +7,8 @@ githubfolder = cd;
 % get folders
 cd('biophysical-muscle-model')
 [datafolder, modelfolder] = get_paths(githubfolder);
-modelfolder = 'C:\Users\u0167448\Desktop\Model fits';
 
-figs = 7;
+figs = 5;
 
 for fig = figs
     cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
