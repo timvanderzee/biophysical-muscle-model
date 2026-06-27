@@ -1,4 +1,4 @@
-function[parms, out, opti] = fit_model_parameters_v2(model, parms, optparms, bnds, data, IG, weights)
+function[parms, out, opti] = fit_model_parameters_v2_feb2(model, parms, optparms, bnds, data, IG, weights)
 
 %% extract input and target
 % mandatory
