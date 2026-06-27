@@ -206,7 +206,7 @@ if contains(model, 'XB')
     [IG, IGef] = get_IG_IGEf(parms.approx);
     
     % Compute Qdot
-    [Q0dot, Q1dot, Q2dot, Rdot] = CrossBridge_Dynamics(Q0, p, q, f, parms.w, k1, k2, IGef, Non, DRX, IG, b, k, R, dLcrit, ps2);
+    [Q0dot, Q1dot, Q2dot, Rdot] = CrossBridge_Dynamics(Q0, p, q, f, parms.w, k1, k2, IGef, Non, DRX, IG, b, k, R, dLcrit, 0);
     
     % velocity - independent derivative
     F0dot  = Q1dot + Q0dot;
