@@ -1,5 +1,5 @@
 clear all; close all; clc
-cd(fileparts(which('reproduce_model_fitting.m')));
+cd(fileparts(which('reproduce_model_fitting_feb2.m')));
 cd .. 
 cd ..
 githubfolder = cd;
@@ -42,7 +42,7 @@ w3 = 10; 	 % weight for regularization
 weights = [w1 w2 w3];
 
 % fit model parameters
-[newparms, out, opti] = fit_model_parameters_v2(model, parms, optparms, bnds, Xdata, IG, weights);
+[newparms, out, opti] = fit_model_parameters_v2_feb2(model, parms, optparms, bnds, Xdata, IG, weights);
 
 %% step 7: analyze output
 if ishandle(2), close(2); end
@@ -81,7 +81,7 @@ for j = 1:2
     testparms.approx = 1;
 
     % simulate
-    [nsol, sout] = simulate_model(model, odefunc, modelfunc, Xdata, testparms);
+    [nsol, sout] = simulate_model(model, modelfunc, Xdata, testparms);
     
     figure(3)
     subplot(414);
@@ -316,8 +316,8 @@ cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Process'))
 foldername = fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Parameters',fibers{iF});
 
 cd(foldername)
-load(['parms_', modelname, '.mat'], 'redparms')
-newparms = complete_parms(redparms);
+load(['parms_', modelname, '.mat'], 'newparms')
+
 parms = newparms;
 
 % add some parameters that didn't exist before
