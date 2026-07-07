@@ -153,6 +153,13 @@ if contains(model, 'XB')
     
     % stiffneses
     Kse = kse * (Fse + kse0);
+    
+    if isfield(parms, 'linear_tendon')
+        if parms.linear_tendon
+            Kse = kse;
+        end
+    end
+
     Kpe = kpe .* (1 - 1./(exp(K*dLce)+1));
     
     % force constraint

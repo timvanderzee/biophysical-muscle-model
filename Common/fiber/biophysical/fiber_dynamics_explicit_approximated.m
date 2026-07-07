@@ -28,7 +28,8 @@ else
 end
 
 % Thick filament dynamics
-[J1, J2] = ThickFilament_Dynamics(Q0, Fce, DRX, parms.J1, parms.J2, parms.JF, 1, R);
+% [J1, J2] = ThickFilament_Dynamics(Q0, Fce, DRX, parms.J1, parms.J2, parms.JF, 1, R);
+[J1, J2] = ThickFilament_Dynamics(Q0, Fce, DRX, parms.J1, parms.J2, parms.JF, Ntot, R);
 
 % points where integrals is evaluated
 k1 = [parms.k11 parms.k12];
