@@ -1,6 +1,8 @@
 function[id0,id1,id2] = get_indices(t, tiso, ts, dTt, dTc, ISI, Ca)
 
 dt = median(diff(t));
+
+% N = round(.005/dt); % 5 ms
 N = round(.01/dt); % 10 ms
 % N = round(.02/dt); % 20 ms
 M = 100;

@@ -9,7 +9,7 @@ modelnames = {'Hill (no SE)', 'Hill (with SE)', '2-state XB', '2-state coop', '3
 
 % savefig = 1;
 iFs = [2,3,5,6,7,8,11];
-discretized_model = 1;
+discretized_model = 0;
 
 % if discretized_model
 %     versions = {'parms', 'parms_v4','parms_v4d', 'parms_v4d', 'parms_v4d', 'parms_v4d'};

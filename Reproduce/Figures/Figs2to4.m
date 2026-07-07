@@ -83,7 +83,24 @@ for j = 1:size(ISIs,1)
                   
             if isfile(filename)
                 disp(filename)
-                Mdata(j,i,kk) = load(filename, 'tis','Cas','vis','Lis','oFi', 'ts');
+                clear oFi
+                load(filename, 'tis','Cas','vis','Lis','oFi', 'ts');
+                
+                if ~exist('oFi', 'var')
+               
+                    load(filename, 'tis','Fis');
+                    
+                     if ~exist('Fis', 'var')
+                         keyboard
+                     end
+                    Mdata(j,i,kk).oFi = Fis;
+ 
+                
+                else
+                    Mdata(j,i,kk).oFi = oFi;
+                end
+                
+                   Mdata(j,i,kk).tis = tis;
             else
                 disp(['Does not exist: ', filename])
                 return
@@ -159,7 +176,7 @@ for kk = 1:2
         rectangle(ax(k+2+(kk-1)*3), 'Position', [zxlim(kk,1) zylim(kk,1) diff(zxlim(kk,:)) diff(zylim(kk,:))])
     end
     
-    text(ax(2), mean(zxlim(kk,:)), zylim(kk,2)+5, stretches{kk}, 'fontsize', 6, 'HorizontalAlignment', 'center', 'fontweight', 'bold');
+    text(ax(2), mean(zxlim(kk,:)), zylim(kk,1)-2, stretches{kk}, 'fontsize', 6, 'HorizontalAlignment', 'center', 'fontweight', 'bold');
     rectangle(ax(2), 'Position', [zxlim(kk,1) zylim(kk,1) diff(zxlim(kk,:)) diff(zylim(kk,:))])
 end
 

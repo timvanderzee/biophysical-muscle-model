@@ -1,4 +1,8 @@
-function[Data] = prep_data_v2(data,ns,ms,Ks,tiso)
+function[Data] = prep_data_v2(data,ns,ms,Ks,tiso,tshift)
+
+if nargin < 6
+    tshift = .005; % default
+end
 
 %% process data
 Data.F = [];
@@ -27,7 +31,7 @@ for i = 1:length(ns)
         id1 = t > trange(1) & t < trange(2);
 
         % save
-        Data.t = [Data.t; t(id1) + k * tiso - 3*Data.dTt - .005 + tmax]; % move to agree with idealized input
+        Data.t = [Data.t; t(id1) + k * tiso - 3*Data.dTt - tshift + tmax]; % move to agree with idealized input
         Data.F = [Data.F; F(id1)];
         Data.L = [Data.L; L(id1)];
         Data.C = [Data.C; Ca(id1)];

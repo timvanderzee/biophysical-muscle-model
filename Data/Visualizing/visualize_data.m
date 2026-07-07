@@ -1,8 +1,9 @@
 clear all; close all; clc
-[username, githubfolder] = get_paths();
+% [username, githubfolder] = get_paths();
 
 fibers = {'12Dec2017a','13Dec2017a','13Dec2017b','14Dec2017a','14Dec2017b','18Dec2017a','18Dec2017b','19Dec2017a','6Aug2018a','6Aug2018b','7Aug2018a'};
-cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
+% cd(['C:\Users\',username,'\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data'])
+cd('C:\Users\u0167448\OneDrive - KU Leuven\9. Short-range stiffness\matlab\data')
 ISIs = [1 10 100 316 1000 3160 10000]/1000;
 
 for i = 2:length(fibers)

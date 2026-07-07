@@ -1,4 +1,4 @@
-function[parms, out, opti] = fit_model_parameters_v2(model, parms, optparms, bnds, data, IG, weights)
+function[parms, out, opti] = fit_model_parameters_v2_feb2(model, parms, optparms, bnds, data, IG, weights)
 
 %% extract input and target
 % mandatory
@@ -106,8 +106,6 @@ if ~isempty(idP)
     % cost
     FrelP = FseP * parms.Fscale;
     FcostP = (FrelP(idFP - N) - Fts(idFP)).^2;
-else
-    FcostP = 0;
 end
 
 %% active force fitting: define opti variables, specify constraints and initial guesses
@@ -121,10 +119,6 @@ if contains(model, 'XB')
     q   = opti.variable(1,N); % standard deviation strain of the distribution
     Ld  = opti.variable(1,N);  % % fiber velocity
     
-%     p = 10*tanh((Q1./Q0) /10);          % constraining minimum and maximum
-%     q = 2*tanh((log(1+exp((Q2./Q0 - p.^2)*10))/10)/2);    % constraining to be larger than zero
-
-
     % constraints that specify relation between opti variables
     opti.subject_to(Q1 - Q0 .* p == 0);
     opti.subject_to(Q2 - Q0 .* (p.^2 + q) == 0);
@@ -135,7 +129,6 @@ if contains(model, 'XB')
     opti.subject_to(p < 5);
     opti.subject_to(Q0 > 1e-6);
     opti.subject_to(Fse > 0);
-    opti.subject_to(Fse < 2);
     % opti.subject_to(Q0+Q1 > 0);
     
     % initial guess
@@ -161,13 +154,12 @@ if contains(model, 'XB')
     % stiffneses
     Kse = kse * (Fse + kse0);
     
-    % overrule if we have a linear tendon
     if isfield(parms, 'linear_tendon')
         if parms.linear_tendon
             Kse = kse;
         end
     end
-    
+
     Kpe = kpe .* (1 - 1./(exp(K*dLce)+1));
     
     % force constraint
@@ -175,10 +167,9 @@ if contains(model, 'XB')
     
     % scale the force
     Frel = Fse * parms.Fscale;
-
     
     % optional: constrain initial value of the force
-%     opti.subject_to(Frel(1) == 1);
+    % opti.subject_to(Frel(1) == 1);
     opti.subject_to(Frel(1) == Fts(idF(1)));
     
     % force-term in cost function
@@ -194,7 +185,7 @@ if contains(model, 'XB')
     if contains(model, 'coop')
         Non = opti.variable(1,N);  % derivative constraint
         opti.subject_to(Non > 0);
-        opti.subject_to(Non < 1.1);
+        opti.subject_to(Non < 2);
         opti.set_initial(Non, IG.Noni(idA));
     end
     
@@ -202,7 +193,7 @@ if contains(model, 'XB')
     if contains(model, '3-state') || contains(model, '4-state')
         DRX = opti.variable(1,N);  % derivative constraint
         opti.subject_to(DRX > 0);
-        opti.subject_to(DRX < 1.1);
+        opti.subject_to(DRX < 2);
         opti.set_initial(DRX, IG.DRXi(idA));
     end
     
@@ -240,26 +231,15 @@ if contains(model, 'XB')
     opti.subject_to((dQ1dt(1:N-1) + dQ1dt(2:N))*dt/2 + Q1(1:N-1) == Q1(2:N));
     opti.subject_to((dQ2dt(1:N-1) + dQ2dt(2:N))*dt/2 + Q2(1:N-1) == Q2(2:N));
     
-
     %% active force fitting: additional dynamics
     % forcibly detached state
     if contains(model, '4-state')
         opti.subject_to((Rdot(1:N-1) + Rdot(2:N))*dt/2 + R(1:N-1) == R(2:N));
     end
     
-    % force-length
-    Ntot = parms.Noverlap;
-    if isfield(parms, 'FL_overlap')
-        if parms.FL_overlap
-            Lcerel = (Lce-Lceopt)/parms.gamma;
-%              Ntot = .1 + .9 * exp(-FL*Lcerel.^2);
-             Ntot = max(exp(-FL*Lcerel.^2), .1);
-        end
-    end
-    
     % thin filament dynamics
     if contains(model, 'coop')
-        [Jon, Joff] = ThinFilament_Dynamics(Cas(idA), Q0, Non, kon, koff, koop, Ntot);
+        [Jon, Joff] = ThinFilament_Dynamics(Cas(idA), Q0, Non, kon, koff, koop, parms.Noverlap);
         dNondt = Jon - Joff;
         opti.subject_to((dNondt(1:N-1) + dNondt(2:N))*dt/2 + Non(1:N-1) == Non(2:N));
     end
@@ -271,20 +251,7 @@ if contains(model, 'XB')
         opti.subject_to((dDRXdt(1:N-1) + dDRXdt(2:N))*dt/2 + DRX(1:N-1) == DRX(2:N));
     end
     
-
-    % initial value
-%     opti.subject_to(Non(1) == .1);
-%     opti.subject_to(DRX(1) == .1);
-%     opti.subject_to(Q0(1) == .1);
-%     opti.subject_to(Q1(1) == .1);
-%     opti.subject_to(Q2(1) == .05);
-%     
-%     opti.subject_to(dQ0dt(1) == 0);
-%     opti.subject_to(dQ1dt(1) == 0);
-%     opti.subject_to(dQ2dt(1) == 0);
-%     opti.subject_to(dDRXdt(1) == 0);
-%     opti.subject_to(dNondt(1) == 0);
-
+    
 else % Hill-type
     
     % variables
@@ -391,18 +358,11 @@ if contains(model, 'XB')
     out.Fce     = sol.value(Fce);
     out.Fse     = sol.value(Fse);
     out.Fpe     = sol.value(Fpe);
+    out.s       = sol.value(s);
     out.J       = sol.value(J);
     out.Fcost   = sol.value(Fcost);
-    out.Lce     = sol.value(Lce);
-    out.dLse    = sol.value(dLse);
-    
-    
-    if exist('s', 'var')
-        out.s       = sol.value(s);
-    end
     
     if ~isempty(idP)
-        out.FrelP = sol.value(FrelP);
         out.Fcost9  = sol.value(FcostP);
     end
     

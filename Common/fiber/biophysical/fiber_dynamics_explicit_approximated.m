@@ -28,8 +28,8 @@ else
 end
 
 % Thick filament dynamics
-Ftot = Fpe + Fce;
-[J1, J2] = ThickFilament_Dynamics(Q0, Fce, DRX, parms.J1, parms.J2, parms.JF, 1, R);
+% [J1, J2] = ThickFilament_Dynamics(Q0, Fce, DRX, parms.J1, parms.J2, parms.JF, 1, R);
+[J1, J2] = ThickFilament_Dynamics(Q0, Fce, DRX, parms.J1, parms.J2, parms.JF, Ntot, R);
 
 % points where integrals is evaluated
 k1 = [parms.k11 parms.k12];
@@ -67,6 +67,6 @@ dDRXdt = J1 - J2 - (Q0dot + Rdot);
 dx = [dQ0dt; dQ2dt; dFsedt; dNondt; dDRXdt; Rdot];
 
 if sum(isnan(dx(:))) > 0
-    keyboard
+%     keyboard
 end
 end
