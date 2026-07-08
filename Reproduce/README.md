@@ -1,17 +1,12 @@
 # Reproduce
 You can reproduce the following things:
-- model parameter fitting
-- model force time-series
-- model force root-mean-square deviations (RMSDs) from data
-- model short-range stiffness (SRS)
-- manuscript figures
+- model force time-series, using `reproduce_model_forces.m`
+- model short-range stiffness (SRS), using `reproduce_model_SRS.m`
+- model force root-mean-square deviations (RMSDs) from data, using `reproduce_model_RMSD.m`
+- manuscript figures, using `reproduce_manuscript_figures.m`
+- model parameter fitting, using `reproduce_model_fitting.m`
 
 Each of these are explained below
-
-## Model parameter fitting
-To perform parameter fitting you need CasADi software, see: https://web.casadi.org/get/. For more information see [biophysical-muscle-model/Fitting](https://github.com/timvanderzee/biophysical-muscle-model/tree/main/Fitting). 
-
-To reproduce parameter fitting, run the `reproduce_model_fitting.m` script. Running this script for all fibers and models should result in the same parameter values as in our pre-print. If you're just interested in the parameter values, they are provided in the [Parameters folder](https://github.com/timvanderzee/biophysical-muscle-model/tree/main/Reproduce/Parameters).
 
 ## Model force time-series
 To reproduce model forces, run `reproduce_model_forces.m`. Running this script for all fibers, models and methods should result in a folder containing all model time-series. The model force time-series should be identical to those from the pre-print, provided that the model code and parameters are not changed. The folder in which force time-seris are saved is specified by the user in `outputfolder`.
@@ -33,6 +28,11 @@ To reproduce the preprint figures, run `reproduce_manuscript_figures.m`. Figures
 | Figure 6         | ☑️   | Not required    | Not required |
 | Figure 7         | ☑️  | ☑️             | Optional |
 | Figure 8         | ☑️  | Not required    | Not required |
+
+## Model parameter fitting
+To perform parameter fitting you need CasADi software, see: https://web.casadi.org/get/. For more information see [biophysical-muscle-model/Fitting](https://github.com/timvanderzee/biophysical-muscle-model/tree/main/Fitting). 
+
+To reproduce parameter fitting, run the `reproduce_model_fitting.m` script. Running this script for all fibers and models should result in the same parameter values as in our pre-print. If you're just interested in the parameter values, they are provided in the [Parameters folder](https://github.com/timvanderzee/biophysical-muscle-model/tree/main/Reproduce/Parameters).
 
 
 
