@@ -5,10 +5,11 @@ Running `test_model.m` should result in the following figure:
 
 ![picture](test_model.png)
 
-This figure shows the model inputs (i.e. calcium, length, velocity) and the resulting model ouput (i.e. force) for three types of protocols:
-- Ramp protocol as in our [preprint](https://www.biorxiv.org/content/10.1101/2025.10.31.685881v1) (t = 0-2 s)
-- Isometric protocol (t = 2-4 s)
-- Sinusoidal protocol (t = 4-6)
+This figure shows the model inputs (i.e. calcium, length, velocity) and the resulting model ouput (i.e. force) for four types of protocols:
+- Ramp protocol as in our [preprint](https://www.biorxiv.org/content/10.1101/2025.10.31.685881v1) (t = 0-0.5 s)
+- Isokinetic protocol (t = 0.5-1 s)
+- Isometric protocol (t = 1-1.5 s)
+- Sinusoidal protocol (t = 1.5-2)
 
 The user can change each protocol, or add their own protocol. 
 
@@ -16,9 +17,7 @@ As explained in `test_model.m`, there are several steps involved:
 1) specify inputs
 2) specify model function
 3) specify model parameters
-4) determine initial state
-5) simulate model
-6) analyze simulation output
+4) simulate model
 
 Each of these steps is explained in further detail below
 
@@ -52,6 +51,7 @@ Alternatively, you could use your own set of model parameters.
 ## Step 4: simulate model
 You are now ready to simulate the model. You will do this by calling the `simulate_model` function with the following inputs:
 - `model`: containing the model (step 2)
+- `odefunc`: containing the odesolver used (step 2)
 - `modelfunc`: containing the model function (step 2)
 - `input`: containing the input (step 1)
 - `newparms`: containing the parameters (step 3)
