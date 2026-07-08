@@ -6,7 +6,7 @@ Running `test_model.m` should result in the following figure:
 ![picture](test_model.png)
 
 This figure shows the model inputs (i.e. calcium, length, velocity) and the resulting model ouput (i.e. force) for four types of protocols:
-- Ramp protocol as in our [preprint](https://www.biorxiv.org/content/10.1101/2025.10.31.685881v1) (t = 0-0.5 s)
+- Ramp stretch-shorten protocol (t = 0-0.5 s)
 - Isokinetic protocol (t = 0.5-1 s)
 - Isometric protocol (t = 1-1.5 s)
 - Sinusoidal protocol (t = 1.5-2)
