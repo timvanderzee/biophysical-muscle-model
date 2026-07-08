@@ -6,12 +6,12 @@ githubfolder = cd;
 
 % get folders
 cd('biophysical-muscle-model')
+addpath(genpath('Reproduce'));
 [datafolder, modelfolder] = get_paths(githubfolder);
 
-figs = 5;
+figs = 3;
 
 for fig = figs
-    cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
 
     %% Figures 2-4: Force traces    
     if fig > 1 && fig < 5
@@ -19,22 +19,18 @@ for fig = figs
     elseif fig == 5
         
         %% Figure 5: Force RMSD
-        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
         Fig5(githubfolder)
         
     elseif fig == 6
         %% Figure 6: SRS
-        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
         Fig6(githubfolder)
         
     elseif fig == 7
         %% Figure 7: SRS
-        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
         Fig7(datafolder, modelfolder, githubfolder)
         
     elseif fig == 8
         %% Figure 8: Computational cost
-        cd(fullfile(githubfolder, 'biophysical-muscle-model', 'Reproduce', 'Figures'))
         Fig8(githubfolder)
     end
 end

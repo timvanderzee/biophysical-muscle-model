@@ -1,12 +1,13 @@
 clear all; close all; clc
-cd(fileparts(which('reproduce_model_forces_new.m')));
+cd(fileparts(which('reproduce_model_forces.m')));
 cd ..
 cd ..
 githubfolder = cd;
-cd('biophysical-muscle-model')
-addpath(genpath('Common'))
 
 % get folders
+cd('biophysical-muscle-model')
+addpath(genpath('Common'))
+addpath(genpath('Reproduce'));
 [~, modelfolder] = get_paths(githubfolder);
 repofolder = cd;
 

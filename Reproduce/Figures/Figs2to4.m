@@ -84,7 +84,7 @@ for j = 1:size(ISIs,1)
             if isfile(filename)
                 disp(filename)
                 clear oFi
-                load(filename, 'tis','Cas','vis','Lis','oFi', 'ts');
+                load(filename, 'tis','oFi');
                 
                 if ~exist('oFi', 'var')
                
