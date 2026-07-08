@@ -3,6 +3,8 @@
 To test a given model for a given input, run `test_model.m`.
 Running `test_model.m` should result in the following figure:
 
+![picture](test_model.png)
+
 This figure shows the model inputs (i.e. calcium, length, velocity) and the resulting model ouput (i.e. force) for four types of protocols:
 - Ramp stretch-shorten protocol (t = 0-0.5 s)
 - Isokinetic protocol (t = 0.5-1 s)
