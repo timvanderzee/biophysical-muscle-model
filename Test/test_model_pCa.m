@@ -5,19 +5,6 @@ addpath(genpath('Common'))
 repofolder = cd;
 
 %% step 1: specify inputs
-% the biophysical models have 3 inputs, namely:
-% 1) calcium concentration
-% 2) fiber length
-% 3) fiber velocity
-% note: the latter two depend on each other, because
-% fiber velocity is the time-derivative of fiber length
-%
-% in the following example, three phases of input trajectories are used:
-% 1) typical protocol from our manuscript
-% 2) an isometric phase in which the fiber is held at constant length
-% 3) a sinusoidal phase in which the fiber undergoes sinusoidal length
-% changes
-
 % applicable to all phases
 pCas     = flip([9 7:-.1:5 4.5]);          % assumed constant and applies to both phases
 Cas      = 10.^(6-pCas);   % (uM)
@@ -33,9 +20,7 @@ v   = 1;            % velocity (L0/s)
 
 % specify all input phases
 for i = 1:length(Cas)
-% input(1) = ramp(Ca, T, dt, RT, A, v);
-input(i) = isometric(Cas(i), T, dt, L0);
-% input(3) = sinusoidal(Ca, T, dt, f, A, L0);
+    input(i) = isometric(Cas(i), T, dt, L0);
 end
 
 % show length and velocity traces
@@ -66,32 +51,12 @@ for i = 1:length(input) % loop over phases
     
 end
 
-% note: this is just an example. you are free to try any input that you
-% like, such as:
-% - different calcium concentration
-% - different amplitude and frequency of sinusoidal length changes
-%
-% but also:
-% - variable calcium concentration
-% - non-sinusoidal fiber length changes
-% 
-% if you use a custom input, make sure that you have a struct (array) called
-% 'input' that contains the following fields:
-%     t: [1×N double]
-%     L: [1×N double]
-%     v: [1×N double]
-%    Ca: [1×N double]
-% here, N is the number of data points, t should be increasing
-% equidistantly (i.e. diff(t) = constant), and v should be the time
-% derivtive of L with respect to t.
-
 %% step 2: specify model function
 % you can choose between the following models:
 % Hill-type SE, Hill-type no SE, 2-state XB, 2-state XB coop, 3-state XB coop, 4-state XB coop
 model   = '3-state XB coop'; % see options above
 odetype = 'explicit'; % type of differential equations
 method  = 'approximated'; % solution method
-% method = 'discretized'; % solution method
 [modelfunc, odefunc, modelname] = look_up_model(model, odetype, method);
 
 %% step 3: specify model parameters
@@ -118,7 +83,8 @@ for i = 1:length(input)
 
     % plot the forces
     plot(out(i).t+t0, out(i).F, 'color', color(1,:), 'linewidth', 1.5); hold on; box off
-    
+    xline(t0,'k--')
+
     Fss(i) = out(i).Fce(end);
 end
 
@@ -127,6 +93,9 @@ ylabel('Force (F_0)')
 xline(t0,'k--')
 title('Fiber force')
 
-figure(10)
-plot(pCas, Fss, 'o')
+figure(2)
+plot(pCas, Fss, 'o-', 'markerfacecolor', [1 1 1])
+xlabel('pCa')
+ylabel('Isometric force')
+box off
 
