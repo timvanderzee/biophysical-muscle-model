@@ -6,6 +6,8 @@ githubfolder = cd;
 
 % get folders
 cd('biophysical-muscle-model')
+addpath(genpath('Common'));
+addpath(genpath('Reproduce'));
 [datafolder, modelfolder] = get_paths(githubfolder);
 save_results = 0;
 visualize = 1;

@@ -121,10 +121,6 @@ if contains(model, 'XB')
     q   = opti.variable(1,N); % standard deviation strain of the distribution
     Ld  = opti.variable(1,N);  % % fiber velocity
     
-%     p = 10*tanh((Q1./Q0) /10);          % constraining minimum and maximum
-%     q = 2*tanh((log(1+exp((Q2./Q0 - p.^2)*10))/10)/2);    % constraining to be larger than zero
-
-
     % constraints that specify relation between opti variables
     opti.subject_to(Q1 - Q0 .* p == 0);
     opti.subject_to(Q2 - Q0 .* (p.^2 + q) == 0);
@@ -135,9 +131,7 @@ if contains(model, 'XB')
     opti.subject_to(p < 5);
     opti.subject_to(Q0 > 1e-6);
     opti.subject_to(Fse > 0);
-    opti.subject_to(Fse < 2);
-    % opti.subject_to(Q0+Q1 > 0);
-    
+
     % initial guess
     opti.set_initial(Q0, IG.Q0i(idA));
     opti.set_initial(Q1, IG.Q1i(idA));
@@ -194,7 +188,7 @@ if contains(model, 'XB')
     if contains(model, 'coop')
         Non = opti.variable(1,N);  % derivative constraint
         opti.subject_to(Non > 0);
-        opti.subject_to(Non < 1.1);
+        opti.subject_to(Non < 2);
         opti.set_initial(Non, IG.Noni(idA));
     end
     
@@ -202,7 +196,7 @@ if contains(model, 'XB')
     if contains(model, '3-state') || contains(model, '4-state')
         DRX = opti.variable(1,N);  % derivative constraint
         opti.subject_to(DRX > 0);
-        opti.subject_to(DRX < 1.1);
+        opti.subject_to(DRX < 2);
         opti.set_initial(DRX, IG.DRXi(idA));
     end
     
@@ -271,20 +265,6 @@ if contains(model, 'XB')
         opti.subject_to((dDRXdt(1:N-1) + dDRXdt(2:N))*dt/2 + DRX(1:N-1) == DRX(2:N));
     end
     
-
-    % initial value
-%     opti.subject_to(Non(1) == .1);
-%     opti.subject_to(DRX(1) == .1);
-%     opti.subject_to(Q0(1) == .1);
-%     opti.subject_to(Q1(1) == .1);
-%     opti.subject_to(Q2(1) == .05);
-%     
-%     opti.subject_to(dQ0dt(1) == 0);
-%     opti.subject_to(dQ1dt(1) == 0);
-%     opti.subject_to(dQ2dt(1) == 0);
-%     opti.subject_to(dDRXdt(1) == 0);
-%     opti.subject_to(dNondt(1) == 0);
-
 else % Hill-type
     
     % variables
