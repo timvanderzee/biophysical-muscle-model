@@ -10,7 +10,7 @@ pCas     = flip([9 7:-.1:5 4.5]);          % assumed constant and applies to bot
 Cas      = 10.^(6-pCas);   % (uM)
 dt      = 1/1000;       % sample time (s)
 T       = 1;            % duration (s)
-L0      = .5;
+L0      = 0;
 
 % phase-specific
 A   = .2;              % length change amplitude (L0)
