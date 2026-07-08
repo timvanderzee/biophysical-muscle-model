@@ -57,3 +57,10 @@ You are now ready to simulate the model. You will do this by calling the `simula
 - `newparms`: containing the parameters (step 3)
 
 After simulating the model you can visualize the obtained force and add it to the figure (see above).
+
+## Example: force-pCa
+You can modify the `test_model.m` script as you like. For example, the `test_model_pCa.m` script simulates isometric contractions at different calcium concentration levels, and plots the steady-state force versus the calcium concentration.
+
+<img width="840" height="1047" alt="image" src="https://github.com/user-attachments/assets/6674866d-ad19-4ac5-939b-c99e404372ea" />
+<img width="516" height="340" alt="image" src="https://github.com/user-attachments/assets/8947bd4f-390c-4a74-af7e-bc028bc72c96" />
+
