@@ -107,8 +107,9 @@ for i = 1:length(input)
     
     % plot the forces
     subplot(414)
-    plot(out(i).t+t0, out(i).F, '-', 'color', color(2,:), 'linewidth', 1.5); hold on; box off
-    
+    plot(out(i).t+t0, out(i).F, '-', 'color', color(1,:), 'linewidth', 1.5); hold on; box off
+    xline(t0,'k--')
+
     Fmax = max([Fmax out(i).F]);
 end
 
